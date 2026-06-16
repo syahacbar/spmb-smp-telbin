@@ -4,17 +4,19 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormulirController;
+use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('dashboard'));
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::post('/cek-status', [LandingController::class, 'checkStatus'])->name('status.check');
+Route::get('/cek-status', fn () => redirect('/#cek-status'));
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.store');
     Route::get('/daftar', [AuthController::class, 'register'])->name('register');
+    Route::post('/daftar/cek-nisn', [AuthController::class, 'checkRegisterNisn'])->name('register.check-nisn');
     Route::post('/daftar', [AuthController::class, 'storeRegistration'])->name('register.store');
-    Route::get('/cek-status', [AuthController::class, 'status'])->name('status');
-    Route::post('/cek-status', [AuthController::class, 'checkStatus'])->name('status.check');
 });
 
 Route::middleware('spmb.auth')->group(function (): void {
@@ -33,7 +35,13 @@ Route::middleware('spmb.auth')->group(function (): void {
     Route::middleware('spmb.admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/pendaftar', [AdminController::class, 'pendaftar'])->name('pendaftar');
         Route::get('/pengguna', [AdminController::class, 'pengguna'])->name('pengguna');
+        Route::post('/pengguna', [AdminController::class, 'storePengguna'])->name('pengguna.store');
         Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
         Route::post('/pengguna/{pengguna}/verifikasi', [AdminController::class, 'verifikasiPengguna'])->name('pengguna.verifikasi');
+        Route::post('/pengguna/{pengguna}/toggle-active', [AdminController::class, 'togglePenggunaAktif'])->name('pengguna.toggle-active');
+        Route::post('/pengguna/{pengguna}/reset-password', [AdminController::class, 'resetPasswordPengguna'])->name('pengguna.reset-password');
+        Route::delete('/pengguna/{pengguna}', [AdminController::class, 'destroyPengguna'])->name('pengguna.destroy');
+        Route::get('/pengguna/{pengguna}/formulir', [FormulirController::class, 'adminCreate'])->name('pengguna.formulir.create');
+        Route::post('/pengguna/{pengguna}/formulir', [FormulirController::class, 'adminStore'])->name('pengguna.formulir.store');
     });
 });

@@ -8,6 +8,7 @@ use App\Models\Pengguna;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class FormulirController extends Controller
@@ -42,6 +43,9 @@ class FormulirController extends Controller
         $pengguna = $request->attributes->get('pengguna');
 
         $data = $this->validatedData($request, true, $pengguna->id_pengguna);
+        $this->syncAkunEmail($pengguna->id_pengguna, $data['email']);
+        unset($data['email']);
+
         $data['nisn'] = $pengguna->id_pengguna;
         $data['hp'] = $pengguna->telpon;
         $data['status'] = 'draft';
@@ -85,6 +89,60 @@ class FormulirController extends Controller
         ]);
     }
 
+    public function adminCreate(Request $request, Pengguna $pengguna): View|RedirectResponse
+    {
+        $admin = $request->attributes->get('pengguna');
+
+        if ($pengguna->level === 'Administrator') {
+            abort(403);
+        }
+
+        $formulir = Formulir::where('nisn', $pengguna->id_pengguna)->first();
+
+        if ($formulir) {
+            return redirect()->route('formulir.edit', $formulir);
+        }
+
+        return view('formulir.form', [
+            'pengguna' => $admin,
+            'akunPendaftar' => $pengguna,
+            'calonSiswa' => $pengguna->calonSiswa,
+            'formulir' => new Formulir(array_merge(
+                ['nisn' => $pengguna->id_pengguna],
+                $this->calonSiswaFormulirData($pengguna->id_pengguna),
+            )),
+            'formAction' => route('admin.pengguna.formulir.store', $pengguna),
+            ...$this->formReferences(),
+        ]);
+    }
+
+    public function adminStore(Request $request, Pengguna $pengguna): RedirectResponse
+    {
+        if ($pengguna->level === 'Administrator') {
+            abort(403);
+        }
+
+        if (Formulir::where('nisn', $pengguna->id_pengguna)->exists()) {
+            return redirect()->route('admin.pengguna.formulir.create', $pengguna)
+                ->with('warning', 'Formulir user tersebut sudah tersedia.');
+        }
+
+        $data = $this->validatedData($request, true, $pengguna->id_pengguna);
+        $this->syncAkunEmail($pengguna->id_pengguna, $data['email']);
+        unset($data['email']);
+
+        $data['nisn'] = $pengguna->id_pengguna;
+        $data['hp'] = $pengguna->telpon;
+        $data['status'] = 'draft';
+        $data['submitted_at'] = null;
+        $data = array_merge($data, $this->calonSiswaFormulirData($pengguna->id_pengguna));
+        $data = array_merge($data, $this->storeUploads($request));
+
+        $formulir = Formulir::create($data);
+
+        return redirect()->route('formulir.periksa', $formulir)->with('success', 'Data formulir user berhasil disimpan. Periksa kembali sebelum mengirim final.');
+    }
+
     public function update(Request $request, Formulir $formulir): RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
@@ -99,8 +157,11 @@ class FormulirController extends Controller
         $akunPendaftar = Pengguna::find($formulir->nisn);
 
         if ($akunPendaftar) {
+            $this->syncAkunEmail($akunPendaftar->id_pengguna, $data['email']);
             $data['hp'] = $akunPendaftar->telpon;
         }
+
+        unset($data['email']);
 
         $data = array_merge($data, $this->calonSiswaFormulirData($formulir->nisn));
         $formulir->update(array_merge($data, $this->storeUploads($request)));
@@ -173,6 +234,7 @@ class FormulirController extends Controller
             ];
 
         $data = $request->validate(array_merge($identityRules, [
+            'email' => ['required', 'email', 'max:100', Rule::unique('tb_pengguna', 'email')->ignore($nisn, 'id_pengguna')],
             'nik' => ['required', 'string', 'max:30'],
             'jenis_kelamin' => ['required', 'in:Laki-laki,Perempuan'],
             'agama' => ['required', 'string', 'max:50'],
@@ -214,6 +276,11 @@ class FormulirController extends Controller
         }
 
         return $data;
+    }
+
+    private function syncAkunEmail(string $nisn, string $email): void
+    {
+        Pengguna::whereKey($nisn)->update(['email' => $email]);
     }
 
     private function storeUploads(Request $request): array

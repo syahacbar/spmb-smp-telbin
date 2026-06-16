@@ -28,11 +28,13 @@ class Pengguna extends Model
         'password',
         'level',
         'is_verified',
+        'is_active',
         'verified_at',
     ];
 
     protected $casts = [
         'is_verified' => 'boolean',
+        'is_active' => 'boolean',
         'verified_at' => 'datetime',
     ];
 

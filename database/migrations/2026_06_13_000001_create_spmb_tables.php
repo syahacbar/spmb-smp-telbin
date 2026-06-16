@@ -15,10 +15,11 @@ return new class extends Migration
                 $table->string('nama_pengguna', 100)->default('');
                 $table->text('alamat')->nullable();
                 $table->string('telpon', 20)->default('');
-                $table->string('email', 100)->unique();
+                $table->string('email', 100)->nullable()->unique();
                 $table->string('username', 50)->default('');
                 $table->string('password');
                 $table->enum('level', ['Administrator', 'User'])->default('User');
+                $table->boolean('is_active')->default(true);
             });
         } else {
             DB::statement('ALTER TABLE tb_pengguna MODIFY password varchar(255) NOT NULL');

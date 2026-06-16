@@ -1022,7 +1022,7 @@
     </style>
 </head>
 <body>
-@unless(request()->routeIs('login', 'register', 'status'))
+@unless(request()->routeIs('login', 'register'))
     <nav class="navbar">
         <div class="container-fluid flex-column flex-md-row align-items-stretch align-items-md-center gap-2 px-3 px-md-4">
             <a class="topbar-brand" href="{{ route('dashboard') }}">
@@ -1080,8 +1080,8 @@
         </div>
     </div>
 @else
-    <main class="{{ request()->routeIs('login', 'register', 'status') ? '' : 'container py-5' }}">
-        @unless(request()->routeIs('login', 'register', 'status'))
+    <main class="{{ request()->routeIs('login', 'register') ? '' : 'container py-5' }}">
+        @unless(request()->routeIs('login', 'register'))
             @include('partials.flash')
         @endunless
         {{ $slot }}

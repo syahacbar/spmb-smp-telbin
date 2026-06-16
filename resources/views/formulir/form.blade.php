@@ -70,7 +70,7 @@
         </div>
     @endif
 
-    <form method="post" action="{{ $isEdit ? route('formulir.update', $formulir) : route('formulir.store') }}" enctype="multipart/form-data" data-registration-form novalidate>
+    <form method="post" action="{{ $formAction ?? ($isEdit ? route('formulir.update', $formulir) : route('formulir.store')) }}" enctype="multipart/form-data" data-registration-form novalidate>
         @csrf
         @if($isEdit)
             @method('put')
@@ -135,8 +135,8 @@
                             <input type="date" name="tanggal_lahir" value="{{ $hasMasterIdentity ? $calonSiswa->tanggal_lahir->format('Y-m-d') : old('tanggal_lahir', optional($formulir->tanggal_lahir)->format('Y-m-d') ?: $formulir->tanggal_lahir) }}" class="form-control" @unless($hasMasterIdentity) min="{{ $tanggalLahirMinimal }}" max="{{ $tanggalLahirMaksimal }}" @endunless data-field-label="Tanggal lahir" @disabled($hasMasterIdentity) data-open-date-on-focus required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" value="{{ $emailAkun }}" class="form-control" disabled>
+                            <label class="form-label">Email Aktif</label>
+                            <input type="email" name="email" value="{{ old('email', $emailAkun) }}" class="form-control" autocomplete="email" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nomor HP/WA</label>

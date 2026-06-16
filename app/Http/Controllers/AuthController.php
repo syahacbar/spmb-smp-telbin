@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CalonSiswa;
 use App\Models\Pengguna;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -57,11 +58,19 @@ class AuthController extends Controller
             return back()->withErrors(['nisn' => 'NISN atau password salah.'])->onlyInput('nisn');
         }
 
+        if ($pengguna->level !== 'Administrator' && $pengguna->is_active === false) {
+            $this->generateLoginCaptcha($request);
+
+            return back()
+                ->withErrors(['nisn' => 'Akun anda sedang nonaktif. Silakan menghubungi panitia SPMB.'])
+                ->onlyInput('nisn');
+        }
+
         if ($pengguna->level !== 'Administrator' && ! $pengguna->is_verified) {
             $this->generateLoginCaptcha($request);
 
             return back()
-                ->withErrors(['nisn' => 'Akun anda belum diverifikasi oleh admin sekolah. Silakan cek email setelah admin melakukan verifikasi.'])
+                ->withErrors(['nisn' => 'Akun anda belum diverifikasi oleh admin sekolah. Silakan menunggu proses verifikasi panitia SPMB.'])
                 ->onlyInput('nisn');
         }
 
@@ -86,68 +95,60 @@ class AuthController extends Controller
         ]);
     }
 
-    public function status(Request $request): View
-    {
-        $this->generateStatusCaptcha($request);
-
-        return view('auth.status');
-    }
-
-    public function checkStatus(Request $request): RedirectResponse
+    public function checkRegisterNisn(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'nisn' => ['required', 'digits:10'],
-            'captcha_answer' => ['required', 'integer'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
             'nisn.digits' => 'NISN harus berisi 10 digit angka.',
-            'captcha_answer.required' => 'Captcha wajib diisi.',
-            'captcha_answer.integer' => 'Captcha harus berupa angka.',
         ]);
 
-        $validator->after(function ($validator) use ($request): void {
-            $expected = (string) $request->session()->get('status_captcha_answer');
-            $answer = trim((string) $request->input('captcha_answer'));
-
-            if ($expected === '' || ! hash_equals($expected, $answer)) {
-                $validator->errors()->add('captcha_answer', 'Kode Captcha tidak sesuai. Silakan masukkan kembali kode keamanan yang benar.');
-            }
-        });
-
         if ($validator->fails()) {
-            $this->generateStatusCaptcha($request);
-
-            return back()->withErrors($validator)->onlyInput('nisn');
+            return response()->json([
+                'ok' => false,
+                'type' => 'error',
+                'message' => $validator->errors()->first('nisn'),
+            ], 422);
         }
 
         $nisn = $validator->validated()['nisn'];
-        $result = Pengguna::whereKey($nisn)->exists()
-            ? 'registered'
-            : (CalonSiswa::whereKey($nisn)->exists() ? 'not_registered' : 'not_found');
 
-        $this->generateStatusCaptcha($request);
+        if (Pengguna::whereKey($nisn)->exists()) {
+            return response()->json([
+                'ok' => false,
+                'type' => 'warning',
+                'message' => "NISN {$nisn} sudah terdaftar pada sistem SPMB. Silakan login atau hubungi panitia SPMB.",
+            ], 409);
+        }
 
-        return back()
-            ->with('status_result', $result)
-            ->with('status_nisn', $nisn)
-            ->onlyInput('nisn');
+        $calonSiswa = CalonSiswa::find($nisn);
+
+        if (! $calonSiswa) {
+            return response()->json([
+                'ok' => false,
+                'type' => 'warning',
+                'message' => 'Tidak ditemukan pada database calon peserta didik. Silakan menghubungi panitia SPMB melalui WhatsApp.',
+            ], 404);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'type' => 'success',
+            'message' => "NISN {$nisn} tersedia di database calon peserta didik. Silakan lanjut isi data akun.",
+        ]);
     }
 
     public function storeRegistration(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'nisn' => ['required', 'digits:10'],
-            'email' => ['required', 'email', 'max:100', 'unique:tb_pengguna,email'],
             'no_wa' => ['required', 'regex:/^8[0-9]{8,11}$/'],
             'password' => ['required', 'confirmed', 'min:3'],
             'captcha_answer' => ['required', 'integer'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
             'nisn.digits' => 'NISN harus berisi 10 digit angka.',
-            'email.required' => 'Email aktif wajib diisi.',
-            'email.email' => 'Format email belum sesuai. Gunakan email aktif yang benar.',
-            'email.max' => 'Email maksimal berisi 100 karakter.',
-            'email.unique' => 'Email tersebut telah digunakan pada sistem SPMB. Silakan gunakan email lain atau hubungi panitia SPMB.',
             'no_wa.required' => 'Nomor WhatsApp aktif wajib diisi.',
             'no_wa.regex' => 'Nomor WhatsApp harus diawali angka 8 dan berisi 9 sampai 12 digit setelah kode +62.',
             'password.required' => 'Kata sandi wajib diisi.',
@@ -164,7 +165,7 @@ class AuthController extends Controller
                 if (Pengguna::whereKey($nisn)->exists()) {
                     $validator->errors()->add('nisn', "NISN {$nisn} telah terdaftar pada sistem SPMB. Untuk informasi dan verifikasi kepemilikan akun, silakan menghubungi panitia SPMB.");
                 } elseif (! CalonSiswa::whereKey($nisn)->exists()) {
-                    $validator->errors()->add('nisn', "NISN {$nisn} tidak ditemukan pada database calon peserta didik. Silakan menghubungi panitia SPMB melalui WhatsApp.");
+                    $validator->errors()->add('nisn', 'Tidak ditemukan pada database calon peserta didik. Silakan menghubungi panitia SPMB melalui WhatsApp.');
                 }
             }
 
@@ -181,7 +182,7 @@ class AuthController extends Controller
 
             return back()
                 ->withErrors($validator)
-                ->onlyInput('nisn', 'email', 'no_wa');
+                ->onlyInput('nisn', 'no_wa');
         }
 
         $data = $validator->validated();
@@ -190,7 +191,7 @@ class AuthController extends Controller
         Pengguna::create([
             'id_pengguna' => $data['nisn'],
             'nama_pengguna' => $calonSiswa->nama,
-            'email' => $data['email'],
+            'email' => null,
             'telpon' => '62'.$data['no_wa'],
             'username' => $data['nisn'],
             'password' => Hash::make($data['password']),
@@ -238,15 +239,6 @@ class AuthController extends Controller
 
         $request->session()->put('register_captcha_question', "{$firstNumber} + {$secondNumber}");
         $request->session()->put('register_captcha_answer', (string) ($firstNumber + $secondNumber));
-    }
-
-    private function generateStatusCaptcha(Request $request): void
-    {
-        $firstNumber = random_int(2, 9);
-        $secondNumber = random_int(1, 9);
-
-        $request->session()->put('status_captcha_question', "{$firstNumber} + {$secondNumber}");
-        $request->session()->put('status_captcha_answer', (string) ($firstNumber + $secondNumber));
     }
 
     private function panitiaWhatsapp(): string

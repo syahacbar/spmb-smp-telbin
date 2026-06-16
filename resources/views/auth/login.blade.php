@@ -30,7 +30,6 @@
                     </div>
 
                     <p class="auth-note mt-4 mb-2">Belum memiliki akun? Klik <a href="{{ route('register') }}">Daftar Akun</a>.</p>
-                    <p class="auth-note mb-2">Ingin memastikan akun sudah terdaftar? Klik <a href="{{ route('status') }}">Cek Status SPMB</a>.</p>
                     <p class="auth-note mb-0">Mengalami kendala login? Hubungi panitia melalui <strong>WhatsApp</strong> untuk verifikasi akun.</p>
                 </div>
 
@@ -94,8 +93,7 @@
 
                             <div class="d-flex justify-content-between align-items-center mt-4">
                                 <a href="{{ route('register') }}" class="fw-bold text-decoration-none">Daftar akun</a>
-                                <a href="{{ route('status') }}" class="fw-bold text-decoration-none">Cek status</a>
-                                <span class="text-muted small">SPMB Online</span>
+                                <a href="{{ route('landing') }}" class="fw-bold text-decoration-none">Kembali ke Beranda</a>
                             </div>
                         </div>
                     </div>
