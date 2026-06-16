@@ -1,4 +1,32 @@
 <x-layouts.app :pengguna="$pengguna" title="Data User">
+    <style>
+        .data-user-table thead .filter-row th {
+            background: #f8fafc;
+            padding-top: .55rem;
+            padding-bottom: .55rem;
+        }
+        .data-user-table thead .filter-row th::after,
+        .data-user-table thead .filter-row th::before {
+            display: none !important;
+        }
+        .data-user-table .dt-column-title {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+        }
+        .dt-search label,
+        .dt-length label {
+            color: #667085;
+            font-weight: 700;
+        }
+        .dt-search input,
+        .dt-length select,
+        .column-filter {
+            border-color: #d0d5dd;
+            border-radius: .45rem;
+        }
+    </style>
+
     <div class="page-title">
         <div>
             <h3 class="fw-bold">Data User</h3>
@@ -40,8 +68,8 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
+            <div class="table-responsive p-3">
+                <table id="dataUserTable" class="table table-hover mb-0 data-user-table w-100">
                     <thead>
                     <tr>
                         <th>No</th>
@@ -52,9 +80,41 @@
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
+                    <tr class="filter-row">
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>
+                            <select class="form-select form-select-sm column-filter" data-column="3" aria-label="Filter asal sekolah">
+                                <option value="">Semua sekolah</option>
+                            </select>
+                        </th>
+                        <th></th>
+                        <th>
+                            <select class="form-select form-select-sm column-filter" data-column="5" aria-label="Filter status">
+                                <option value="">Semua status</option>
+                                <option value="Aktif">Aktif</option>
+                                <option value="Menunggu">Menunggu</option>
+                                <option value="Nonaktif">Nonaktif</option>
+                            </select>
+                        </th>
+                        <th></th>
+                    </tr>
                     </thead>
                     <tbody>
-                    @forelse($users as $user)
+                    @foreach($users as $user)
+                        @php
+                            if ($user->is_active === false) {
+                                $statusLabel = 'Nonaktif';
+                                $statusOrder = 3;
+                            } elseif ($user->is_verified) {
+                                $statusLabel = 'Aktif';
+                                $statusOrder = 1;
+                            } else {
+                                $statusLabel = 'Menunggu';
+                                $statusOrder = 2;
+                            }
+                        @endphp
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $user->id_pengguna }}</td>
@@ -70,7 +130,7 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-                            <td>
+                            <td data-order="{{ $statusOrder }}" data-search="{{ $statusLabel }}">
                                 @if($user->is_active === false)
                                     <span class="badge text-bg-secondary">Nonaktif</span>
                                 @elseif($user->is_verified)
@@ -140,14 +200,92 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">Belum ada user.</td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tableElement = document.getElementById('dataUserTable');
+
+            if (! tableElement || ! window.DataTable) {
+                return;
+            }
+
+            const table = new DataTable(tableElement, {
+                orderCellsTop: true,
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                order: [[1, 'asc']],
+                columnDefs: [
+                    { orderable: false, searchable: false, targets: [0, 6] },
+                    { type: 'num', targets: 5 },
+                ],
+                language: {
+                    search: 'Cari:',
+                    lengthMenu: 'Tampilkan _MENU_ data',
+                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ user',
+                    infoEmpty: 'Tidak ada user yang ditampilkan',
+                    infoFiltered: '(difilter dari _MAX_ total user)',
+                    zeroRecords: 'Data user tidak ditemukan',
+                    emptyTable: 'Belum ada user.',
+                    paginate: {
+                        first: 'Awal',
+                        last: 'Akhir',
+                        next: 'Berikutnya',
+                        previous: 'Sebelumnya',
+                    },
+                },
+            });
+
+            const schoolFilter = tableElement.querySelector('.column-filter[data-column="3"]');
+
+            if (schoolFilter) {
+                table
+                    .column(3)
+                    .data()
+                    .unique()
+                    .sort()
+                    .each(function (value) {
+                        const school = String(value).trim();
+
+                        if (! school || school === '-') {
+                            return;
+                        }
+
+                        const option = document.createElement('option');
+                        option.value = school;
+                        option.textContent = school;
+                        schoolFilter.appendChild(option);
+                    });
+            }
+
+            tableElement.querySelectorAll('.column-filter').forEach(function (select) {
+                select.addEventListener('change', function () {
+                    const columnIndex = Number(select.dataset.column);
+                    const value = select.value;
+                    const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+                    table.column(columnIndex).search(value ? '^' + escapedValue + '$' : '', true, false).draw();
+                });
+
+                select.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                });
+            });
+
+            table.on('order.dt search.dt draw.dt', function () {
+                let index = 1;
+
+                table
+                    .cells(null, 0, { search: 'applied', order: 'applied' })
+                    .every(function () {
+                        this.data(index++);
+                    });
+            }).draw();
+        });
+    </script>
 </x-layouts.app>
