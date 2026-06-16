@@ -15,8 +15,8 @@
                         <th>NISN</th>
                         <th>Nama</th>
                         <th>Asal Sekolah</th>
-                        <th>Program 1</th>
-                        <th>Program 2</th>
+                        <th>Minat A</th>
+                        <th>Minat B</th>
                         <th>Dokumen</th>
                         <th>Tanggal Kirim</th>
                         <th>Aksi</th>

@@ -30,6 +30,7 @@
                     </div>
 
                     <p class="auth-note mt-4 mb-2">Belum memiliki akun? Klik <a href="{{ route('register') }}">Daftar Akun</a>.</p>
+                    <p class="auth-note mb-2">Ingin memastikan akun sudah terdaftar? Klik <a href="{{ route('status') }}">Cek Status SPMB</a>.</p>
                     <p class="auth-note mb-0">Mengalami kendala login? Hubungi panitia melalui <strong>WhatsApp</strong> untuk verifikasi akun.</p>
                 </div>
 
@@ -41,6 +42,25 @@
                                 <h4 class="fw-bold mb-1">Selamat datang</h4>
                                 <div class="text-muted small">Gunakan NISN dan password yang sudah terdaftar.</div>
                             </div>
+
+                            @if(session('success'))
+                                <div class="alert alert-success">{{ session('success') }}</div>
+                            @endif
+
+                            @if(session('warning'))
+                                <div class="alert alert-warning">{{ session('warning') }}</div>
+                            @endif
+
+                            @if($errors->any())
+                                <div class="alert alert-danger">
+                                    <div class="fw-bold mb-1">Login belum berhasil.</div>
+                                    <ul class="mb-0 ps-3">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
 
                             <form method="post" action="{{ route('login.store') }}">
                                 @csrf
@@ -74,6 +94,7 @@
 
                             <div class="d-flex justify-content-between align-items-center mt-4">
                                 <a href="{{ route('register') }}" class="fw-bold text-decoration-none">Daftar akun</a>
+                                <a href="{{ route('status') }}" class="fw-bold text-decoration-none">Cek status</a>
                                 <span class="text-muted small">SPMB Online</span>
                             </div>
                         </div>

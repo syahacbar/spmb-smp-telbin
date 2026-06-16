@@ -11,19 +11,33 @@
             'agama' => 'Agama',
             'hp' => 'No HP / WA',
             'asal_sekolah' => 'Asal Sekolah',
+            'alamat_kabupaten' => 'Kabupaten Domisili',
+            'alamat_kecamatan' => 'Kecamatan Domisili',
+            'alamat_kelurahan' => 'Kelurahan/Desa Domisili',
             'alamat' => 'Alamat',
             'nama_ayah' => 'Nama Ayah',
             'pekerjaan_ayah' => 'Pekerjaan Ayah',
             'nama_ibu' => 'Nama Ibu',
             'pekerjaan_ibu' => 'Pekerjaan Ibu',
             'hp_ortu' => 'No HP / WA Ortu',
-            'alamat_ortu' => 'Alamat Orang Tua',
-            'program_keahlian_1' => 'Program Keahlian 1',
-            'program_keahlian_2' => 'Program Keahlian 2',
+            'alamat_ortu_sama_dengan_siswa' => 'Alamat Orang Tua Sama dengan Domisili Siswa',
+            'alamat_ortu_provinsi' => 'Provinsi Orang Tua',
+            'alamat_ortu_kabupaten' => 'Kabupaten Orang Tua',
+            'alamat_ortu_kecamatan' => 'Kecamatan Orang Tua',
+            'alamat_ortu_kelurahan' => 'Kelurahan/Desa Orang Tua',
+            'alamat_ortu' => 'Alamat Detail Orang Tua',
+            'program_keahlian_1' => 'Minat Program Keahlian A',
+            'program_keahlian_2' => 'Minat Program Keahlian B',
         ] as $field => $label)
             <tr>
                 <th style="width: 230px">{{ $label }}</th>
-                <td>{{ $formulir->{$field} }}</td>
+                <td>
+                    @if($field === 'alamat_ortu_sama_dengan_siswa')
+                        {{ $formulir->{$field} ? 'Ya' : 'Tidak' }}
+                    @else
+                        {{ $formulir->{$field} }}
+                    @endif
+                </td>
             </tr>
         @endforeach
         <tr>

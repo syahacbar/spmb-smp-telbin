@@ -24,7 +24,14 @@ class AdminController extends Controller
     {
         return view('admin.pengguna', [
             'pengguna' => $request->attributes->get('pengguna'),
-            'users' => Pengguna::where('level', 'User')->orderBy('id_pengguna')->get(),
+            'users' => Pengguna::with('calonSiswa')->where('level', 'User')->orderBy('id_pengguna')->get(),
+        ]);
+    }
+
+    public function pengaturan(Request $request): View
+    {
+        return view('admin.pengaturan', [
+            'pengguna' => $request->attributes->get('pengguna'),
         ]);
     }
 

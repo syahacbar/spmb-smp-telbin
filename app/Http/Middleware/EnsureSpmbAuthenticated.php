@@ -12,7 +12,7 @@ class EnsureSpmbAuthenticated
     public function handle(Request $request, Closure $next): Response
     {
         $penggunaId = $request->session()->get('pengguna_id');
-        $pengguna = $penggunaId ? Pengguna::find($penggunaId) : null;
+        $pengguna = $penggunaId ? Pengguna::with('formulirTerbaru')->find($penggunaId) : null;
 
         if (! $pengguna) {
             return redirect()->route('login');

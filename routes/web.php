@@ -6,13 +6,15 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormulirController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard');
+Route::get('/', fn () => redirect()->route('dashboard'));
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.store');
     Route::get('/daftar', [AuthController::class, 'register'])->name('register');
     Route::post('/daftar', [AuthController::class, 'storeRegistration'])->name('register.store');
+    Route::get('/cek-status', [AuthController::class, 'status'])->name('status');
+    Route::post('/cek-status', [AuthController::class, 'checkStatus'])->name('status.check');
 });
 
 Route::middleware('spmb.auth')->group(function (): void {
@@ -31,6 +33,7 @@ Route::middleware('spmb.auth')->group(function (): void {
     Route::middleware('spmb.admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/pendaftar', [AdminController::class, 'pendaftar'])->name('pendaftar');
         Route::get('/pengguna', [AdminController::class, 'pengguna'])->name('pengguna');
+        Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
         Route::post('/pengguna/{pengguna}/verifikasi', [AdminController::class, 'verifikasiPengguna'])->name('pengguna.verifikasi');
     });
 });

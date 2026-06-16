@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'spmb' => [
+        'panitia_whatsapp' => env('SPMB_PANITIA_WHATSAPP', '6281111110002'),
+    ],
+
 ];

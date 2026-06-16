@@ -12,12 +12,12 @@
                     </div>
 
                     <h1 class="fw-bold">Daftar Akun SPMB</h1>
-                    <p class="mt-3 mb-4">Lengkapi data pendaftaran menggunakan <strong>NISN</strong>, <strong>email aktif</strong>, dan <strong>nomor WhatsApp aktif</strong>.</p>
+                    <p class="mt-3 mb-4">Lengkapi data pendaftaran menggunakan <strong>NISN</strong> yang sudah tersedia di database calon peserta didik, <strong>email aktif</strong>, dan <strong>nomor WhatsApp aktif</strong>.</p>
 
                     <div class="auth-info-grid">
                         <div class="auth-feature">
                             <span class="auth-feature-mark">&#10003;</span>
-                            <span>Buat kata sandi yang aman dan mudah Anda ingat</span>
+                            <span>Sistem memeriksa NISN sebelum akun dibuat</span>
                         </div>
                         <div class="auth-feature">
                             <span class="auth-feature-mark">&#10003;</span>
@@ -29,7 +29,8 @@
                         </div>
                     </div>
 
-                    <p class="auth-note mt-4 mb-0">Akun yang telah diverifikasi dapat digunakan untuk mengakses dashboard siswa dan melanjutkan proses pendaftaran.</p>
+                    <p class="auth-note mt-4 mb-2">Sudah pernah mendaftar akun? Klik <a href="{{ route('status') }}">Cek Status SPMB</a>.</p>
+                    <p class="auth-note mb-0">NISN belum tersedia? Hubungi panitia melalui <a href="{{ $panitiaWhatsappUrl }}" target="_blank" rel="noopener">WhatsApp {{ $panitiaWhatsapp }}</a>.</p>
                 </div>
 
                 <div class="col-md-8 col-lg-6 col-xl-5">
@@ -40,6 +41,20 @@
                                 <h4 class="fw-bold mb-1">Buat akun baru</h4>
                                 <div class="text-muted small">Isi data akun awal untuk masuk ke layanan SPMB.</div>
                             </div>
+
+                            @if($errors->any())
+                                <div class="alert alert-danger">
+                                    <div class="fw-bold mb-1">Pendaftaran belum dapat diproses.</div>
+                                    <ul class="mb-0 ps-3">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                    @if($errors->has('nisn'))
+                                        <a href="{{ $panitiaWhatsappUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-danger mt-3">Hubungi Panitia via WhatsApp</a>
+                                    @endif
+                                </div>
+                            @endif
 
                             <form method="post" action="{{ route('register.store') }}">
                                 @csrf
@@ -95,6 +110,9 @@
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-primary btn-lg flex-fill">Daftar Akun</button>
                                     <a href="{{ route('login') }}" class="btn btn-outline-secondary btn-lg flex-fill">Kembali</a>
+                                </div>
+                                <div class="text-center mt-4">
+                                    <a href="{{ route('status') }}" class="fw-bold text-decoration-none">Cek Status SPMB</a>
                                 </div>
                             </form>
                         </div>

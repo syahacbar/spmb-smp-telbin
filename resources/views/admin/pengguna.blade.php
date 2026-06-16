@@ -13,6 +13,8 @@
                     <tr>
                         <th>No</th>
                         <th>NISN</th>
+                        <th>Nama</th>
+                        <th>Asal Sekolah</th>
                         <th>Email</th>
                         <th>No Telpon</th>
                         <th>Status</th>
@@ -24,6 +26,8 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $user->id_pengguna }}</td>
+                            <td>{{ $user->calonSiswa->nama ?? ($user->nama_pengguna ?: '-') }}</td>
+                            <td>{{ $user->calonSiswa->asal_sekolah ?? '-' }}</td>
                             <td>{{ $user->email }}</td>
                             <td>{{ $user->telpon }}</td>
                             <td>
@@ -49,7 +53,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted">Belum ada user.</td>
+                            <td colspan="8" class="text-center text-muted">Belum ada user.</td>
                         </tr>
                     @endforelse
                     </tbody>

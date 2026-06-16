@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Pengguna extends Model
 {
@@ -33,4 +35,14 @@ class Pengguna extends Model
         'is_verified' => 'boolean',
         'verified_at' => 'datetime',
     ];
+
+    public function calonSiswa(): BelongsTo
+    {
+        return $this->belongsTo(CalonSiswa::class, 'id_pengguna', 'nisn');
+    }
+
+    public function formulirTerbaru(): HasOne
+    {
+        return $this->hasOne(Formulir::class, 'nisn', 'id_pengguna')->latestOfMany('id');
+    }
 }
