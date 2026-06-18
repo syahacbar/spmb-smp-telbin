@@ -154,6 +154,16 @@
                                         </button>
                                     </form>
 
+                                    @if($user->is_verified && $user->is_active && $phone)
+                                        <a href="{{ route('admin.pengguna.notifikasi-whatsapp', $user) }}" target="_blank" rel="noopener" class="btn btn-sm btn-success" aria-label="Kirim pemberitahuan WhatsApp kepada user {{ $user->id_pengguna }}" title="Kirim pemberitahuan akun aktif via WhatsApp">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                <path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+                                                <path d="M8.2 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.8 1.9c.1.2.1.4 0 .6l-.7 1c-.2.2-.1.4 0 .6.8 1.4 1.9 2.4 3.3 3.1.2.1.4.1.6-.1l.9-1.1c.2-.2.4-.3.7-.2l1.9.9c.3.1.4.3.4.5 0 .5-.2 1.5-.8 2-.6.5-1.4.8-2.4.6-1.3-.2-3-.9-4.8-2.5-1.5-1.3-2.5-2.9-2.9-4.2-.4-1.1-.1-2.3.4-2.8l.9-.3Z" fill="currentColor"></path>
+                                            </svg>
+                                            <span class="visually-hidden">Kirim WhatsApp</span>
+                                        </a>
+                                    @endif
+
                                     <form method="post" action="{{ route('admin.pengguna.toggle-active', $user) }}" class="mb-0">
                                         @csrf
                                         <button class="btn btn-sm {{ $user->is_active === false ? 'btn-outline-success' : 'btn-outline-warning' }}" data-confirm="{{ $user->is_active === false ? 'Aktifkan user ini?' : 'Nonaktifkan user ini?' }}" aria-label="{{ $user->is_active === false ? 'Aktifkan' : 'Nonaktifkan' }} user {{ $user->id_pengguna }}" title="{{ $user->is_active === false ? 'Aktifkan user' : 'Nonaktifkan user' }}">

@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormulirBerkasController;
 use App\Http\Controllers\FormulirController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\PenggunaWhatsappController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -61,6 +62,7 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::post('/pengaturan/kontak-panitia/{kontak}/utama', [AdminController::class, 'setKontakPanitiaUtama'])->name('pengaturan.kontak.primary');
         Route::delete('/pengaturan/kontak-panitia/{kontak}', [AdminController::class, 'destroyKontakPanitia'])->name('pengaturan.kontak.destroy');
         Route::post('/pengguna/{pengguna}/verifikasi', [AdminController::class, 'verifikasiPengguna'])->name('pengguna.verifikasi');
+        Route::get('/pengguna/{pengguna}/notifikasi-whatsapp', PenggunaWhatsappController::class)->name('pengguna.notifikasi-whatsapp');
         Route::post('/pengguna/{pengguna}/toggle-active', [AdminController::class, 'togglePenggunaAktif'])->name('pengguna.toggle-active');
         Route::post('/pengguna/{pengguna}/reset-password', [AdminController::class, 'resetPasswordPengguna'])->name('pengguna.reset-password');
         Route::delete('/pengguna/{pengguna}', [AdminController::class, 'destroyPengguna'])->name('pengguna.destroy');
