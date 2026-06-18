@@ -975,7 +975,7 @@
                 <a href="#persyaratan">Persyaratan</a>
                 <a href="#kuota">Kuota</a>
                 <a href="#cek-status">Cek Status SPMB</a>
-                <a class="login" href="{{ route('login') }}">Login</a>
+                <a class="login" href="#">Login</a>
             </div>
         </nav>
 
@@ -983,7 +983,7 @@
             <h1>SISTEM<br>PENERIMAAN<br><span class="yellow">MURID BARU</span></h1>
             <h3>TAHUN AJARAN 2026/2027</h3>
             <div class="hero-actions">
-                <a class="hero-cta" href="{{ route('register') }}">Daftar Akun SPMB</a>
+                <a class="hero-cta" href="#">Daftar Akun SPMB</a>
                 <a class="hero-link" href="#cek-status">Cek Status</a>
             </div>
         </div>
@@ -1243,6 +1243,11 @@
                         <div class="status-alert info">
                             <strong>NISN {{ session('status_nisn') }} tersedia di database calon siswa.</strong>
                             Silakan daftar akun SPMB melalui tombol daftar pada halaman ini.
+                        </div>
+                    @elseif(session('status_result') === 'inactive')
+                        <div class="status-alert warning">
+                            <strong>NISN {{ session('status_nisn') }} tidak tersedia pada whitelist aktif tahun ini.</strong>
+                            Tidak ditemukan pada whitelist calon peserta didik aktif tahun ini. Silakan menghubungi panitia SPMB melalui WhatsApp.
                         </div>
                     @elseif(session('status_result') === 'not_found')
                         <div class="status-alert warning">

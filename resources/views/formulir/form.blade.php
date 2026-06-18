@@ -340,7 +340,7 @@
                                         @if($isEdit && $formulir->{$field})
                                             <div class="uploaded-file mb-2">
                                                 <div class="fw-bold small">Berkas saat ini</div>
-                                                <a href="{{ asset($formulir->{$field}) }}" target="_blank" class="small text-decoration-none">Lihat berkas</a>
+                                                <a href="{{ $formulir->berkasUrl($field) }}" target="_blank" class="small text-decoration-none">Lihat berkas</a>
                                             </div>
                                             <div class="small text-muted mb-2">Kosongkan jika tidak ingin mengganti berkas.</div>
                                         @endif

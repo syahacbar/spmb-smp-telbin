@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\CalonSiswa;
 use App\Models\Formulir;
-use App\Models\Pengguna;
 use App\Models\PengaturanSpmb;
+use App\Models\Pengguna;
 use App\Models\ProgramKeahlian;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use RuntimeException;
 
 class FormulirController extends Controller
 {
@@ -44,6 +48,13 @@ class FormulirController extends Controller
     {
         $pengguna = $request->attributes->get('pengguna');
 
+        if ($formulir = Formulir::where('nisn', $pengguna->id_pengguna)->first()) {
+            return redirect()->route(
+                $formulir->isSubmitted() ? 'formulir.riwayat' : 'formulir.edit',
+                $formulir->isSubmitted() ? [] : $formulir,
+            )->with('warning', 'Formulir anda sudah tersedia.');
+        }
+
         $data = $this->validatedData($request, true, $pengguna->id_pengguna);
         $this->syncAkunEmail($pengguna->id_pengguna, $data['email']);
         unset($data['email']);
@@ -53,9 +64,23 @@ class FormulirController extends Controller
         $data['status'] = 'draft';
         $data['submitted_at'] = null;
         $data = array_merge($data, $this->calonSiswaFormulirData($pengguna->id_pengguna));
-        $data = array_merge($data, $this->storeUploads($request));
+        $uploadedPaths = $this->storeUploads($request);
+        $data = array_merge($data, $uploadedPaths);
 
-        $formulir = Formulir::create($data);
+        try {
+            $formulir = Formulir::create($data);
+        } catch (QueryException $exception) {
+            $this->deleteUploadedFiles($uploadedPaths);
+
+            if ($formulir = Formulir::where('nisn', $pengguna->id_pengguna)->first()) {
+                return redirect()->route(
+                    $formulir->isSubmitted() ? 'formulir.riwayat' : 'formulir.edit',
+                    $formulir->isSubmitted() ? [] : $formulir,
+                )->with('warning', 'Formulir anda sudah tersimpan dari permintaan sebelumnya.');
+            }
+
+            throw $exception;
+        }
 
         return redirect()->route('formulir.periksa', $formulir)->with('success', 'Data formulir berhasil disimpan. Periksa kembali sebelum mengirim final.');
     }
@@ -138,9 +163,21 @@ class FormulirController extends Controller
         $data['status'] = 'draft';
         $data['submitted_at'] = null;
         $data = array_merge($data, $this->calonSiswaFormulirData($pengguna->id_pengguna));
-        $data = array_merge($data, $this->storeUploads($request));
+        $uploadedPaths = $this->storeUploads($request);
+        $data = array_merge($data, $uploadedPaths);
 
-        $formulir = Formulir::create($data);
+        try {
+            $formulir = Formulir::create($data);
+        } catch (QueryException $exception) {
+            $this->deleteUploadedFiles($uploadedPaths);
+
+            if (Formulir::where('nisn', $pengguna->id_pengguna)->exists()) {
+                return redirect()->route('admin.pengguna.formulir.create', $pengguna)
+                    ->with('warning', 'Formulir user tersebut sudah tersimpan dari permintaan sebelumnya.');
+            }
+
+            throw $exception;
+        }
 
         return redirect()->route('formulir.periksa', $formulir)->with('success', 'Data formulir user berhasil disimpan. Periksa kembali sebelum mengirim final.');
     }
@@ -292,24 +329,31 @@ class FormulirController extends Controller
     private function storeUploads(Request $request): array
     {
         $paths = [];
-        $dir = public_path('uploads/dokumen');
 
-        if (! is_dir($dir)) {
-            mkdir($dir, 0775, true);
-        }
-
-        foreach (['surat_keterangan_lulus', 'kartu_keluarga', 'foto_selfie'] as $field) {
+        foreach (Formulir::DOCUMENT_FIELDS as $field) {
             if (! $request->hasFile($field)) {
                 continue;
             }
 
             $file = $request->file($field);
-            $name = $request->session()->get('pengguna_id').'_'.time().'_'.$field.'.'.$file->extension();
-            $file->move($dir, $name);
-            $paths[$field] = 'uploads/dokumen/'.$name;
+            $name = Str::uuid().'_'.$field.'.'.$file->extension();
+            $path = $file->storeAs('dokumen', $name, 'local');
+
+            if (! $path) {
+                throw new RuntimeException("Berkas {$field} gagal disimpan.");
+            }
+
+            $paths[$field] = $path;
         }
 
         return $paths;
+    }
+
+    private function deleteUploadedFiles(array $paths): void
+    {
+        if ($paths !== []) {
+            Storage::disk('local')->delete(array_values($paths));
+        }
     }
 
     private function formReferences(): array

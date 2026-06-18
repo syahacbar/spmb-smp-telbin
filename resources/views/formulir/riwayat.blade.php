@@ -119,7 +119,11 @@
                                     'kartu_keluarga' => 'Kartu Keluarga',
                                     'foto_selfie' => 'Pas Foto',
                                 ] as $field => $label)
-                                    <a href="{{ asset($formulir->{$field}) }}" target="_blank">{{ $label }}</a>
+                                    @if($formulir->berkasTersedia($field))
+                                        <a href="{{ $formulir->berkasUrl($field) }}" target="_blank">{{ $label }}</a>
+                                    @else
+                                        <span class="text-muted small">{{ $label }} belum tersedia</span>
+                                    @endif
                                 @endforeach
                             </div>
                         </section>

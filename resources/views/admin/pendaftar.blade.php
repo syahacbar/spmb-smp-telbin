@@ -83,8 +83,8 @@
                             <td>{{ $formulir->program_keahlian_1 }}</td>
                             <td>{{ $formulir->program_keahlian_2 }}</td>
                             <td>
-                                <a href="{{ asset($formulir->foto_selfie) }}" target="_blank">
-                                    <img src="{{ asset($formulir->foto_selfie) }}" class="doc-thumb" alt="Foto {{ $formulir->nama }}">
+                                <a href="{{ $formulir->berkasUrl('foto_selfie') }}" target="_blank">
+                                    <img src="{{ $formulir->berkasUrl('foto_selfie') }}" class="doc-thumb" alt="Foto {{ $formulir->nama }}">
                                 </a>
                             </td>
                             @php($tanggalKirim = $formulir->submitted_at ?: $formulir->created_at)

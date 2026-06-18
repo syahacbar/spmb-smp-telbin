@@ -3,9 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Formulir extends Model
 {
+    public const DOCUMENT_FIELDS = [
+        'surat_keterangan_lulus',
+        'kartu_keluarga',
+        'foto_selfie',
+    ];
+
     protected $table = 'tb_formulir';
 
     public const UPDATED_AT = null;
@@ -51,8 +59,39 @@ class Formulir extends Model
         'alamat_ortu_sama_dengan_siswa' => 'boolean',
     ];
 
+    public function pengguna(): BelongsTo
+    {
+        return $this->belongsTo(Pengguna::class, 'nisn', 'id_pengguna');
+    }
+
     public function isSubmitted(): bool
     {
         return $this->status === 'submitted';
+    }
+
+    public function berkasUrl(string $field): string
+    {
+        abort_unless(in_array($field, self::DOCUMENT_FIELDS, true), 404);
+
+        return route('formulir.berkas.show', [$this, $field]);
+    }
+
+    public function berkasTersedia(string $field): bool
+    {
+        if (! in_array($field, self::DOCUMENT_FIELDS, true)) {
+            return false;
+        }
+
+        $path = $this->{$field};
+
+        if (! $path) {
+            return false;
+        }
+
+        if (str_starts_with($path, 'dokumen/')) {
+            return Storage::disk('local')->exists($path);
+        }
+
+        return str_starts_with($path, 'uploads/dokumen/') && is_file(public_path($path));
     }
 }

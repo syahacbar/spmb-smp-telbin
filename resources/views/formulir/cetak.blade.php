@@ -319,7 +319,7 @@
         </div>
         <div class="col-3 text-center">
             <div class="section-label">Pas Foto</div>
-            <img src="{{ asset($formulir->foto_selfie) }}" class="photo-box" alt="Foto peserta">
+            <img src="{{ $formulir->berkasUrl('foto_selfie') }}" class="photo-box" alt="Foto peserta">
         </div>
     </div>
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'SPMB SMKN 1 Bintuni' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    @if(request()->routeIs('admin.pengguna', 'admin.pendaftar'))
+    @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
         <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
     @endif
     <style>
@@ -1038,12 +1038,13 @@
             @isset($pengguna)
                 @php
                     $namaPengguna = $pengguna->nama_pengguna ?: $pengguna->id_pengguna;
-                    $fotoPengguna = $pengguna->formulirTerbaru?->foto_selfie;
+                    $formulirPengguna = $pengguna->formulirTerbaru;
+                    $fotoPengguna = $formulirPengguna?->foto_selfie;
                 @endphp
                 <div class="topbar-user">
                     <span class="topbar-avatar">
                         @if($fotoPengguna)
-                            <img src="{{ asset($fotoPengguna) }}" class="topbar-avatar-photo" alt="Foto {{ $namaPengguna }}">
+                            <img src="{{ $formulirPengguna->berkasUrl('foto_selfie') }}" class="topbar-avatar-photo" alt="Foto {{ $namaPengguna }}">
                         @else
                             <span class="topbar-avatar-icon" aria-hidden="true"></span>
                         @endif
@@ -1110,7 +1111,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@if(request()->routeIs('admin.pengguna', 'admin.pendaftar'))
+@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>

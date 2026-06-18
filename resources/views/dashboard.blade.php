@@ -108,7 +108,6 @@
                             <div>
                                 <div class="text-muted small text-uppercase fw-bold">Peminatan Program Keahlian</div>
                                 <h4 class="fw-bold mb-1">Jumlah pendaftar berdasarkan urutan minat</h4>
-                                <div class="text-muted small">Minat A dihitung terhadap kuota program. Minat B ditampilkan sebagai data pertimbangan pemetaan jurusan.</div>
                             </div>
                             <a href="{{ route('admin.pendaftar') }}" class="btn btn-outline-primary align-self-lg-start">Lihat Data Registrasi</a>
                         </div>
@@ -116,24 +115,17 @@
                         <div class="program-interest-columns">
                             <section class="program-interest-panel">
                                 <div class="program-interest-title">Program Keahlian Minat A</div>
-                                <div class="program-interest-subtitle">Minat A dengan persentase keterisian kuota.</div>
+                                <div class="program-interest-subtitle"></div>
                                 <div class="program-interest-list">
                                     @foreach($programCounts as $program)
                                         @php($theme = $programThemes[$program['nama']] ?? ['class' => 'program-default', 'icon' => 'SP'])
                                         <div class="program-stat-item {{ $theme['class'] }}">
-                                            <div class="d-flex justify-content-between gap-3 mb-2">
+                                            <div class="d-flex justify-content-between gap-3">
                                                 <div class="d-flex align-items-start gap-2">
                                                     <div class="program-stat-visual">{{ $theme['icon'] }}</div>
                                                     <div class="program-stat-name">{{ $program['nama'] }}</div>
                                                 </div>
                                                 <div class="program-stat-total">{{ $program['minat_a'] }}</div>
-                                            </div>
-                                            <div class="program-quota-line">
-                                                <span>Kuota {{ $program['kuota'] }} siswa</span>
-                                                <strong>{{ $program['persen'] }}%</strong>
-                                            </div>
-                                            <div class="program-stat-track">
-                                                <div class="program-stat-bar" style="width: {{ $program['persen'] }}%"></div>
                                             </div>
                                         </div>
                                     @endforeach
@@ -142,7 +134,7 @@
 
                             <section class="program-interest-panel">
                                 <div class="program-interest-title">Program Keahlian Minat B</div>
-                                <div class="program-interest-subtitle">Minat B tanpa persentase kuota.</div>
+                                <div class="program-interest-subtitle"></div>
                                 <div class="program-interest-list">
                                     @foreach($programCounts as $program)
                                         @php($theme = $programThemes[$program['nama']] ?? ['class' => 'program-default', 'icon' => 'SP'])

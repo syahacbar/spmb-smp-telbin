@@ -45,6 +45,11 @@ class Pengguna extends Model
 
     public function formulirTerbaru(): HasOne
     {
-        return $this->hasOne(Formulir::class, 'nisn', 'id_pengguna')->latestOfMany('id');
+        return $this->formulir();
+    }
+
+    public function formulir(): HasOne
+    {
+        return $this->hasOne(Formulir::class, 'nisn', 'id_pengguna');
     }
 }

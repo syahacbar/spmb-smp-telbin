@@ -121,7 +121,8 @@
                             @foreach($documents as $field => $document)
                                 @php
                                     $path = $formulir->{$field};
-                                    $fileExists = $path && file_exists(public_path($path));
+                                    $fileExists = $formulir->berkasTersedia($field);
+                                    $fileUrl = $formulir->berkasUrl($field);
                                     $isImage = $document['preview'] === 'image' && $fileExists;
                                     $isPdf = $document['preview'] === 'pdf' && $fileExists;
                                 @endphp
@@ -136,12 +137,12 @@
                                         </div>
 
                                         @if($isImage)
-                                            <a href="{{ asset($path) }}" target="_blank" class="d-block mb-2">
-                                                <img src="{{ asset($path) }}" class="img-fluid border rounded" alt="{{ $document['label'] }}">
+                                            <a href="{{ $fileUrl }}" target="_blank" class="d-block mb-2">
+                                                <img src="{{ $fileUrl }}" class="img-fluid border rounded" alt="{{ $document['label'] }}">
                                             </a>
                                         @elseif($isPdf)
                                             <div class="ratio ratio-4x3 mb-2">
-                                                <iframe src="{{ asset($path) }}#toolbar=0&navpanes=0&scrollbar=0" class="border rounded bg-white" title="Preview {{ $document['label'] }}"></iframe>
+                                                <iframe src="{{ $fileUrl }}#toolbar=0&navpanes=0&scrollbar=0" class="border rounded bg-white" title="Preview {{ $document['label'] }}"></iframe>
                                             </div>
                                             <div class="document-hint mb-2">Preview halaman pertama berkas PDF.</div>
                                         @else
@@ -149,7 +150,7 @@
                                         @endif
 
                                         @if($fileExists)
-                                            <a href="{{ asset($path) }}" target="_blank" class="btn btn-outline-primary btn-sm w-100">Buka Berkas</a>
+                                            <a href="{{ $fileUrl }}" target="_blank" class="btn btn-outline-primary btn-sm w-100">Buka Berkas</a>
                                         @endif
                                     </div>
                                 </div>
@@ -184,10 +185,10 @@
                             @foreach($documents as $field => $document)
                                 @php
                                     $path = $formulir->{$field};
-                                    $fileExists = $path && file_exists(public_path($path));
+                                    $fileExists = $formulir->berkasTersedia($field);
                                 @endphp
                                 @if($fileExists)
-                                    <a href="{{ asset($path) }}" target="_blank">{{ $document['label'] }}</a>
+                                    <a href="{{ $formulir->berkasUrl($field) }}" target="_blank">{{ $document['label'] }}</a>
                                 @else
                                     <span class="text-muted small">{{ $document['label'] }} belum tersedia</span>
                                 @endif

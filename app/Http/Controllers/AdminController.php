@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\CalonSiswa;
 use App\Models\Formulir;
 use App\Models\KontakPanitia;
-use App\Models\Pengguna;
 use App\Models\PengaturanSpmb;
+use App\Models\Pengguna;
 use App\Models\ProgramKeahlian;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,11 +49,15 @@ class AdminController extends Controller
                 ->groupBy('tahun_pendaftaran')
                 ->orderByDesc('tahun_pendaftaran')
                 ->get(),
-            'recentWhitelist' => CalonSiswa::query()
+            'whitelistYears' => CalonSiswa::query()
+                ->select('tahun_pendaftaran')
+                ->distinct()
+                ->orderByDesc('tahun_pendaftaran')
+                ->pluck('tahun_pendaftaran'),
+            'whitelist' => CalonSiswa::query()
                 ->orderByDesc('tahun_pendaftaran')
                 ->orderByDesc('is_active')
                 ->orderBy('nama')
-                ->limit(8)
                 ->get(),
         ]);
     }
@@ -158,7 +162,6 @@ class AdminController extends Controller
         $data = $request->validate([
             'tahun_pendaftaran' => ['required', 'digits:4'],
             'calon_siswa_csv' => ['required', 'file', 'mimes:csv,txt', 'max:4096'],
-            'deactivate_other_years' => ['nullable', 'boolean'],
             'deactivate_missing_in_year' => ['nullable', 'boolean'],
         ], [
             'calon_siswa_csv.required' => 'File CSV whitelist calon siswa wajib dipilih.',
@@ -177,12 +180,6 @@ class AdminController extends Controller
         $importedNisn = $validRows->pluck('nisn')->all();
 
         DB::transaction(function () use ($tahun, $validRows, $importedNisn, $request): void {
-            if ($request->boolean('deactivate_other_years')) {
-                CalonSiswa::query()
-                    ->where('tahun_pendaftaran', '!=', $tahun)
-                    ->update(['is_active' => false]);
-            }
-
             if ($request->boolean('deactivate_missing_in_year')) {
                 CalonSiswa::query()
                     ->where('tahun_pendaftaran', $tahun)
@@ -216,15 +213,38 @@ class AdminController extends Controller
 
     public function deactivateCalonSiswaWhitelist(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'tahun_pendaftaran' => ['required', 'digits:4'],
-        ]);
+        $tahun = $this->validatedWhitelistYear($request);
 
         $updated = CalonSiswa::query()
-            ->where('tahun_pendaftaran', $data['tahun_pendaftaran'])
+            ->where('tahun_pendaftaran', $tahun)
+            ->where('is_active', true)
             ->update(['is_active' => false]);
 
-        return back()->with('success', "Whitelist tahun {$data['tahun_pendaftaran']} berhasil dinonaktifkan ({$updated} data).");
+        return back()->with('success', "Whitelist tahun {$tahun} berhasil dinonaktifkan ({$updated} data).");
+    }
+
+    public function activateCalonSiswaWhitelist(Request $request): RedirectResponse
+    {
+        $tahun = $this->validatedWhitelistYear($request);
+
+        $updated = CalonSiswa::query()
+            ->where('tahun_pendaftaran', $tahun)
+            ->where('is_active', false)
+            ->update(['is_active' => true]);
+
+        return back()->with('success', "Whitelist tahun {$tahun} berhasil diaktifkan ({$updated} data).");
+    }
+
+    private function validatedWhitelistYear(Request $request): string
+    {
+        $data = $request->validate([
+            'tahun_pendaftaran' => ['required', 'digits:4', 'exists:tb_calon_siswa,tahun_pendaftaran'],
+        ], [
+            'tahun_pendaftaran.required' => 'Pilih tahun pendaftaran terlebih dahulu.',
+            'tahun_pendaftaran.exists' => 'Tahun pendaftaran yang dipilih tidak ditemukan.',
+        ]);
+
+        return $data['tahun_pendaftaran'];
     }
 
     public function storeKontakPanitia(Request $request): RedirectResponse
@@ -369,6 +389,13 @@ class AdminController extends Controller
     public function destroyPengguna(Pengguna $pengguna): RedirectResponse
     {
         $this->guardUserAccount($pengguna);
+
+        if ($pengguna->formulir()->exists()) {
+            return back()->with(
+                'warning',
+                'Akun tidak dapat dihapus karena sudah memiliki formulir pendaftaran. Nonaktifkan akun jika akses siswa perlu dihentikan.',
+            );
+        }
 
         $pengguna->delete();
 

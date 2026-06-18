@@ -5,6 +5,45 @@
             grid-template-columns: minmax(0, 1fr);
             gap: 1rem;
         }
+        .settings-tabs {
+            gap: .35rem;
+            border-bottom: 1px solid #d9e2ef;
+        }
+        .settings-tabs .nav-link {
+            border: 0;
+            border-bottom: 3px solid transparent;
+            border-radius: .5rem .5rem 0 0;
+            color: #667085;
+            font-weight: 800;
+            padding: .85rem 1rem;
+        }
+        .settings-tabs .nav-link:hover {
+            border-bottom-color: #fecaca;
+            color: #991b1b;
+        }
+        .settings-tabs .nav-link.active {
+            border-bottom-color: var(--spmb-red);
+            background: #fff;
+            color: var(--spmb-red);
+        }
+        .settings-tab-content {
+            padding-top: 1rem;
+        }
+        .bulk-action-panel {
+            border: 1px solid #fed7aa;
+            border-radius: .65rem;
+            background: #fff7ed;
+            padding: 1rem;
+        }
+        .whitelist-table-wrap .dt-search,
+        .whitelist-table-wrap .dt-length {
+            margin-bottom: .75rem;
+        }
+        .whitelist-table-wrap,
+        .whitelist-table-wrap .dt-container,
+        .whitelist-table-wrap table {
+            width: 100% !important;
+        }
         .settings-section-title {
             color: #172033;
             font-size: 1rem;
@@ -77,8 +116,23 @@
         </div>
     </div>
 
-    <div class="settings-grid">
-        <section class="card shadow-sm">
+    <ul class="nav nav-tabs settings-tabs" id="settingsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="kartu-tab" data-bs-toggle="tab" data-bs-target="#kartu-pane" type="button" role="tab" aria-controls="kartu-pane" aria-selected="true">Kartu & Identitas</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="whitelist-tab" data-bs-toggle="tab" data-bs-target="#whitelist-pane" type="button" role="tab" aria-controls="whitelist-pane" aria-selected="false">Whitelist Calon Siswa</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="program-tab" data-bs-toggle="tab" data-bs-target="#program-pane" type="button" role="tab" aria-controls="program-pane" aria-selected="false">Program Keahlian</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="kontak-tab" data-bs-toggle="tab" data-bs-target="#kontak-pane" type="button" role="tab" aria-controls="kontak-pane" aria-selected="false">Kontak Panitia</button>
+        </li>
+    </ul>
+
+    <div class="tab-content settings-tab-content" id="settingsTabContent">
+        <section class="tab-pane fade show active card shadow-sm" id="kartu-pane" role="tabpanel" aria-labelledby="kartu-tab" tabindex="0">
             <div class="card-header">
                 <h4 class="settings-section-title">Kartu Pendaftaran & Kepala Sekolah</h4>
                 <p class="settings-section-subtitle">Data ini dipakai untuk nomor kartu, jadwal, catatan, dan tanda tangan pada cetak PDF/kartu.</p>
@@ -143,7 +197,7 @@
             </div>
         </section>
 
-        <section class="card shadow-sm">
+        <section class="tab-pane fade card shadow-sm" id="whitelist-pane" role="tabpanel" aria-labelledby="whitelist-tab" tabindex="0">
             <div class="card-header">
                 <h4 class="settings-section-title">Whitelist Calon Siswa</h4>
                 <p class="settings-section-subtitle">Import data NISN yang diperbolehkan membuat akun. Data tahun lama bisa dinonaktifkan tanpa dihapus.</p>
@@ -164,57 +218,62 @@
                     </div>
                     <div class="col-12">
                         <div class="small text-muted mb-2">Format kolom CSV: <strong>nisn,nama,tempat_lahir,tanggal_lahir,asal_sekolah</strong>.</div>
-                        <div class="row g-2">
-                            <div class="col-lg-6">
-                                <div class="form-check">
-                                    <input type="checkbox" name="deactivate_other_years" value="1" class="form-check-input" id="nonaktifTahunLain" checked>
-                                    <label class="form-check-label" for="nonaktifTahunLain">Nonaktifkan whitelist tahun lain setelah import</label>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="form-check">
-                                    <input type="checkbox" name="deactivate_missing_in_year" value="1" class="form-check-input" id="nonaktifTidakAdaCsv" checked>
-                                    <label class="form-check-label" for="nonaktifTidakAdaCsv">Nonaktifkan NISN tahun ini yang tidak ada di CSV baru</label>
-                                </div>
-                            </div>
+                        <div class="form-check">
+                            <input type="checkbox" name="deactivate_missing_in_year" value="1" class="form-check-input" id="nonaktifTidakAdaCsv" checked>
+                            <label class="form-check-label" for="nonaktifTidakAdaCsv">Nonaktifkan NISN pada tahun yang sama jika tidak ada di CSV baru</label>
+                            <div class="form-text">Penonaktifan tahun pendaftaran lain dilakukan melalui Aksi Massal di bawah.</div>
                         </div>
                     </div>
                 </form>
 
                 <hr>
 
-                <div class="whitelist-summary mb-3">
-                    @forelse($whitelistStats as $stat)
-                        <div class="whitelist-summary-item">
-                            <span>Tahun {{ $stat->tahun_pendaftaran }}</span>
-                            <strong>{{ number_format((int) $stat->active_total) }}</strong>
-                            <div class="small text-muted">aktif dari {{ number_format((int) $stat->total) }} data</div>
-                            <form method="post" action="{{ route('admin.pengaturan.whitelist.deactivate') }}" class="mt-2">
-                                @csrf
-                                <input type="hidden" name="tahun_pendaftaran" value="{{ $stat->tahun_pendaftaran }}">
-                                <button class="btn btn-outline-danger btn-sm" data-confirm="Nonaktifkan semua whitelist calon siswa tahun {{ $stat->tahun_pendaftaran }}?">Nonaktifkan Tahun Ini</button>
-                            </form>
+                <div class="bulk-action-panel mb-4">
+                    <form method="post" action="{{ route('admin.pengaturan.whitelist.deactivate') }}" class="row g-3 align-items-end">
+                        @csrf
+                        <div class="col-lg-7">
+                            <label class="form-label fw-bold">Aksi Massal Berdasarkan Tahun</label>
+                            <select name="tahun_pendaftaran" class="form-select" required>
+                                <option value="">Pilih tahun pendaftaran</option>
+                                @foreach($whitelistYears as $year)
+                                    @php($stat = $whitelistStats->firstWhere('tahun_pendaftaran', $year))
+                                    <option value="{{ $year }}">
+                                        {{ $year }} — {{ number_format((int) ($stat?->active_total ?? 0)) }} aktif dari {{ number_format((int) ($stat?->total ?? 0)) }} data
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Pilih satu tahun, kemudian aktifkan atau nonaktifkan seluruh calon siswa pada tahun tersebut.</div>
                         </div>
-                    @empty
-                        <div class="text-muted">Belum ada data whitelist calon siswa.</div>
-                    @endforelse
+                        <div class="col-sm-6 col-lg-2 d-grid">
+                            <button
+                                class="btn btn-outline-success"
+                                formaction="{{ route('admin.pengaturan.whitelist.activate') }}"
+                                data-confirm="Aktifkan seluruh calon siswa pada tahun yang dipilih?"
+                            >Aktifkan</button>
+                        </div>
+                        <div class="col-sm-6 col-lg-3 d-grid">
+                            <button class="btn btn-outline-danger" data-confirm="Nonaktifkan seluruh calon siswa aktif pada tahun yang dipilih?">Nonaktifkan</button>
+                        </div>
+                    </form>
                 </div>
 
-                @if($recentWhitelist->isNotEmpty())
+                <div class="whitelist-table-wrap">
                     <div class="table-responsive">
-                        <table class="table table-bordered align-middle settings-table mb-0">
+                        <table class="table table-bordered table-hover align-middle settings-table mb-0 w-100" id="whitelistTable" style="width: 100%">
                             <thead>
                             <tr>
+                                <th>No</th>
                                 <th>NISN</th>
                                 <th class="wide">Nama</th>
                                 <th>Asal Sekolah</th>
-                                <th>Tahun</th>
+                                <th>Tahun Pendaftaran</th>
                                 <th>Status</th>
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach($recentWhitelist as $calonSiswa)
+                            @foreach($whitelist as $calonSiswa)
                                 <tr>
+                                    <td>{{ $loop->iteration }}</td>
                                     <td>{{ $calonSiswa->nisn }}</td>
                                     <td>{{ $calonSiswa->nama }}</td>
                                     <td>{{ $calonSiswa->asal_sekolah }}</td>
@@ -231,11 +290,11 @@
                             </tbody>
                         </table>
                     </div>
-                @endif
+                </div>
             </div>
         </section>
 
-        <section class="card shadow-sm">
+        <section class="tab-pane fade card shadow-sm" id="program-pane" role="tabpanel" aria-labelledby="program-tab" tabindex="0">
             <div class="card-header">
                 <h4 class="settings-section-title">Kuota Program Keahlian</h4>
                 <p class="settings-section-subtitle">Kuota aktif dipakai di dashboard admin dan pilihan program pada formulir registrasi.</p>
@@ -327,7 +386,7 @@
             </div>
         </section>
 
-        <section class="card shadow-sm">
+        <section class="tab-pane fade card shadow-sm" id="kontak-pane" role="tabpanel" aria-labelledby="kontak-tab" tabindex="0">
             <div class="card-header">
                 <h4 class="settings-section-title">Kontak Panitia</h4>
                 <p class="settings-section-subtitle">Kontak utama dipakai untuk tombol WhatsApp di landing page dan halaman daftar.</p>
@@ -407,4 +466,76 @@
             </div>
         </section>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabStorageKey = 'spmb-settings-active-tab';
+            const storedTab = window.localStorage.getItem(tabStorageKey);
+            const storedTabButton = storedTab ? document.querySelector(`[data-bs-target="${storedTab}"]`) : null;
+
+            if (storedTabButton) {
+                bootstrap.Tab.getOrCreateInstance(storedTabButton).show();
+            }
+
+            document.querySelectorAll('#settingsTabs [data-bs-toggle="tab"]').forEach(function (tabButton) {
+                tabButton.addEventListener('shown.bs.tab', function (event) {
+                    window.localStorage.setItem(tabStorageKey, event.target.dataset.bsTarget);
+                });
+            });
+
+            document.querySelectorAll('#settingsTabContent form').forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    const pane = form.closest('.tab-pane');
+
+                    if (pane) {
+                        window.localStorage.setItem(tabStorageKey, `#${pane.id}`);
+                    }
+                });
+            });
+
+            const tableElement = document.getElementById('whitelistTable');
+
+            if (! tableElement || ! window.DataTable) {
+                return;
+            }
+
+            const table = new DataTable(tableElement, {
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                order: [[4, 'desc'], [2, 'asc']],
+                columnDefs: [
+                    { orderable: false, searchable: false, targets: 0 },
+                    { type: 'num', targets: [0, 4] },
+                ],
+                language: {
+                    search: 'Cari calon siswa:',
+                    lengthMenu: 'Tampilkan _MENU_ data',
+                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ calon siswa',
+                    infoEmpty: 'Tidak ada calon siswa yang ditampilkan',
+                    infoFiltered: '(difilter dari _MAX_ total calon siswa)',
+                    zeroRecords: 'Data calon siswa tidak ditemukan',
+                    emptyTable: 'Belum ada data whitelist calon siswa.',
+                    paginate: {
+                        first: 'Awal',
+                        last: 'Akhir',
+                        next: 'Berikutnya',
+                        previous: 'Sebelumnya',
+                    },
+                },
+            });
+
+            const updateRowNumbers = function () {
+                table.rows({ page: 'current' }).nodes().each(function (row, index) {
+                    row.cells[0].textContent = table.page.info().start + index + 1;
+                });
+            };
+
+            table.on('draw', updateRowNumbers);
+            updateRowNumbers();
+
+            document.getElementById('whitelist-tab')?.addEventListener('shown.bs.tab', function () {
+                table.columns.adjust();
+            });
+        });
+    </script>
 </x-layouts.app>
