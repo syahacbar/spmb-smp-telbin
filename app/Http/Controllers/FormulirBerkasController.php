@@ -18,7 +18,7 @@ class FormulirBerkasController extends Controller
         $pengguna = $request->attributes->get('pengguna');
 
         abort_unless(
-            $pengguna->level === 'Administrator' || $formulir->nisn === $pengguna->id_pengguna,
+            $pengguna->isAdminDinas() || $formulir->nisn === $pengguna->id_pengguna,
             403,
         );
 
@@ -47,7 +47,7 @@ class FormulirBerkasController extends Controller
         $pengguna = $request->attributes->get('pengguna');
 
         abort_unless(
-            $pengguna->level === 'Administrator' || $formulir->nisn === $pengguna->id_pengguna,
+            $pengguna->isAdminDinas() || $formulir->nisn === $pengguna->id_pengguna,
             403,
         );
 

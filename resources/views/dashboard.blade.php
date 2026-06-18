@@ -28,22 +28,12 @@
     <div class="page-title">
         <div>
             <h3 class="fw-bold">Dasbor</h3>
-            <div class="text-muted">Ringkasan aktivitas SPMB SMK Negeri 1 Bintuni</div>
+            <div class="text-muted">Ringkasan aktivitas SPMB SMP Kabupaten Teluk Bintuni</div>
         </div>
     </div>
 
     <div class="row g-3">
-        @if($pengguna->level === 'Administrator')
-            @php
-                $programThemes = [
-                    'Akuntansi dan Keuangan Lembaga (AKL)' => ['class' => 'program-akl', 'icon' => 'AKL'],
-                    'Teknik Kendaraan Ringan (TKR)' => ['class' => 'program-tkr', 'icon' => 'TKR'],
-                    'Teknik Komputer dan Jaringan (TKJ)' => ['class' => 'program-tkj', 'icon' => 'TKJ'],
-                    'Desain Komunikasi Visual (DKV)' => ['class' => 'program-dkv', 'icon' => 'DKV'],
-                    'Teknik Sepeda Motor (TSM)' => ['class' => 'program-tsm', 'icon' => 'TSM'],
-                ];
-            @endphp
-
+        @if($pengguna->isAdminDinas())
             <div class="col-md-6 col-xl-3">
                 <div class="card shadow-sm stat-card admin-stat-card stat-final">
                     <div class="card-body">
@@ -101,66 +91,13 @@
                 </div>
             </div>
 
-            <div class="col-12">
-                <div class="card shadow-sm program-overview">
-                    <div class="card-body p-4">
-                        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2 mb-4">
-                            <div>
-                                <div class="text-muted small text-uppercase fw-bold">Peminatan Program Keahlian</div>
-                                <h4 class="fw-bold mb-1">Jumlah pendaftar berdasarkan urutan minat</h4>
-                            </div>
-                            <a href="{{ route('admin.pendaftar') }}" class="btn btn-outline-primary align-self-lg-start">Lihat Data Registrasi</a>
-                        </div>
-
-                        <div class="program-interest-columns">
-                            <section class="program-interest-panel">
-                                <div class="program-interest-title">Program Keahlian Minat A</div>
-                                <div class="program-interest-subtitle"></div>
-                                <div class="program-interest-list">
-                                    @foreach($programCounts as $program)
-                                        @php($theme = $programThemes[$program['nama']] ?? ['class' => 'program-default', 'icon' => 'SP'])
-                                        <div class="program-stat-item {{ $theme['class'] }}">
-                                            <div class="d-flex justify-content-between gap-3">
-                                                <div class="d-flex align-items-start gap-2">
-                                                    <div class="program-stat-visual">{{ $theme['icon'] }}</div>
-                                                    <div class="program-stat-name">{{ $program['nama'] }}</div>
-                                                </div>
-                                                <div class="program-stat-total">{{ $program['minat_a'] }}</div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </section>
-
-                            <section class="program-interest-panel">
-                                <div class="program-interest-title">Program Keahlian Minat B</div>
-                                <div class="program-interest-subtitle"></div>
-                                <div class="program-interest-list">
-                                    @foreach($programCounts as $program)
-                                        @php($theme = $programThemes[$program['nama']] ?? ['class' => 'program-default', 'icon' => 'SP'])
-                                        <div class="program-stat-item {{ $theme['class'] }}">
-                                            <div class="d-flex justify-content-between gap-3">
-                                                <div class="d-flex align-items-start gap-2">
-                                                    <div class="program-stat-visual">{{ $theme['icon'] }}</div>
-                                                    <div class="program-stat-name">{{ $program['nama'] }}</div>
-                                                </div>
-                                                <div class="program-stat-total">{{ $program['minat_b'] }}</div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </section>
-                        </div>
-                    </div>
-                </div>
-            </div>
         @else
             <div class="col-12">
                 <div class="card shadow-sm welcome-card">
                     <div class="card-body p-4">
                         <div class="text-muted small text-uppercase fw-bold mb-1">Selamat Datang</div>
                         <h4 class="fw-bold mb-1">{{ $pengguna->nama_pengguna ?: $pengguna->id_pengguna }}</h4>
-                        <div class="text-muted">di Dasbor SPMB SMK Negeri 1 Bintuni. Silakan pantau status formulir, lengkapi data pendaftaran, dan cetak kartu pendaftaran setelah formulir dikirim final.</div>
+                        <div class="text-muted">di Portal SPMB SMP Kabupaten Teluk Bintuni. Silakan pantau status dan lanjutkan pendaftaran setelah akun diverifikasi.</div>
                     </div>
                 </div>
             </div>
@@ -201,7 +138,7 @@
                             <h6 class="fw-bold mb-3">Alur SPMB:</h6>
                             <ol class="mb-0 ps-3">
                                 <li class="mb-2">Login menggunakan akun yang telah diverifikasi oleh panitia.</li>
-                                <li class="mb-2">Isi biodata calon siswa, data orang tua/wali, dan minat program keahlian.</li>
+                                <li class="mb-2">Isi biodata calon murid dan data orang tua/wali secara lengkap.</li>
                                 <li class="mb-2">Unggah seluruh dokumen persyaratan sesuai ketentuan.</li>
                                 <li class="mb-2">Periksa kembali data pendaftaran sebelum dikirim final.</li>
                                 <li>Cetak kartu pendaftaran setelah formulir berhasil dikirim final.</li>
@@ -212,7 +149,7 @@
                             <h6 class="fw-bold mb-3">Persiapan File Dokumen yang Telah Dipindai (Scan):</h6>
                             <ol class="mb-0 ps-3">
                                 <li class="mb-2">
-                                    <strong>Ijazah SMP/Sederajat atau Surat Keterangan Lulus.</strong>
+                                    <strong>Ijazah SD/Sederajat atau Surat Keterangan Lulus.</strong>
                                     Format file <strong>*.pdf</strong> berukuran maksimal <strong>1 MB</strong> serta tulisan dapat dilihat/dibaca dengan jelas.
                                 </li>
                                 <li class="mb-2">
@@ -221,7 +158,7 @@
                                 </li>
                                 <li>
                                     <strong>Pas Foto.</strong>
-                                    Ukuran/dimensi <strong>3x4</strong>, proporsi wajah <strong>60%</strong>, menggunakan seragam SMA dan berdasi serta menggunakan latar belakang berwarna biru.
+                                    Ukuran/dimensi <strong>3x4</strong>, wajah terlihat jelas, dan menggunakan pakaian yang rapi.
                                     Format file <strong>*.jpg</strong>, <strong>*.jpeg</strong>, atau <strong>*.png</strong> berukuran maksimal <strong>1 MB</strong>.
                                 </li>
                             </ol>

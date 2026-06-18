@@ -7,14 +7,11 @@ use App\Models\Formulir;
 use App\Models\KontakPanitia;
 use App\Models\PengaturanSpmb;
 use App\Models\Pengguna;
-use App\Models\ProgramKeahlian;
+use App\Services\CalonSiswaImportReader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -33,9 +30,16 @@ class AdminController extends Controller
 
     public function pengguna(Request $request): View
     {
+        $users = Pengguna::with(['calonSiswa', 'registrasiAkun'])
+            ->whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))
+            ->orderBy('id_pengguna')
+            ->get();
+
         return view('admin.pengguna', [
             'pengguna' => $request->attributes->get('pengguna'),
-            'users' => Pengguna::with('calonSiswa')->where('level', 'User')->orderBy('id_pengguna')->get(),
+            'users' => $users,
+            'kecamatanNames' => DB::table('ref_kecamatan')->pluck('nama', 'id'),
+            'kelurahanNames' => DB::table('ref_kelurahan')->pluck('nama', 'id'),
         ]);
     }
 
@@ -44,7 +48,6 @@ class AdminController extends Controller
         return view('admin.pengaturan', [
             'pengguna' => $request->attributes->get('pengguna'),
             'settings' => PengaturanSpmb::allSettings(),
-            'programs' => ProgramKeahlian::query()->ordered()->get(),
             'contacts' => KontakPanitia::query()->orderByDesc('is_primary')->orderBy('id')->get(),
             'whitelistStats' => CalonSiswa::query()
                 ->select('tahun_pendaftaran')
@@ -121,79 +124,33 @@ class AdminController extends Controller
         return $this->signatureResponse();
     }
 
-    public function updateProgramKeahlian(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'programs' => ['required', 'array'],
-            'programs.*.nama' => ['required', 'string', 'max:100'],
-            'programs.*.singkatan' => ['nullable', 'string', 'max:20'],
-            'programs.*.kuota' => ['required', 'integer', 'min:0', 'max:10000'],
-            'programs.*.aliases' => ['nullable', 'string', 'max:500'],
-            'programs.*.urutan' => ['required', 'integer', 'min:0', 'max:10000'],
-            'programs.*.is_active' => ['nullable', 'boolean'],
-        ]);
 
-        foreach ($data['programs'] as $id => $programData) {
-            $program = ProgramKeahlian::findOrFail($id);
-
-            $program->update([
-                'nama' => $programData['nama'],
-                'singkatan' => $programData['singkatan'] ?? null,
-                'kuota' => $programData['kuota'],
-                'aliases' => $this->aliasesFromInput($programData['aliases'] ?? ''),
-                'urutan' => $programData['urutan'],
-                'is_active' => (bool) ($programData['is_active'] ?? false),
-            ]);
-        }
-
-        return back()->with('success', 'Kuota program keahlian berhasil diperbarui.');
-    }
-
-    public function storeProgramKeahlian(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'nama' => ['required', 'string', 'max:100', 'unique:tb_program_keahlian,nama'],
-            'singkatan' => ['nullable', 'string', 'max:20'],
-            'kuota' => ['required', 'integer', 'min:0', 'max:10000'],
-            'aliases' => ['nullable', 'string', 'max:500'],
-            'urutan' => ['required', 'integer', 'min:0', 'max:10000'],
-        ]);
-
-        ProgramKeahlian::create([
-            'nama' => $data['nama'],
-            'singkatan' => $data['singkatan'] ?? null,
-            'kuota' => $data['kuota'],
-            'aliases' => $this->aliasesFromInput($data['aliases'] ?? ''),
-            'urutan' => $data['urutan'],
-            'is_active' => true,
-        ]);
-
-        return back()->with('success', 'Program keahlian berhasil ditambahkan.');
-    }
-
-    public function destroyProgramKeahlian(ProgramKeahlian $program): RedirectResponse
-    {
-        $program->delete();
-
-        return back()->with('success', 'Program keahlian berhasil dihapus.');
-    }
-
-    public function importCalonSiswa(Request $request): RedirectResponse
+    public function importCalonSiswa(Request $request, CalonSiswaImportReader $reader): RedirectResponse
     {
         $data = $request->validate([
             'tahun_pendaftaran' => ['required', 'digits:4'],
-            'calon_siswa_csv' => ['required', 'file', 'mimes:csv,txt', 'max:4096'],
+            'calon_siswa_file' => ['required', 'file', 'mimes:xlsx,csv,txt', 'max:5120'],
             'deactivate_missing_in_year' => ['nullable', 'boolean'],
         ], [
-            'calon_siswa_csv.required' => 'File CSV whitelist calon siswa wajib dipilih.',
-            'calon_siswa_csv.mimes' => 'File whitelist harus berformat CSV atau TXT.',
-            'calon_siswa_csv.max' => 'Ukuran file whitelist maksimal 4 MB.',
+            'calon_siswa_file.required' => 'File whitelist calon siswa wajib dipilih.',
+            'calon_siswa_file.mimes' => 'File whitelist harus berformat XLSX, CSV, atau TXT.',
+            'calon_siswa_file.max' => 'Ukuran file whitelist maksimal 5 MB.',
         ]);
 
-        $result = $this->readCalonSiswaCsv($request->file('calon_siswa_csv')->getRealPath());
+        $uploadedFile = $request->file('calon_siswa_file');
+        $temporaryPath = $uploadedFile->getRealPath().'.'.$uploadedFile->getClientOriginalExtension();
+        copy($uploadedFile->getRealPath(), $temporaryPath);
+
+        try {
+            $result = $reader->read($temporaryPath);
+        } finally {
+            @unlink($temporaryPath);
+        }
 
         if ($result['valid']->isEmpty()) {
-            return back()->with('warning', 'Tidak ada data valid yang dapat diimport. Pastikan header CSV berisi nisn,nama,tempat_lahir,tanggal_lahir,asal_sekolah.');
+            $detail = $result['errors'][0] ?? 'Pastikan file memiliki kolom NISN, Nama Siswa, Tempat Lahir, Tanggal Lahir, dan Asal Sekolah.';
+
+            return back()->with('warning', 'Tidak ada data valid yang dapat diimpor. '.$detail);
         }
 
         $tahun = $data['tahun_pendaftaran'];
@@ -216,6 +173,8 @@ class AdminController extends Controller
                         'tempat_lahir' => $row['tempat_lahir'],
                         'tanggal_lahir' => $row['tanggal_lahir'],
                         'asal_sekolah' => $row['asal_sekolah'],
+                        'nilai_tka_matematika' => $row['nilai_tka_matematika'],
+                        'nilai_tka_bahasa_indonesia' => $row['nilai_tka_bahasa_indonesia'],
                         'tahun_pendaftaran' => $tahun,
                         'is_active' => true,
                     ],
@@ -223,10 +182,14 @@ class AdminController extends Controller
             }
         });
 
-        $message = "Whitelist calon siswa berhasil diimport: {$validRows->count()} data aktif untuk tahun {$tahun}.";
+        $message = "Whitelist calon siswa berhasil diimpor: {$validRows->count()} data aktif untuk tahun {$tahun}.";
 
         if ($result['skipped'] > 0) {
             $message .= " {$result['skipped']} baris dilewati karena tidak valid.";
+        }
+
+        if ($result['missing_score_count'] > 0) {
+            $message .= " {$result['missing_score_count']} siswa memiliki nilai TKA yang belum lengkap dan tetap disimpan.";
         }
 
         return back()->with('success', $message);
@@ -322,71 +285,48 @@ class AdminController extends Controller
         return back()->with('success', 'Kontak panitia berhasil dihapus.');
     }
 
-    public function storePengguna(Request $request): RedirectResponse
+    public function verifikasiPengguna(Request $request, Pengguna $pengguna): RedirectResponse
     {
-        $validator = Validator::make($request->all(), [
-            'nisn' => ['required', 'digits:10', 'unique:tb_pengguna,id_pengguna'],
-            'no_wa' => ['required', 'regex:/^8[0-9]{8,11}$/'],
-        ], [
-            'nisn.required' => 'NISN wajib diisi.',
-            'nisn.digits' => 'NISN harus berisi 10 digit angka.',
-            'nisn.unique' => 'NISN tersebut sudah memiliki akun.',
-            'no_wa.required' => 'Nomor WhatsApp aktif wajib diisi.',
-            'no_wa.regex' => 'Nomor WhatsApp harus diawali angka 8 dan berisi 9 sampai 12 digit setelah kode +62.',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $data = $validator->validated();
-
-        $pengguna = Pengguna::create([
-            'id_pengguna' => $data['nisn'],
-            'nama_pengguna' => '',
-            'email' => null,
-            'telpon' => '62'.$data['no_wa'],
-            'username' => $data['nisn'],
-            'password' => Hash::make('siswa123'),
-            'level' => 'User',
-            'is_verified' => true,
-            'is_active' => true,
-            'verified_at' => now(),
-        ]);
-
-        return redirect()
-            ->route('admin.pengguna.formulir.create', $pengguna)
-            ->with('success', 'Akun siswa berhasil dibuat dengan password default siswa123. Silakan lanjut isi biodata pendaftaran.');
-    }
-
-    public function verifikasiPengguna(Pengguna $pengguna): RedirectResponse
-    {
-        if ($pengguna->level === 'Administrator') {
+        if (! $pengguna->isCalonMurid()) {
             abort(403);
         }
 
-        $pengguna->update([
-            'is_verified' => true,
-            'verified_at' => now(),
-        ]);
+        $admin = $request->attributes->get('pengguna');
+        $registrasiAkun = $pengguna->registrasiAkun;
 
-        if (! $pengguna->email) {
-            return back()->with('success', 'Akun berhasil diverifikasi. Email notifikasi belum dikirim karena siswa belum mengisi email.');
+        if (! $registrasiAkun || ! $registrasiAkun->kartuKeluargaTersedia()) {
+            return back()->with('warning', 'Akun belum dapat diverifikasi karena Kartu Keluarga tidak tersedia.');
         }
 
-        try {
-            Mail::raw(
-                "Akun SPMB anda dengan NISN {$pengguna->id_pengguna} sudah diverifikasi. Silakan login untuk melanjutkan pengisian formulir pendaftaran.",
-                function ($message) use ($pengguna): void {
-                    $message->to($pengguna->email)
-                        ->subject('Akun SPMB Sudah Diverifikasi');
-                },
-            );
-        } catch (Throwable) {
-            return back()->with('warning', 'Akun berhasil diverifikasi, tetapi email notifikasi belum terkirim. Periksa konfigurasi email aplikasi.');
-        }
+        DB::transaction(function () use ($pengguna, $admin): void {
+            $pengguna->update([
+                'is_verified' => true,
+                'is_active' => true,
+                'verified_at' => now(),
+            ]);
 
-        return back()->with('success', 'Akun berhasil diverifikasi dan email notifikasi telah dikirim.');
+            if ($registrasi = $pengguna->registrasiAkun) {
+                $statusSebelumnya = $registrasi->status;
+                $registrasi->update([
+                    'status' => 'terverifikasi',
+                    'catatan_verifikasi' => null,
+                    'verified_at' => now(),
+                    'rejected_at' => null,
+                    'verified_by' => $admin?->id_pengguna,
+                ]);
+
+                DB::table('tb_riwayat_verifikasi_akun')->insert([
+                    'registrasi_akun_id' => $registrasi->id,
+                    'status_sebelumnya' => $statusSebelumnya,
+                    'status_baru' => 'terverifikasi',
+                    'catatan' => 'Alamat domisili dan Kartu Keluarga dinyatakan sesuai.',
+                    'diproses_oleh' => $admin?->id_pengguna,
+                    'created_at' => now(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Akun berhasil diverifikasi. Kirim pemberitahuan melalui tombol WhatsApp.');
     }
 
     public function togglePenggunaAktif(Pengguna $pengguna): RedirectResponse
@@ -398,13 +338,50 @@ class AdminController extends Controller
         return back()->with('success', $pengguna->is_active ? 'User berhasil diaktifkan.' : 'User berhasil dinonaktifkan.');
     }
 
-    public function resetPasswordPengguna(Pengguna $pengguna): RedirectResponse
+    public function updateStatusVerifikasiPengguna(Request $request, Pengguna $pengguna): RedirectResponse
     {
-        $this->guardUserAccount($pengguna);
+        if (! $pengguna->isCalonMurid()) {
+            abort(403);
+        }
 
-        $pengguna->update(['password' => Hash::make('siswa123')]);
+        $data = $request->validate([
+            'status' => ['required', 'in:perlu_perbaikan,ditolak'],
+            'catatan' => ['required', 'string', 'max:1000'],
+        ], [
+            'catatan.required' => 'Catatan verifikasi wajib diisi agar calon murid mengetahui bagian yang harus diperbaiki.',
+        ]);
 
-        return back()->with('success', 'Password user berhasil direset ke default siswa123.');
+        $admin = $request->attributes->get('pengguna');
+
+        DB::transaction(function () use ($pengguna, $admin, $data): void {
+            $pengguna->update([
+                'is_verified' => false,
+                'verified_at' => null,
+            ]);
+
+            $registrasi = $pengguna->registrasiAkun;
+            abort_unless($registrasi, 422, 'Data registrasi akun belum tersedia.');
+
+            $statusSebelumnya = $registrasi->status;
+            $registrasi->update([
+                'status' => $data['status'],
+                'catatan_verifikasi' => $data['catatan'],
+                'verified_at' => null,
+                'rejected_at' => $data['status'] === 'ditolak' ? now() : null,
+                'verified_by' => $admin?->id_pengguna,
+            ]);
+
+            DB::table('tb_riwayat_verifikasi_akun')->insert([
+                'registrasi_akun_id' => $registrasi->id,
+                'status_sebelumnya' => $statusSebelumnya,
+                'status_baru' => $data['status'],
+                'catatan' => $data['catatan'],
+                'diproses_oleh' => $admin?->id_pengguna,
+                'created_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Status verifikasi akun berhasil diperbarui. Gunakan tombol WhatsApp untuk menyampaikan hasil kepada pendaftar.');
     }
 
     public function destroyPengguna(Pengguna $pengguna): RedirectResponse
@@ -425,7 +402,7 @@ class AdminController extends Controller
 
     private function guardUserAccount(Pengguna $pengguna): void
     {
-        if ($pengguna->level === 'Administrator') {
+        if (! $pengguna->isCalonMurid()) {
             abort(403);
         }
     }
@@ -465,90 +442,6 @@ class AdminController extends Controller
         if ($basePath && $filePath && str_starts_with($filePath, $basePath.DIRECTORY_SEPARATOR) && is_file($filePath)) {
             unlink($filePath);
         }
-    }
-
-    private function aliasesFromInput(string $value): array
-    {
-        return collect(preg_split('/[\r\n,]+/', $value))
-            ->map(fn (string $alias) => trim($alias))
-            ->filter()
-            ->values()
-            ->all();
-    }
-
-    private function readCalonSiswaCsv(string $path): array
-    {
-        $file = fopen($path, 'r');
-        $header = fgetcsv($file);
-        $valid = collect();
-        $skipped = 0;
-
-        if (! $header) {
-            fclose($file);
-
-            return ['valid' => $valid, 'skipped' => 0];
-        }
-
-        $header = array_map(fn (string $column): string => strtolower(trim($column)), $header);
-        $requiredColumns = ['nisn', 'nama', 'tempat_lahir', 'tanggal_lahir', 'asal_sekolah'];
-
-        if (array_diff($requiredColumns, $header)) {
-            fclose($file);
-
-            return ['valid' => $valid, 'skipped' => 0];
-        }
-
-        while (($row = fgetcsv($file)) !== false) {
-            $row = array_slice(array_pad($row, count($header), ''), 0, count($header));
-            $data = array_combine($header, $row);
-
-            if (! $data) {
-                $skipped++;
-                continue;
-            }
-
-            $nisn = preg_replace('/\D+/', '', (string) ($data['nisn'] ?? ''));
-            $tanggalLahir = $this->normalizeDate((string) ($data['tanggal_lahir'] ?? ''));
-
-            if (
-                strlen($nisn) !== 10
-                || trim((string) ($data['nama'] ?? '')) === ''
-                || trim((string) ($data['tempat_lahir'] ?? '')) === ''
-                || ! $tanggalLahir
-                || trim((string) ($data['asal_sekolah'] ?? '')) === ''
-            ) {
-                $skipped++;
-                continue;
-            }
-
-            $valid->push([
-                'nisn' => $nisn,
-                'nama' => trim((string) $data['nama']),
-                'tempat_lahir' => trim((string) $data['tempat_lahir']),
-                'tanggal_lahir' => $tanggalLahir,
-                'asal_sekolah' => trim((string) $data['asal_sekolah']),
-            ]);
-        }
-
-        fclose($file);
-
-        return [
-            'valid' => $valid->unique('nisn')->values(),
-            'skipped' => $skipped,
-        ];
-    }
-
-    private function normalizeDate(string $value): ?string
-    {
-        $value = trim($value);
-
-        if ($value === '') {
-            return null;
-        }
-
-        $timestamp = strtotime(str_replace('/', '-', $value));
-
-        return $timestamp ? date('Y-m-d', $timestamp) : null;
     }
 
     private function validatedContact(Request $request): array

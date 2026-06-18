@@ -65,9 +65,11 @@ class LandingController extends Controller
         }
 
         $nisn = $validator->validated()['nisn'];
-        $result = Pengguna::whereKey($nisn)->exists()
-            ? 'registered'
+        $pengguna = Pengguna::with('registrasiAkun')->find($nisn);
+        $result = $pengguna
+            ? ($pengguna->registrasiAkun?->status ?: 'registered')
             : $this->calonSiswaStatus($nisn);
+        $note = $pengguna?->registrasiAkun?->catatan_verifikasi;
 
         $this->generateStatusCaptcha($request);
 
@@ -77,6 +79,8 @@ class LandingController extends Controller
                 'type' => $this->statusAlertType($result),
                 'title' => $this->statusTitle($result, $nisn),
                 'message' => $this->statusMessage($result),
+                'note' => $note,
+                'action_url' => $result === 'terverifikasi' ? route('login') : null,
                 'captcha_question' => $request->session()->get('status_captcha_question'),
             ]);
         }
@@ -84,6 +88,7 @@ class LandingController extends Controller
         return redirect('/#cek-status')
             ->with('status_result', $result)
             ->with('status_nisn', $nisn)
+            ->with('status_note', $note)
             ->withInput(['nisn' => $nisn]);
     }
 
@@ -99,7 +104,9 @@ class LandingController extends Controller
     private function statusAlertType(string $result): string
     {
         return match ($result) {
-            'registered' => 'success',
+            'registered', 'terverifikasi' => 'success',
+            'menunggu_verifikasi' => 'info',
+            'perlu_perbaikan', 'ditolak' => 'warning',
             'not_registered' => 'info',
             default => 'warning',
         };
@@ -109,6 +116,10 @@ class LandingController extends Controller
     {
         return match ($result) {
             'registered' => "NISN {$nisn} sudah memiliki akun SPMB.",
+            'menunggu_verifikasi' => "Akun NISN {$nisn} sedang menunggu verifikasi.",
+            'terverifikasi' => "Akun NISN {$nisn} sudah terverifikasi.",
+            'perlu_perbaikan' => "Registrasi NISN {$nisn} perlu diperbaiki.",
+            'ditolak' => "Registrasi NISN {$nisn} ditolak.",
             'not_registered' => "NISN {$nisn} tersedia di database calon siswa.",
             'inactive' => "NISN {$nisn} tidak tersedia pada whitelist aktif tahun ini.",
             default => "NISN {$nisn} belum ditemukan.",
@@ -119,6 +130,10 @@ class LandingController extends Controller
     {
         return match ($result) {
             'registered' => 'Silakan login untuk melanjutkan proses pendaftaran.',
+            'menunggu_verifikasi' => 'Data alamat dan Kartu Keluarga sedang diperiksa oleh Dinas Pendidikan.',
+            'terverifikasi' => 'Akun sudah aktif. Silakan login untuk melanjutkan pendaftaran.',
+            'perlu_perbaikan' => 'Silakan login menggunakan NISN dan kata sandi untuk membaca catatan serta memperbaiki data.',
+            'ditolak' => 'Silakan perhatikan catatan Dinas Pendidikan atau hubungi admin untuk informasi lebih lanjut.',
             'not_registered' => 'Silakan daftar akun SPMB melalui tombol daftar pada halaman ini.',
             'inactive' => 'Tidak ditemukan pada whitelist calon peserta didik aktif tahun ini. Silakan menghubungi panitia SPMB melalui WhatsApp.',
             default => 'Silakan hubungi panitia SPMB untuk pengecekan data calon peserta didik.',

@@ -18,17 +18,17 @@ class EnsureSpmbAuthenticated
             return redirect()->route('login');
         }
 
-        if ($pengguna->level !== 'Administrator' && $pengguna->is_active === false) {
+        if ($pengguna->isCalonMurid() && $pengguna->is_active === false) {
             return $this->logoutWithError(
                 $request,
                 'Akun anda sedang nonaktif. Silakan menghubungi panitia SPMB.',
             );
         }
 
-        if ($pengguna->level !== 'Administrator' && ! $pengguna->is_verified) {
+        if ($pengguna->isCalonMurid() && ! $pengguna->is_verified) {
             return $this->logoutWithError(
                 $request,
-                'Akun anda belum diverifikasi oleh admin sekolah. Silakan menunggu proses verifikasi panitia SPMB.',
+                'Akun anda belum diverifikasi oleh Dinas Pendidikan. Silakan pantau status registrasi akun.',
             );
         }
 

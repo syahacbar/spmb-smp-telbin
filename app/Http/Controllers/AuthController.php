@@ -10,6 +10,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
@@ -55,7 +58,10 @@ class AuthController extends Controller
 
         $credentials = $validator->validated();
 
-        $pengguna = Pengguna::find($credentials['nisn']);
+        $pengguna = Pengguna::query()
+            ->whereKey($credentials['nisn'])
+            ->orWhere('username', $credentials['nisn'])
+            ->first();
 
         if (! $pengguna || ! $this->passwordMatches($credentials['password'], $pengguna->password)) {
             $this->generateLoginCaptcha($request);
@@ -63,7 +69,7 @@ class AuthController extends Controller
             return back()->withErrors(['nisn' => 'NISN atau password salah.'])->onlyInput('nisn');
         }
 
-        if ($pengguna->level !== 'Administrator' && $pengguna->is_active === false) {
+        if ($pengguna->isCalonMurid() && $pengguna->is_active === false) {
             $this->generateLoginCaptcha($request);
 
             return back()
@@ -71,12 +77,12 @@ class AuthController extends Controller
                 ->onlyInput('nisn');
         }
 
-        if ($pengguna->level !== 'Administrator' && ! $pengguna->is_verified) {
-            $this->generateLoginCaptcha($request);
+        if ($pengguna->isCalonMurid() && ! $pengguna->is_verified) {
+            $request->session()->regenerate();
+            $request->session()->put('pengguna_id', $pengguna->id_pengguna);
+            $request->session()->forget(['login_captcha_question', 'login_captcha_answer']);
 
-            return back()
-                ->withErrors(['nisn' => 'Akun anda belum diverifikasi oleh admin sekolah. Silakan menunggu proses verifikasi panitia SPMB.'])
-                ->onlyInput('nisn');
+            return redirect()->route('akun.status');
         }
 
         if (! str_starts_with($pengguna->password, '$2y$') && ! str_starts_with($pengguna->password, '$argon')) {
@@ -94,9 +100,22 @@ class AuthController extends Controller
     {
         $this->generateRegisterCaptcha($request);
 
+        try {
+            $kecamatanOptions = DB::table('ref_kecamatan')->orderBy('urutan')->orderBy('nama')->get(['id', 'nama']);
+            $kelurahanOptions = DB::table('ref_kelurahan')->orderBy('urutan')->orderBy('nama')->get(['id', 'kecamatan_id', 'nama']);
+        } catch (\Throwable) {
+            $kecamatanOptions = collect();
+            $kelurahanOptions = collect();
+        }
+
         return view('auth.register', [
             'panitiaWhatsapp' => $this->panitiaWhatsapp(),
             'panitiaWhatsappUrl' => $this->panitiaWhatsappUrl(),
+            'kecamatanOptions' => $kecamatanOptions,
+            'kelurahanOptions' => $kelurahanOptions,
+            'calonSiswa' => old('nisn')
+                ? CalonSiswa::activeForYear($this->tahunPendaftaranAktif())->find(old('nisn'))
+                : null,
         ]);
     }
 
@@ -141,6 +160,13 @@ class AuthController extends Controller
             'ok' => true,
             'type' => 'success',
             'message' => "NISN {$nisn} tersedia di database calon peserta didik. Silakan lanjut isi data akun.",
+            'student' => [
+                'nisn' => $calonSiswa->nisn,
+                'nama' => $calonSiswa->nama,
+                'tempat_lahir' => $calonSiswa->tempat_lahir,
+                'tanggal_lahir' => $calonSiswa->tanggal_lahir?->translatedFormat('d F Y'),
+                'asal_sekolah' => $calonSiswa->asal_sekolah,
+            ],
         ]);
     }
 
@@ -148,17 +174,27 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nisn' => ['required', 'digits:10'],
+            'kecamatan_id' => ['required', 'integer', 'exists:ref_kecamatan,id'],
+            'kelurahan_id' => ['required', 'integer', 'exists:ref_kelurahan,id'],
+            'detail_alamat' => ['required', 'string', 'max:1000'],
+            'kartu_keluarga' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:2048'],
             'no_wa' => ['required', 'regex:/^8[0-9]{8,11}$/'],
-            'password' => ['required', 'confirmed', 'min:3'],
+            'password' => ['required', 'confirmed', 'min:8'],
             'captcha_answer' => ['required', 'integer'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
             'nisn.digits' => 'NISN harus berisi 10 digit angka.',
+            'kecamatan_id.required' => 'Distrik/kecamatan domisili wajib dipilih.',
+            'kelurahan_id.required' => 'Kelurahan/kampung domisili wajib dipilih.',
+            'detail_alamat.required' => 'Detail alamat domisili wajib diisi.',
+            'kartu_keluarga.required' => 'Kartu Keluarga wajib diunggah untuk verifikasi domisili.',
+            'kartu_keluarga.mimes' => 'Kartu Keluarga harus berupa PDF atau gambar.',
+            'kartu_keluarga.max' => 'Ukuran Kartu Keluarga maksimal 2 MB.',
             'no_wa.required' => 'Nomor WhatsApp aktif wajib diisi.',
             'no_wa.regex' => 'Nomor WhatsApp harus diawali angka 8 dan berisi 9 sampai 12 digit setelah kode +62.',
             'password.required' => 'Kata sandi wajib diisi.',
             'password.confirmed' => 'Konfirmasi kata sandi belum sama dengan kata sandi.',
-            'password.min' => 'Kata sandi minimal berisi 3 karakter.',
+            'password.min' => 'Kata sandi minimal berisi 8 karakter.',
             'captcha_answer.required' => 'Captcha wajib diisi.',
             'captcha_answer.integer' => 'Captcha harus berupa angka.',
         ]);
@@ -187,27 +223,83 @@ class AuthController extends Controller
 
             return back()
                 ->withErrors($validator)
-                ->onlyInput('nisn', 'no_wa');
+                ->withInput($request->except(['password', 'password_confirmation', 'kartu_keluarga']));
         }
 
         $data = $validator->validated();
         $calonSiswa = CalonSiswa::activeForYear($this->tahunPendaftaranAktif())->findOrFail($data['nisn']);
 
-        Pengguna::create([
-            'id_pengguna' => $data['nisn'],
-            'nama_pengguna' => $calonSiswa->nama,
-            'email' => null,
-            'telpon' => '62'.$data['no_wa'],
-            'username' => $data['nisn'],
-            'password' => Hash::make($data['password']),
-            'level' => 'User',
-            'is_verified' => false,
-            'verified_at' => null,
-        ]);
+        $kelurahanValid = DB::table('ref_kelurahan')
+            ->where('id', $data['kelurahan_id'])
+            ->where('kecamatan_id', $data['kecamatan_id'])
+            ->exists();
+
+        if (! $kelurahanValid) {
+            return back()
+                ->withErrors(['kelurahan_id' => 'Kelurahan/kampung tidak sesuai dengan distrik/kecamatan yang dipilih.'])
+                ->withInput($request->except(['password', 'password_confirmation', 'kartu_keluarga']));
+        }
+
+        $file = $request->file('kartu_keluarga');
+        $kkPath = $file->storeAs(
+            'registrasi/kk',
+            Str::uuid().'.'.$file->extension(),
+            'local',
+        );
+
+        if (! $kkPath) {
+            return back()
+                ->withErrors(['kartu_keluarga' => 'Kartu Keluarga gagal disimpan. Silakan unggah kembali.'])
+                ->withInput($request->except(['password', 'password_confirmation', 'kartu_keluarga']));
+        }
+
+        try {
+            DB::transaction(function () use ($data, $calonSiswa, $kkPath): void {
+                $pengguna = Pengguna::create([
+                    'id_pengguna' => $data['nisn'],
+                    'nama_pengguna' => $calonSiswa->nama,
+                    'alamat' => $data['detail_alamat'],
+                    'email' => null,
+                    'telpon' => '62'.$data['no_wa'],
+                    'username' => $data['nisn'],
+                    'password' => Hash::make($data['password']),
+                    'level' => 'User',
+                    'is_verified' => false,
+                    'verified_at' => null,
+                ]);
+
+                $roleId = DB::table('roles')->where('kode', 'calon_murid')->value('id');
+                $pengguna->roles()->attach($roleId);
+
+                $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+                $registrasi = $pengguna->registrasiAkun()->create([
+                    'periode_id' => $periodeId,
+                    'kabupaten' => 'Teluk Bintuni',
+                    'kecamatan_id' => $data['kecamatan_id'],
+                    'kelurahan_id' => $data['kelurahan_id'],
+                    'detail_alamat' => $data['detail_alamat'],
+                    'kartu_keluarga_path' => $kkPath,
+                    'status' => 'menunggu_verifikasi',
+                    'submitted_at' => now(),
+                ]);
+
+                DB::table('tb_riwayat_verifikasi_akun')->insert([
+                    'registrasi_akun_id' => $registrasi->id,
+                    'status_baru' => 'menunggu_verifikasi',
+                    'catatan' => 'Registrasi akun diajukan oleh calon murid.',
+                    'created_at' => now(),
+                ]);
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($kkPath);
+            throw $exception;
+        }
 
         $request->session()->forget(['register_captcha_question', 'register_captcha_answer']);
 
-        return redirect()->route('login')->with('success', 'Pendaftaran berhasil. Akun anda menunggu verifikasi admin sekolah.');
+        $request->session()->put('pengguna_id', $data['nisn']);
+
+        return redirect()->route('akun.status')->with('success', 'Pendaftaran akun berhasil. Data anda menunggu verifikasi Dinas Pendidikan.');
     }
 
     public function logout(Request $request): RedirectResponse
@@ -261,6 +353,6 @@ class AuthController extends Controller
     {
         $phone = preg_replace('/\D+/', '', $this->panitiaWhatsapp());
 
-        return 'https://wa.me/'.$phone.'?text='.rawurlencode('Halo Panitia SPMB SMK Negeri 1 Bintuni, saya ingin konfirmasi NISN yang belum tersedia di sistem.');
+        return 'https://wa.me/'.$phone.'?text='.rawurlencode('Halo Admin SPMB SMP Kabupaten Teluk Bintuni, saya ingin konfirmasi NISN yang belum tersedia di sistem.');
     }
 }

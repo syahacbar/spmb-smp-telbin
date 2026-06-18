@@ -26,8 +26,6 @@
             'alamat_ortu_kecamatan' => 'Kecamatan Orang Tua',
             'alamat_ortu_kelurahan' => 'Kelurahan/Desa Orang Tua',
             'alamat_ortu' => 'Alamat Detail Orang Tua',
-            'program_keahlian_1' => 'Minat Program Keahlian A',
-            'program_keahlian_2' => 'Minat Program Keahlian B',
         ] as $field => $label)
             <tr>
                 <th style="width: 230px">{{ $label }}</th>

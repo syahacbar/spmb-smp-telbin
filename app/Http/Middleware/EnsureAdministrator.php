@@ -12,7 +12,7 @@ class EnsureAdministrator
     {
         $pengguna = $request->attributes->get('pengguna');
 
-        if (! $pengguna || $pengguna->level !== 'Administrator') {
+        if (! $pengguna || ! $pengguna->isAdminDinas()) {
             abort(403);
         }
 

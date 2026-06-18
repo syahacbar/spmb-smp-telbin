@@ -249,11 +249,11 @@
     };
     $tanggalTes = $settings['tanggal_tes'] ?? '06 Juli 2026';
     $waktuTes = $settings['waktu_tes'] ?? '08.00 WIT s.d. selesai';
-    $tempatTes = $settings['tempat_tes'] ?? 'SMK Negeri 1 Bintuni';
+    $tempatTes = $settings['tempat_tes'] ?? 'Dinas Pendidikan Kabupaten Teluk Bintuni';
     $kepalaNama = $settings['kepala_nama'] ?? 'Panitia SPMB';
     $kepalaNip = $settings['kepala_nip'] ?? '';
     $kepalaJabatan = $settings['kepala_jabatan'] ?? 'Panitia SPMB';
-    $kepalaTtdPath = $settings['kepala_ttd_path'] ?? 'images/ttdketua.png';
+    $kepalaTtdPath = $settings['kepala_ttd_path'] ?? '';
     $catatanKartu = collect(preg_split('/\r\n|\r|\n/', $settings['catatan_kartu'] ?? ''))
         ->map(fn (string $line) => trim($line))
         ->filter()
@@ -271,10 +271,10 @@
         <div class="text-center">
             <div class="kop-title">PEMERINTAH KABUPATEN TELUK BINTUNI</div>
             <div class="kop-title">DINAS PENDIDIKAN, KEBUDAYAAN, PEMUDA DAN OLAHRAGA</div>
-            <div class="kop-school">SMK NEGERI 1 BINTUNI</div>
-            <div class="kop-meta">Alamat: Jl. Manimeri - Bintuni | Website: https://smkn1bintuni.sch.id | Email: smknegeri1bintuni@gmail.com | Kode Pos: 98143</div>
+            <div class="kop-school">SPMB SMP KABUPATEN TELUK BINTUNI</div>
+            <div class="kop-meta">Portal resmi penerimaan murid baru SMP se-Kabupaten Teluk Bintuni</div>
         </div>
-        <img src="{{ asset('images/logobintuni.jpeg') }}" class="kop-logo" alt="Logo SMK Negeri 1 Bintuni">
+        <div class="kop-logo" aria-hidden="true"></div>
     </div>
 
     <div class="card-title">
@@ -323,21 +323,7 @@
         </div>
     </div>
 
-    <div class="section-label">Pilihan Program Keahlian</div>
-    <table class="table table-bordered info-table compact-table">
-        <tbody>
-        <tr>
-            <td>
-                <span class="program-choice"><span class="program-check">&#10003;</span>{{ $formulir->program_keahlian_1 }}</span>
-            </td>
-            <td>
-                <span class="program-choice"><span class="program-check">&#10003;</span>{{ $formulir->program_keahlian_2 }}</span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-    <div class="section-label">Jadwal Wawancara & Pemetaan Jurusan</div>
+    <div class="section-label">Informasi Tahap Berikutnya</div>
     <table class="table table-bordered info-table schedule-table">
         <tbody>
         <tr>
@@ -361,7 +347,7 @@
 
     <div class="signature-area">
         <div class="system-note">
-            Kartu ini dicetak dari sistem SPMB SMK Negeri 1 Bintuni dan digunakan sebagai bukti pendaftaran saat mengikuti tahap wawancara dan pemetaan jurusan.
+            Kartu ini dicetak dari Portal SPMB SMP Kabupaten Teluk Bintuni sebagai bukti pendaftaran.
         </div>
         <div class="signature-box">
             <div class="signature-caption">Bintuni, {{ $formatTanggalIndonesia(now()) }}</div>
@@ -388,7 +374,7 @@
             @forelse($catatanKartu as $catatan)
                 <li>{{ $catatan }}</li>
             @empty
-                <li>Peserta wajib mengikuti tahap wawancara dan pemetaan jurusan sesuai jadwal yang tercantum pada kartu ini.</li>
+                <li>Peserta wajib mengikuti tahapan SPMB sesuai jadwal yang tercantum pada portal.</li>
             @endforelse
         </ol>
     </div>

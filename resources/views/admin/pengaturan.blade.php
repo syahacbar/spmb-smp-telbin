@@ -112,7 +112,7 @@
     <div class="page-title">
         <div>
             <h3 class="fw-bold">Pengaturan SPMB</h3>
-            <div class="text-muted">Kelola kartu pendaftaran, kuota program, dan kontak panitia.</div>
+            <div class="text-muted">Kelola periode, whitelist calon murid, identitas dokumen, dan kontak layanan.</div>
         </div>
     </div>
 
@@ -122,9 +122,6 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="whitelist-tab" data-bs-toggle="tab" data-bs-target="#whitelist-pane" type="button" role="tab" aria-controls="whitelist-pane" aria-selected="false">Whitelist Calon Siswa</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="program-tab" data-bs-toggle="tab" data-bs-target="#program-pane" type="button" role="tab" aria-controls="program-pane" aria-selected="false">Program Keahlian</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="kontak-tab" data-bs-toggle="tab" data-bs-target="#kontak-pane" type="button" role="tab" aria-controls="kontak-pane" aria-selected="false">Kontak Panitia</button>
@@ -213,14 +210,14 @@
                         <input type="text" name="tahun_pendaftaran" value="{{ old('tahun_pendaftaran', $settings['tahun_pendaftaran']) }}" class="form-control" maxlength="4" required>
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label">File CSV Whitelist</label>
-                        <input type="file" name="calon_siswa_csv" class="form-control" accept=".csv,text/csv,text/plain" required>
+                        <label class="form-label">File Whitelist</label>
+                        <input type="file" name="calon_siswa_file" class="form-control" accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain" required>
                     </div>
                     <div class="col-md-4 d-grid">
                         <button class="btn btn-primary">Import Whitelist</button>
                     </div>
                     <div class="col-12">
-                        <div class="small text-muted mb-2">Format kolom CSV: <strong>nisn,nama,tempat_lahir,tanggal_lahir,asal_sekolah</strong>.</div>
+                        <div class="small text-muted mb-2">Format XLSX/CSV: <strong>NISN, Nama Siswa, Tempat Lahir, Tanggal Lahir, Asal Sekolah, Nilai Matematika, Nilai Bahasa Indonesia</strong>.</div>
                         <div class="form-check">
                             <input type="checkbox" name="deactivate_missing_in_year" value="1" class="form-check-input" id="nonaktifTidakAdaCsv" checked>
                             <label class="form-check-label" for="nonaktifTidakAdaCsv">Nonaktifkan NISN pada tahun yang sama jika tidak ada di CSV baru</label>
@@ -269,6 +266,8 @@
                                 <th>NISN</th>
                                 <th class="wide">Nama</th>
                                 <th>Asal Sekolah</th>
+                                <th>TKA Matematika</th>
+                                <th>TKA Bahasa Indonesia</th>
                                 <th>Tahun Pendaftaran</th>
                                 <th>Status</th>
                             </tr>
@@ -280,6 +279,8 @@
                                     <td>{{ $calonSiswa->nisn }}</td>
                                     <td>{{ $calonSiswa->nama }}</td>
                                     <td>{{ $calonSiswa->asal_sekolah }}</td>
+                                    <td>{{ $calonSiswa->nilai_tka_matematika ?? '-' }}</td>
+                                    <td>{{ $calonSiswa->nilai_tka_bahasa_indonesia ?? '-' }}</td>
                                     <td>{{ $calonSiswa->tahun_pendaftaran }}</td>
                                     <td>
                                         @if($calonSiswa->is_active)
@@ -294,98 +295,6 @@
                         </table>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <section class="tab-pane fade card shadow-sm" id="program-pane" role="tabpanel" aria-labelledby="program-tab" tabindex="0">
-            <div class="card-header">
-                <h4 class="settings-section-title">Kuota Program Keahlian</h4>
-                <p class="settings-section-subtitle">Kuota aktif dipakai di dashboard admin dan pilihan program pada formulir registrasi.</p>
-            </div>
-            <div class="card-body">
-                <form method="post" action="{{ route('admin.pengaturan.program.update') }}">
-                    @csrf
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle settings-table">
-                            <thead>
-                            <tr>
-                                <th class="wide">Program</th>
-                                <th>Singkatan</th>
-                                <th class="narrow">Kuota</th>
-                                <th class="narrow">Urutan</th>
-                                <th class="wide">Alias</th>
-                                <th class="narrow">Aktif</th>
-                                <th class="narrow">Aksi</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach($programs as $program)
-                                <tr>
-                                    <td>
-                                        <input type="text" name="programs[{{ $program->id }}][nama]" value="{{ old("programs.$program->id.nama", $program->nama) }}" class="form-control" required>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="programs[{{ $program->id }}][singkatan]" value="{{ old("programs.$program->id.singkatan", $program->singkatan) }}" class="form-control">
-                                    </td>
-                                    <td>
-                                        <input type="number" name="programs[{{ $program->id }}][kuota]" value="{{ old("programs.$program->id.kuota", $program->kuota) }}" class="form-control" min="0" required>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="programs[{{ $program->id }}][urutan]" value="{{ old("programs.$program->id.urutan", $program->urutan) }}" class="form-control" min="0" required>
-                                    </td>
-                                    <td>
-                                        <textarea name="programs[{{ $program->id }}][aliases]" class="form-control" rows="2">{{ old("programs.$program->id.aliases", implode("\n", $program->aliases ?? [])) }}</textarea>
-                                    </td>
-                                    <td class="text-center">
-                                        <input type="hidden" name="programs[{{ $program->id }}][is_active]" value="0">
-                                        <input type="checkbox" name="programs[{{ $program->id }}][is_active]" value="1" class="form-check-input" @checked(old("programs.$program->id.is_active", $program->is_active))>
-                                    </td>
-                                    <td class="text-center">
-                                        <button class="btn btn-outline-danger btn-sm" type="submit" form="hapusProgram{{ $program->id }}" data-confirm="Hapus program keahlian ini?">Hapus</button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    <button class="btn btn-primary">Simpan Kuota Program</button>
-                </form>
-
-                @foreach($programs as $program)
-                    <form id="hapusProgram{{ $program->id }}" method="post" action="{{ route('admin.pengaturan.program.destroy', $program) }}" class="d-none">
-                        @csrf
-                        @method('delete')
-                    </form>
-                @endforeach
-
-                <hr>
-
-                <form method="post" action="{{ route('admin.pengaturan.program.store') }}" class="row g-3 align-items-end">
-                    @csrf
-                    <div class="col-lg-4">
-                        <label class="form-label">Tambah Program</label>
-                        <input type="text" name="nama" value="{{ old('nama') }}" class="form-control" placeholder="Nama program keahlian">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Singkatan</label>
-                        <input type="text" name="singkatan" value="{{ old('singkatan') }}" class="form-control">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Kuota</label>
-                        <input type="number" name="kuota" value="{{ old('kuota', 0) }}" class="form-control" min="0">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Urutan</label>
-                        <input type="number" name="urutan" value="{{ old('urutan', $programs->max('urutan') + 1) }}" class="form-control" min="0">
-                    </div>
-                    <div class="col-md-2 d-grid">
-                        <button class="btn btn-outline-primary">Tambah</button>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Alias Program Baru</label>
-                        <textarea name="aliases" class="form-control" rows="2" placeholder="Satu alias per baris jika ada">{{ old('aliases') }}</textarea>
-                    </div>
-                </form>
             </div>
         </section>
 

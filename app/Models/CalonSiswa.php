@@ -22,12 +22,16 @@ class CalonSiswa extends Model
         'tempat_lahir',
         'tanggal_lahir',
         'asal_sekolah',
+        'nilai_tka_matematika',
+        'nilai_tka_bahasa_indonesia',
         'tahun_pendaftaran',
         'is_active',
     ];
 
     protected $casts = [
         'tanggal_lahir' => 'date',
+        'nilai_tka_matematika' => 'decimal:2',
+        'nilai_tka_bahasa_indonesia' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

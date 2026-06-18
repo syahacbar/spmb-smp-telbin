@@ -29,40 +29,8 @@
 
     <div class="page-title">
         <div>
-            <h3 class="fw-bold">Data User</h3>
-            <div class="text-muted">Kelola akun siswa dan verifikasi akses login.</div>
-        </div>
-        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#formTambahUser" aria-expanded="{{ $errors->any() ? 'true' : 'false' }}" aria-controls="formTambahUser">
-            <span aria-hidden="true">+</span>
-            <span>Tambah User</span>
-        </button>
-    </div>
-
-    <div class="collapse {{ $errors->any() ? 'show' : '' }}" id="formTambahUser">
-        <div class="card shadow-sm mb-3">
-            <div class="card-header">
-                <div class="fw-bold">Tambah User Siswa</div>
-                <div class="small text-muted">Password awal otomatis diset ke <strong>siswa123</strong>, lalu admin diarahkan ke form biodata pendaftaran.</div>
-            </div>
-            <div class="card-body">
-                <form method="post" action="{{ route('admin.pengguna.store') }}" class="row g-3 align-items-end">
-                    @csrf
-                    <div class="col-md-5">
-                        <label class="form-label">NISN</label>
-                        <input type="text" name="nisn" value="{{ old('nisn') }}" class="form-control form-control-lg" inputmode="numeric" maxlength="10" required>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label">Nomor WhatsApp Aktif</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text">+62</span>
-                            <input type="text" name="no_wa" value="{{ old('no_wa') }}" class="form-control" inputmode="numeric" placeholder="81234567890" required>
-                        </div>
-                    </div>
-                    <div class="col-md-2 d-grid">
-                        <button class="btn btn-primary btn-lg">Buat Akun</button>
-                    </div>
-                </form>
-            </div>
+            <h3 class="fw-bold">Verifikasi Registrasi Akun</h3>
+            <div class="text-muted">Periksa domisili dan Kartu Keluarga calon murid sebelum mengaktifkan akun.</div>
         </div>
     </div>
 
@@ -77,6 +45,7 @@
                         <th>Nama</th>
                         <th>Asal Sekolah</th>
                         <th>No Telpon</th>
+                        <th>Domisili & KK</th>
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
@@ -90,8 +59,9 @@
                             </select>
                         </th>
                         <th></th>
+                        <th></th>
                         <th>
-                            <select class="form-select form-select-sm column-filter" data-column="5" aria-label="Filter status">
+                            <select class="form-select form-select-sm column-filter" data-column="6" aria-label="Filter status">
                                 <option value="">Semua status</option>
                                 <option value="Aktif">Aktif</option>
                                 <option value="Menunggu">Menunggu</option>
@@ -104,9 +74,16 @@
                     <tbody>
                     @foreach($users as $user)
                         @php
+                            $registrasiStatus = $user->registrasiAkun?->status;
                             if ($user->is_active === false) {
                                 $statusLabel = 'Nonaktif';
                                 $statusOrder = 3;
+                            } elseif ($registrasiStatus === 'ditolak') {
+                                $statusLabel = 'Ditolak';
+                                $statusOrder = 5;
+                            } elseif ($registrasiStatus === 'perlu_perbaikan') {
+                                $statusLabel = 'Perlu Perbaikan';
+                                $statusOrder = 4;
                             } elseif ($user->is_verified) {
                                 $statusLabel = 'Aktif';
                                 $statusOrder = 1;
@@ -130,9 +107,37 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
+                            <td>
+                                @if($user->registrasiAkun)
+                                    <div class="small">
+                                        <strong>{{ $kelurahanNames[$user->registrasiAkun->kelurahan_id] ?? '-' }}</strong><br>
+                                        {{ $kecamatanNames[$user->registrasiAkun->kecamatan_id] ?? '-' }}<br>
+                                        <span class="text-muted">{{ $user->registrasiAkun->detail_alamat ?: '-' }}</span>
+                                    </div>
+                                    @if($user->registrasiAkun->kartuKeluargaTersedia())
+                                        <a href="{{ route('admin.registrasi.kk', $user->registrasiAkun) }}"
+                                           target="_blank"
+                                           class="btn btn-sm btn-outline-primary mt-1"
+                                           data-document-preview
+                                           data-document-title="Kartu Keluarga {{ $user->id_pengguna }}"
+                                           data-document-type="{{ $user->registrasiAkun->kartuKeluargaIsImage() ? 'image' : 'pdf' }}"
+                                           data-document-download="{{ route('admin.registrasi.kk', $user->registrasiAkun) }}">
+                                            Lihat KK
+                                        </a>
+                                    @else
+                                        <span class="badge text-bg-danger mt-1">KK tidak tersedia</span>
+                                    @endif
+                                @else
+                                    <span class="text-muted">Registrasi belum tersedia</span>
+                                @endif
+                            </td>
                             <td data-order="{{ $statusOrder }}" data-search="{{ $statusLabel }}">
                                 @if($user->is_active === false)
                                     <span class="badge text-bg-secondary">Nonaktif</span>
+                                @elseif($registrasiStatus === 'ditolak')
+                                    <span class="badge text-bg-danger">Ditolak</span>
+                                @elseif($registrasiStatus === 'perlu_perbaikan')
+                                    <span class="badge text-bg-info">Perlu Perbaikan</span>
                                 @elseif($user->is_verified)
                                     <span class="badge text-bg-success">Aktif</span>
                                     @if($user->verified_at)
@@ -140,6 +145,9 @@
                                     @endif
                                 @else
                                     <span class="badge text-bg-warning">Menunggu</span>
+                                @endif
+                                @if($user->registrasiAkun?->catatan_verifikasi)
+                                    <div class="small text-muted mt-1">{{ $user->registrasiAkun->catatan_verifikasi }}</div>
                                 @endif
                             </td>
                             <td>
@@ -154,7 +162,13 @@
                                         </button>
                                     </form>
 
-                                    @if($user->is_verified && $user->is_active && $phone)
+                                    @if(! $user->is_verified)
+                                        <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#statusVerifikasi{{ $loop->iteration }}" title="Tolak atau minta perbaikan">
+                                            Catatan
+                                        </button>
+                                    @endif
+
+                                    @if($phone && $user->registrasiAkun)
                                         <a href="{{ route('admin.pengguna.notifikasi-whatsapp', $user) }}" target="_blank" rel="noopener" class="btn btn-sm btn-success" aria-label="Kirim pemberitahuan WhatsApp kepada user {{ $user->id_pengguna }}" title="Kirim pemberitahuan akun aktif via WhatsApp">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                                 <path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
@@ -172,17 +186,6 @@
                                                 <path d="M18.4 6.7a8 8 0 1 1-12.8 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
                                             </svg>
                                             <span class="visually-hidden">{{ $user->is_active === false ? 'Aktifkan' : 'Nonaktifkan' }}</span>
-                                        </button>
-                                    </form>
-
-                                    <form method="post" action="{{ route('admin.pengguna.reset-password', $user) }}" class="mb-0">
-                                        @csrf
-                                        <button class="btn btn-sm btn-outline-info" data-confirm="Reset password user ini ke siswa123?" aria-label="Reset password user {{ $user->id_pengguna }}" title="Reset password">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                <circle cx="7.5" cy="14.5" r="3.5" stroke="currentColor" stroke-width="2"></circle>
-                                                <path d="M10.2 12 21 1.2M15 6.2l2.8 2.8M18.2 3l2.8 2.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                            </svg>
-                                            <span class="visually-hidden">Reset password</span>
                                         </button>
                                     </form>
 
@@ -208,6 +211,19 @@
                                         </button>
                                     </form>
                                 </div>
+                                @if(! $user->is_verified)
+                                    <div class="collapse mt-2" id="statusVerifikasi{{ $loop->iteration }}">
+                                        <form method="post" action="{{ route('admin.pengguna.status-verifikasi', $user) }}" class="border rounded p-2 bg-light" style="min-width: 260px">
+                                            @csrf
+                                            <select name="status" class="form-select form-select-sm mb-2" required>
+                                                <option value="perlu_perbaikan">Perlu perbaikan</option>
+                                                <option value="ditolak">Ditolak</option>
+                                            </select>
+                                            <textarea name="catatan" class="form-control form-control-sm mb-2" rows="2" placeholder="Catatan untuk calon murid" required></textarea>
+                                            <button class="btn btn-sm btn-danger">Simpan Status</button>
+                                        </form>
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -231,8 +247,8 @@
                 lengthMenu: [10, 25, 50, 100],
                 order: [[1, 'asc']],
                 columnDefs: [
-                    { orderable: false, searchable: false, targets: [0, 6] },
-                    { type: 'num', targets: 5 },
+                    { orderable: false, searchable: false, targets: [0, 7] },
+                    { type: 'num', targets: 6 },
                 ],
                 language: {
                     search: 'Cari:',

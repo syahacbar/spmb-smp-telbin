@@ -43,8 +43,6 @@ class Formulir extends Model
         'alamat_ortu_kabupaten',
         'alamat_ortu_kecamatan',
         'alamat_ortu_kelurahan',
-        'program_keahlian_1',
-        'program_keahlian_2',
         'surat_keterangan_lulus',
         'kartu_keluarga',
         'foto_selfie',

@@ -43,8 +43,6 @@
                         <th>NISN</th>
                         <th>Nama</th>
                         <th>Asal Sekolah</th>
-                        <th>Minat A</th>
-                        <th>Minat B</th>
                         <th>Foto</th>
                         <th>Tanggal Kirim</th>
                         <th>Aksi</th>
@@ -56,16 +54,6 @@
                         <th>
                             <select class="form-select form-select-sm column-filter" data-column="3" aria-label="Filter asal sekolah">
                                 <option value="">Semua sekolah</option>
-                            </select>
-                        </th>
-                        <th>
-                            <select class="form-select form-select-sm column-filter" data-column="4" aria-label="Filter minat A">
-                                <option value="">Semua minat A</option>
-                            </select>
-                        </th>
-                        <th>
-                            <select class="form-select form-select-sm column-filter" data-column="5" aria-label="Filter minat B">
-                                <option value="">Semua minat B</option>
                             </select>
                         </th>
                         <th></th>
@@ -80,8 +68,6 @@
                             <td>{{ $formulir->nisn }}</td>
                             <td>{{ $formulir->nama }}</td>
                             <td>{{ $formulir->asal_sekolah }}</td>
-                            <td>{{ $formulir->program_keahlian_1 }}</td>
-                            <td>{{ $formulir->program_keahlian_2 }}</td>
                             <td>
                                 <a href="{{ $formulir->berkasUrl('foto_selfie') }}" target="_blank">
                                     <img src="{{ $formulir->berkasUrl('foto_selfie') }}" class="doc-thumb" alt="Foto {{ $formulir->nama }}">

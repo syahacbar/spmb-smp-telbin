@@ -39,7 +39,7 @@ class EnsureSpmbAuthenticatedTest extends TestCase
         $response
             ->assertRedirect(route('login'))
             ->assertSessionHasErrors([
-                'nisn' => 'Akun anda belum diverifikasi oleh admin sekolah. Silakan menunggu proses verifikasi panitia SPMB.',
+                'nisn' => 'Akun anda belum diverifikasi oleh Dinas Pendidikan. Silakan pantau status registrasi akun.',
             ]);
         $this->assertFalse($session->has('pengguna_id'));
     }

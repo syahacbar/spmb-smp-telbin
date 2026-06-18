@@ -219,45 +219,6 @@ class FormReferenceSeeder extends Seeder
             }
         }
 
-        foreach ([
-            'SMP ADVENT TELUK BINTUNI',
-            'SMP HARMONI SCHOOL TERPADU BINTUNI',
-            'SMP MUHAMMADIYAH',
-            'SMP YPK BINTUNI',
-            'SMP YPPK SANTA MONIKA',
-            'SMP NEGERI I BINTUNI',
-            'SMP NEGERI TERPADU',
-            'SMP NEGERI 2 BINTUNI',
-            'SMP PERINTIS MANIMERI II',
-            'SMP PERINTIS KELAPA DUA',
-            'SMP STELLA MARIS TOFOI',
-            'SMP TAMAN BANGSA TOFOI',
-            'SMP YPK TANAH MERAH',
-            'SMP YPK BETHEL IDOOR',
-            'SMP NEGERI 1 ARANDAY',
-            'SMP NEGERI 2 ARANDAY',
-            'SMP NEGERI BABO',
-            'SMP NEGERI MERDEY',
-            'SMP NEGERI KURI SARBE',
-            'SMP NEGERI FRUATA FAFURWAR',
-            'SMP SATU ATAP KALITAMI',
-            'SMP SATU ATAP MEYERGA',
-            'SMP SATU ATAP WERIAGAR',
-            'SMP SATAP MUYEBA',
-            'SMPN WIMRO',
-            'SMPN SATAP HORNA',
-            'SMP NEGERI SATU ATAP JAGIRO',
-            'SMP PERINTIS STENGKOL I',
-            'SMP PERINTIS STENGKOL III',
-            'SMPN SIBENA',
-
-        ] as $index => $namaSekolah) {
-            DB::table('ref_sekolah_asal')->updateOrInsert(
-                ['nama' => $namaSekolah],
-                ['urutan' => $index + 1, 'created_at' => now(), 'updated_at' => now()],
-            );
-        }
-
         if (DB::table('ref_wilayah_provinsi')->whereNotNull('kode')->doesntExist()) {
             $wilayah = [
                 'Papua Barat' => [

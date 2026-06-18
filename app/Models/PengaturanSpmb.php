@@ -25,11 +25,11 @@ class PengaturanSpmb extends Model
             'kepala_nama' => 'Panitia SPMB',
             'kepala_nip' => '',
             'kepala_jabatan' => 'Panitia SPMB',
-            'kepala_ttd_path' => 'images/ttdketua.png',
+            'kepala_ttd_path' => '',
             'tanggal_tes' => '06 Juli 2026',
             'waktu_tes' => '08.00 WIT s.d. selesai',
-            'tempat_tes' => 'SMK Negeri 1 Bintuni',
-            'catatan_kartu' => "Peserta wajib mengikuti tahap wawancara dan pemetaan jurusan sesuai jadwal yang tercantum pada kartu ini.\nPeserta wajib mencetak dan membawa kartu pendaftaran sebagai bukti keikutsertaan.\nPeserta wajib mengenakan seragam SMP lengkap dan berpenampilan rapi.",
+            'tempat_tes' => 'Dinas Pendidikan Kabupaten Teluk Bintuni',
+            'catatan_kartu' => "Peserta wajib mengikuti tahapan SPMB sesuai jadwal resmi.\nPeserta wajib mencetak dan membawa kartu pendaftaran sebagai bukti keikutsertaan.\nPeserta wajib memantau pengumuman melalui portal SPMB.",
         ];
     }
 

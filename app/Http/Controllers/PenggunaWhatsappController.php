@@ -9,12 +9,8 @@ class PenggunaWhatsappController extends Controller
 {
     public function __invoke(Pengguna $pengguna): RedirectResponse
     {
-        if ($pengguna->level === 'Administrator') {
+        if (! $pengguna->isCalonMurid()) {
             abort(403);
-        }
-
-        if (! $pengguna->is_verified || ! $pengguna->is_active) {
-            return back()->with('warning', 'Notifikasi WhatsApp hanya dapat dikirim untuk akun yang sudah terverifikasi dan aktif.');
         }
 
         $phone = $this->normalizePhone((string) $pengguna->telpon);
@@ -23,7 +19,7 @@ class PenggunaWhatsappController extends Controller
             return back()->with('warning', 'Nomor WhatsApp calon siswa tidak valid atau belum tersedia.');
         }
 
-        $pengguna->loadMissing('calonSiswa');
+        $pengguna->loadMissing(['calonSiswa', 'registrasiAkun']);
 
         $nama = trim((string) ($pengguna->calonSiswa?->nama ?: $pengguna->nama_pengguna));
 
@@ -31,13 +27,33 @@ class PenggunaWhatsappController extends Controller
             $nama = 'Calon Siswa';
         }
 
+        $status = $pengguna->registrasiAkun?->status;
+        $statusMessage = match ($status) {
+            'terverifikasi' => [
+                "Akun SPMB Anda dengan NISN {$pengguna->id_pengguna} telah diverifikasi dan aktif.",
+                'Silakan login ke portal SPMB SMP Kabupaten Teluk Bintuni untuk melanjutkan pendaftaran.',
+            ],
+            'perlu_perbaikan' => [
+                "Registrasi akun SPMB dengan NISN {$pengguna->id_pengguna} perlu diperbaiki.",
+                'Catatan: '.($pengguna->registrasiAkun?->catatan_verifikasi ?: '-'),
+                'Silakan login untuk memperbaiki alamat atau Kartu Keluarga.',
+            ],
+            'ditolak' => [
+                "Registrasi akun SPMB dengan NISN {$pengguna->id_pengguna} belum dapat disetujui.",
+                'Catatan: '.($pengguna->registrasiAkun?->catatan_verifikasi ?: '-'),
+                'Silakan menghubungi Admin Dinas jika membutuhkan penjelasan.',
+            ],
+            default => [
+                "Registrasi akun SPMB dengan NISN {$pengguna->id_pengguna} sedang menunggu verifikasi Dinas Pendidikan.",
+            ],
+        };
+
         $message = implode("\n", [
             "Halo, {$nama}",
             '',
-            "Akun SPMB Anda dengan NISN {$pengguna->id_pengguna} telah aktif.",
-            'Silahkan login di spmb.smkn1bintuni.sch.id/login untuk mengisi biodata dan melengkapi berkas persyaratan.',
+            ...$statusMessage,
             '',
-            'Panitia SPMB SMK Negeri 1 Bintuni',
+            'Dinas Pendidikan Kabupaten Teluk Bintuni',
         ]);
 
         return redirect()->away('https://wa.me/'.$phone.'?text='.rawurlencode($message));

@@ -1,7 +1,7 @@
 @php
     $whatsapp = (string) ($whatsapp ?? config('services.spmb.panitia_whatsapp', '6281111110002'));
     $whatsappPhone = preg_replace('/\D+/', '', $whatsapp);
-    $whatsappMessage = 'Halo Panitia SPMB SMK Negeri 1 Bintuni, saya ingin bertanya tentang pendaftaran SPMB 2026.';
+    $whatsappMessage = 'Halo Admin SPMB SMP Kabupaten Teluk Bintuni, saya ingin bertanya tentang pendaftaran SPMB.';
     $whatsappUrl = 'https://wa.me/'.$whatsappPhone.'?text='.rawurlencode($whatsappMessage);
 @endphp
 <!DOCTYPE html>
@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SPMB SMKN 1 Bintuni</title>
+    <title>SPMB SMP Kabupaten Teluk Bintuni</title>
     <style>
         html {
             scroll-behavior: smooth;
@@ -966,8 +966,8 @@
     <section class="hero" id="beranda">
         <nav>
             <div class="brand">
-                <img src="{{ asset('landing/assets/logo.png') }}" alt="Logo SMK Negeri 1 Bintuni">
-                <span>SMK NEGERI 1 BINTUNI</span>
+                <img src="{{ asset('images/logotelukbintuni.png') }}" alt="Logo Kabupaten Teluk Bintuni">
+                <span>SPMB SMP KABUPATEN TELUK BINTUNI</span>
             </div>
             <div class="menu">
                 <a href="#beranda">Beranda</a>
@@ -975,7 +975,7 @@
                 <a href="#persyaratan">Persyaratan</a>
                 <a href="#kuota">Kuota</a>
                 <a href="#cek-status">Cek Status SPMB</a>
-                <a class="login" href="#">Login</a>
+                <a class="login" href="{{ route('login') }}">Login</a>
             </div>
         </nav>
 
@@ -983,7 +983,7 @@
             <h1>SISTEM<br>PENERIMAAN<br><span class="yellow">MURID BARU</span></h1>
             <h3>TAHUN AJARAN 2026/2027</h3>
             <div class="hero-actions">
-                <a class="hero-cta" href="#">Daftar Akun SPMB</a>
+                <a class="hero-cta" href="{{ route('register') }}">Daftar Akun SPMB</a>
                 <a class="hero-link" href="#cek-status">Cek Status</a>
             </div>
         </div>
@@ -1002,8 +1002,8 @@
         <div class="wrap">
             <h2>Informasi SPMB 2026</h2>
             <div class="banner-frame">
-                <button class="banner-button" type="button" data-open-image="{{ asset('landing/assets/banner-spmb-2026.jpg') }}" aria-label="Lihat brosur SPMB 2026 ukuran penuh">
-                    <img src="{{ asset('landing/assets/banner-spmb-2026.jpg') }}" alt="Banner SPMB 2026">
+                <button class="banner-button" type="button" data-open-image="{{ asset('landing/assets/brosur-spmb-smp-teluk-bintuni-2026.png') }}" aria-label="Lihat brosur SPMB SMP Kabupaten Teluk Bintuni ukuran penuh">
+                    <img src="{{ asset('landing/assets/brosur-spmb-smp-teluk-bintuni-2026.png') }}" alt="Brosur SPMB SMP Kabupaten Teluk Bintuni Tahun Ajaran 2026/2027">
                 </button>
             </div>
         </div>
@@ -1129,8 +1129,8 @@
                     <div class="requirement-card">
                         <div class="requirement-number">02</div>
                         <div>
-                            <h3>Ijazah SMP/Sederajat</h3>
-                            <p>Melampirkan fotokopi ijazah atau dokumen kelulusan yang setara.</p>
+                            <h3>Ijazah SD/Sederajat</h3>
+                            <p>Melampirkan ijazah atau dokumen kelulusan SD/sederajat yang setara.</p>
                         </div>
                     </div>
                     <div class="requirement-card">
@@ -1154,53 +1154,12 @@
 
     <section id="kuota" class="section">
         <div class="wrap">
-            <h2>Kuota Program Keahlian</h2>
+            <h2>Jalur Pendaftaran</h2>
             <div class="grid">
-                <div class="quota-card">
-                    <div class="quota-media">
-                        <img src="{{ asset('images/programkeahlian/AKL.png') }}" alt="Akuntansi dan Keuangan Lembaga">
-                    </div>
-                    <div class="quota-body">
-                        <h3>Akuntansi dan Keuangan Lembaga</h3>
-                        <div class="quota-total">72 Siswa</div>
-                    </div>
-                </div>
-                <div class="quota-card">
-                    <div class="quota-media">
-                        <img src="{{ asset('images/programkeahlian/TKR.png') }}" alt="Teknik Kendaraan Ringan">
-                    </div>
-                    <div class="quota-body">
-                        <h3>Teknik Kendaraan Ringan</h3>
-                        <div class="quota-total">36 Siswa</div>
-                    </div>
-                </div>
-                <div class="quota-card">
-                    <div class="quota-media">
-                        <img src="{{ asset('images/programkeahlian/TKJ.png') }}" alt="Teknik Komputer Jaringan">
-                    </div>
-                    <div class="quota-body">
-                        <h3>Teknik Komputer Jaringan</h3>
-                        <div class="quota-total">36 Siswa</div>
-                    </div>
-                </div>
-                <div class="quota-card">
-                    <div class="quota-media">
-                        <img src="{{ asset('images/programkeahlian/DKV.png') }}" alt="Desain Komunikasi Visual">
-                    </div>
-                    <div class="quota-body">
-                        <h3>Desain Komunikasi Visual</h3>
-                        <div class="quota-total">36 Siswa</div>
-                    </div>
-                </div>
-                <div class="quota-card">
-                    <div class="quota-media">
-                        <img src="{{ asset('images/programkeahlian/TSM.png') }}" alt="Teknik Sepeda Motor">
-                    </div>
-                    <div class="quota-body">
-                        <h3>Teknik Sepeda Motor</h3>
-                        <div class="quota-total">36 Siswa</div>
-                    </div>
-                </div>
+                <div class="card"><h3>Jalur Domisili</h3><p>Pilihan SMP berdasarkan wilayah domisili yang telah diverifikasi melalui Kartu Keluarga.</p></div>
+                <div class="card"><h3>Jalur Prestasi</h3><p>Pilihan lintas domisili dengan pemeringkatan berdasarkan nilai TKA.</p></div>
+                <div class="card"><h3>Jalur Afirmasi</h3><p>Untuk keluarga tidak mampu, penyandang disabilitas, dan kelompok khusus sesuai ketentuan.</p></div>
+                <div class="card"><h3>Jalur Mutasi</h3><p>Untuk calon murid yang mengikuti perpindahan tugas atau pekerjaan orang tua/wali.</p></div>
             </div>
         </div>
     </section>
@@ -1238,6 +1197,27 @@
                         <div class="status-alert success">
                             <strong>NISN {{ session('status_nisn') }} sudah memiliki akun SPMB.</strong>
                             Silakan login untuk melanjutkan proses pendaftaran.
+                        </div>
+                    @elseif(session('status_result') === 'menunggu_verifikasi')
+                        <div class="status-alert info">
+                            <strong>Akun NISN {{ session('status_nisn') }} sedang menunggu verifikasi.</strong>
+                            Data alamat dan Kartu Keluarga sedang diperiksa oleh Dinas Pendidikan.
+                        </div>
+                    @elseif(session('status_result') === 'terverifikasi')
+                        <div class="status-alert success">
+                            <strong>Akun NISN {{ session('status_nisn') }} sudah terverifikasi.</strong>
+                            Akun sudah aktif. Silakan login untuk melanjutkan pendaftaran.
+                        </div>
+                    @elseif(session('status_result') === 'perlu_perbaikan')
+                        <div class="status-alert warning">
+                            <strong>Registrasi NISN {{ session('status_nisn') }} perlu diperbaiki.</strong>
+                            Silakan login untuk membaca catatan dan memperbaiki data.
+                            @if(session('status_note'))<div class="mt-2"><b>Catatan:</b> {{ session('status_note') }}</div>@endif
+                        </div>
+                    @elseif(session('status_result') === 'ditolak')
+                        <div class="status-alert warning">
+                            <strong>Registrasi NISN {{ session('status_nisn') }} ditolak.</strong>
+                            @if(session('status_note'))<div><b>Catatan:</b> {{ session('status_note') }}</div>@endif
                         </div>
                     @elseif(session('status_result') === 'not_registered')
                         <div class="status-alert info">
@@ -1285,7 +1265,7 @@
         <img src="" alt="Brosur SPMB 2026 ukuran penuh">
     </div>
 
-    <footer>2026 - Panitia SPMB SMK Negeri 1 Bintuni</footer>
+    <footer>2026 - Dinas Pendidikan Kabupaten Teluk Bintuni</footer>
 
     <a class="wa" href="{{ $whatsappUrl }}" target="_blank" rel="noopener">WhatsApp Panitia</a>
 
@@ -1400,7 +1380,8 @@
                 });
                 const data = await response.json();
 
-                renderStatusAlert(data.type || 'error', data.title || 'Pengecekan belum berhasil.', data.messages || data.message);
+                const statusMessage = data.note ? `${data.message} Catatan: ${data.note}` : (data.messages || data.message);
+                renderStatusAlert(data.type || 'error', data.title || 'Pengecekan belum berhasil.', statusMessage);
 
                 if (captchaQuestion && data.captcha_question) {
                     captchaQuestion.textContent = `${data.captcha_question} = ?`;

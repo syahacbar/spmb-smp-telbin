@@ -7,10 +7,10 @@
             <div class="row align-items-center justify-content-center g-4 g-xl-5">
                 <div class="col-lg-6 auth-copy">
                     <div class="auth-school-badge mb-4">
-                        <img src="{{ asset('images/logobintuni.jpeg') }}" alt="Logo" class="auth-logo">
+                        <img src="{{ asset('images/logotelukbintuni.png') }}" alt="Logo Kabupaten Teluk Bintuni" class="auth-logo">
                         <div>
                             <div class="auth-kicker">Portal Resmi SPMB</div>
-                            <div class="auth-school-name">SMK Negeri 1 Bintuni</div>
+                            <div class="auth-school-name">SMP Kabupaten Teluk Bintuni</div>
                         </div>
                     </div>
 
@@ -59,7 +59,7 @@
                                 </div>
                             @endif
 
-                            <form method="post" action="{{ route('register.store') }}">
+                            <form method="post" action="{{ route('register.store') }}" enctype="multipart/form-data">
                                 @csrf
                                 <div class="mb-3">
                                     <label class="form-label">NISN</label>
@@ -79,6 +79,56 @@
                                 </div>
 
                                 <div data-account-fields class="{{ $showAccountFields ? '' : 'd-none' }}">
+                                    <div class="card border-success bg-success-subtle mb-3">
+                                        <div class="card-body">
+                                            <div class="small text-uppercase fw-bold text-success mb-2">Identitas Ditemukan</div>
+                                            <div class="row g-2 small">
+                                                <div class="col-12"><span class="text-muted">Nama:</span> <strong data-student-name>{{ $calonSiswa?->nama }}</strong></div>
+                                                <div class="col-md-6"><span class="text-muted">Tempat Lahir:</span> <strong data-student-birthplace>{{ $calonSiswa?->tempat_lahir }}</strong></div>
+                                                <div class="col-md-6"><span class="text-muted">Tanggal Lahir:</span> <strong data-student-birthdate>{{ $calonSiswa?->tanggal_lahir?->translatedFormat('d F Y') }}</strong></div>
+                                                <div class="col-12"><span class="text-muted">Asal Sekolah:</span> <strong data-student-school>{{ $calonSiswa?->asal_sekolah }}</strong></div>
+                                            </div>
+                                            <div class="form-text mt-2">Identitas berasal dari whitelist resmi dan tidak dapat diubah saat registrasi.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Kabupaten</label>
+                                        <input type="text" class="form-control form-control-lg" value="Teluk Bintuni" disabled>
+                                    </div>
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Distrik/Kecamatan</label>
+                                            <select name="kecamatan_id" class="form-select form-select-lg" data-kecamatan @if($showAccountFields) required @endif>
+                                                <option value="">Pilih distrik</option>
+                                                @foreach($kecamatanOptions as $kecamatan)
+                                                    <option value="{{ $kecamatan->id }}" @selected((string) old('kecamatan_id') === (string) $kecamatan->id)>{{ $kecamatan->nama }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Kelurahan/Kampung</label>
+                                            <select name="kelurahan_id" class="form-select form-select-lg" data-kelurahan data-selected="{{ old('kelurahan_id') }}" @if($showAccountFields) required @endif>
+                                                <option value="">Pilih kampung</option>
+                                                @foreach($kelurahanOptions as $kelurahan)
+                                                    <option value="{{ $kelurahan->id }}" data-kecamatan="{{ $kelurahan->kecamatan_id }}" @selected((string) old('kelurahan_id') === (string) $kelurahan->id)>{{ $kelurahan->nama }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Detail Alamat Domisili</label>
+                                        <textarea name="detail_alamat" class="form-control" rows="3" placeholder="Jalan, RT/RW, patokan, atau detail alamat lainnya" @if($showAccountFields) required @endif>{{ old('detail_alamat') }}</textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Kartu Keluarga</label>
+                                        <input type="file" name="kartu_keluarga" class="form-control form-control-lg" accept=".pdf,.jpg,.jpeg,.png,.webp" @if($showAccountFields) required @endif>
+                                        <div class="form-text">PDF atau gambar, maksimal 2 MB. Dokumen digunakan untuk verifikasi domisili oleh Dinas Pendidikan.</div>
+                                    </div>
+
                                     <div class="mb-3">
                                         <label class="form-label">Nomor WhatsApp Aktif</label>
                                         <div class="input-group input-group-lg">
@@ -137,6 +187,29 @@
         const checkButton = document.querySelector('[data-check-nisn-url]');
         const resultBox = document.querySelector('[data-nisn-result]');
         const accountFields = document.querySelector('[data-account-fields]');
+        const studentName = document.querySelector('[data-student-name]');
+        const studentBirthplace = document.querySelector('[data-student-birthplace]');
+        const studentBirthdate = document.querySelector('[data-student-birthdate]');
+        const studentSchool = document.querySelector('[data-student-school]');
+        const kecamatanSelect = document.querySelector('[data-kecamatan]');
+        const kelurahanSelect = document.querySelector('[data-kelurahan]');
+        const kelurahanOptions = kelurahanSelect ? Array.from(kelurahanSelect.querySelectorAll('option[data-kecamatan]')) : [];
+
+        function filterKelurahan() {
+            const kecamatanId = kecamatanSelect?.value || '';
+            kelurahanOptions.forEach((option) => {
+                option.hidden = option.dataset.kecamatan !== kecamatanId;
+                option.disabled = option.hidden;
+            });
+
+            const selected = kelurahanSelect?.selectedOptions[0];
+            if (selected?.disabled) {
+                kelurahanSelect.value = '';
+            }
+        }
+
+        kecamatanSelect?.addEventListener('change', filterKelurahan);
+        filterKelurahan();
 
         function setAccountFieldsEnabled(enabled) {
             if (! accountFields) {
@@ -144,8 +217,10 @@
             }
 
             accountFields.classList.toggle('d-none', ! enabled);
-            accountFields.querySelectorAll('input').forEach((input) => {
-                input.required = enabled;
+            accountFields.querySelectorAll('input, select, textarea').forEach((field) => {
+                if (! field.disabled) {
+                    field.required = enabled;
+                }
             });
 
             if (nisnInput) {
@@ -202,6 +277,10 @@
 
                 if (data.ok) {
                     showNisnResult('success', data.message);
+                    if (studentName) studentName.textContent = data.student?.nama || '-';
+                    if (studentBirthplace) studentBirthplace.textContent = data.student?.tempat_lahir || '-';
+                    if (studentBirthdate) studentBirthdate.textContent = data.student?.tanggal_lahir || '-';
+                    if (studentSchool) studentSchool.textContent = data.student?.asal_sekolah || '-';
                     setAccountFieldsEnabled(true);
                     accountFields?.querySelector('input[name="no_wa"]')?.focus();
                 } else {

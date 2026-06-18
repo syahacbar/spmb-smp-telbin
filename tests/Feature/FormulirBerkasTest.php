@@ -92,7 +92,7 @@ class FormulirBerkasTest extends TestCase
         $method = new \ReflectionMethod(FormulirController::class, 'deleteDocumentFiles');
         $method->invoke(app(FormulirController::class), [
             'kartu_keluarga' => 'dokumen/lama.pdf',
-            'aset_bawaan' => 'images/kop.jpg',
+            'aset_bawaan' => 'landing/assets/hero.jpg',
             'file_lain' => 'file-lain.pdf',
         ]);
 

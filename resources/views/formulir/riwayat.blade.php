@@ -106,12 +106,6 @@
 
                     <aside class="history-side">
                         <section class="history-side-panel">
-                            <div class="history-section-title">Program Keahlian</div>
-                            <div class="program-pill">{{ $formulir->program_keahlian_1 }}</div>
-                            <div class="program-pill">{{ $formulir->program_keahlian_2 }}</div>
-                        </section>
-
-                        <section class="history-side-panel">
                             <div class="history-section-title">Berkas</div>
                             <div class="document-list">
                                 @foreach([

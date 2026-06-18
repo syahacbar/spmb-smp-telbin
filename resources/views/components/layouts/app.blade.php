@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'SPMB SMKN 1 Bintuni' }}</title>
+    <title>{{ $title ?? 'SPMB SMP Kabupaten Teluk Bintuni' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
         <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
@@ -787,18 +787,18 @@
             inset: 0;
             background:
                 linear-gradient(135deg, rgba(185, 28, 28, .94), rgba(127, 29, 29, .84)),
-                url("{{ asset('images/kop.jpg') }}") center/cover;
+                url("{{ asset('landing/assets/hero.jpg') }}") center/cover;
             z-index: -2;
         }
         .login-auth-page::before {
             background:
                 linear-gradient(110deg, rgba(15, 23, 42, .86) 0%, rgba(30, 64, 175, .76) 48%, rgba(14, 116, 144, .56) 100%),
-                url("{{ asset('images/login-vokasi-bg.png') }}") center/cover;
+                url("{{ asset('landing/assets/hero.jpg') }}") center/cover;
         }
         .register-auth-page::before {
             background:
                 linear-gradient(110deg, rgba(15, 23, 42, .86) 0%, rgba(30, 64, 175, .74) 48%, rgba(14, 116, 144, .56) 100%),
-                url("{{ asset('images/register-vokasi-bg.png') }}") center/cover;
+                url("{{ asset('landing/assets/hero.jpg') }}") center/cover;
         }
         .login-auth-page,
         .register-auth-page {
@@ -1055,9 +1055,9 @@
     <nav class="navbar">
         <div class="container-fluid flex-column flex-md-row align-items-stretch align-items-md-center gap-2 px-3 px-md-4">
             <a class="topbar-brand" href="{{ route('dashboard') }}">
-                <img src="{{ asset('images/logobintuni.jpeg') }}" alt="Logo" class="topbar-logo">
+                <img src="{{ asset('images/logotelukbintuni.png') }}" alt="Logo Kabupaten Teluk Bintuni" class="topbar-logo">
                 <span>
-                    <span class="topbar-brand-title">SPMB SMK Negeri 1 Bintuni</span>
+                    <span class="topbar-brand-title">SPMB SMP Kabupaten Teluk Bintuni</span>
                     <span class="topbar-brand-subtitle">Sistem Penerimaan Murid Baru</span>
                 </span>
             </a>
@@ -1077,7 +1077,7 @@
                     </span>
                     <div class="d-none d-sm-block">
                         <div class="topbar-user-name">{{ $namaPengguna }}</div>
-                        <div class="topbar-role">{{ $pengguna->level }}</div>
+                        <div class="topbar-role">{{ $pengguna->roleLabel() }}</div>
                     </div>
                     <form action="{{ route('logout') }}" method="post" class="mb-0">
                         @csrf
@@ -1094,7 +1094,7 @@
         <div class="row min-vh-100">
             <aside class="col-md-3 col-lg-2 sidebar p-3">
                 <a class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dasbor</a>
-                @if($pengguna->level === 'Administrator')
+                @if($pengguna->isAdminDinas())
                     <a class="sidebar-link {{ request()->routeIs('admin.pendaftar') ? 'active' : '' }}" href="{{ route('admin.pendaftar') }}">Data Registrasi</a>
                     <a class="sidebar-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}" href="{{ route('admin.pengguna') }}">Data User</a>
                     <a class="sidebar-link {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}" href="{{ route('admin.pengaturan') }}">Pengaturan SPMB</a>

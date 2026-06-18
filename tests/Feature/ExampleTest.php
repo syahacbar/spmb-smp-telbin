@@ -15,7 +15,7 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('SPMB SMK Negeri 1 Bintuni');
+        $response->assertSee('SPMB SMP KABUPATEN TELUK BINTUNI');
         $response->assertSee(route('login'), false);
         $response->assertSee('href="#cek-status"', false);
         $response->assertSee('Cek Status Sekarang');

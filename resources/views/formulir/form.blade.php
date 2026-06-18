@@ -1,8 +1,6 @@
 <x-layouts.app :pengguna="$pengguna" title="Formulir Registrasi">
     @php
         $isEdit = $formulir->exists;
-        $programs = $programs ?? [];
-        $programsSecond = $programsSecond ?? [];
         $pekerjaanAyah = ['PNS', 'TNI/Polri', 'Pedagang', 'Petani', 'Nelayan', 'Buruh Bangunan', 'Kontraktor', 'Pegawai Swasta', 'Wiraswasta', 'Lainnya', 'Tidak Ada Pekerjaan'];
         $pekerjaanIbu = ['PNS', 'Ibu Rumah Tangga', 'Pedagang', 'Petani', 'Pegawai Swasta', 'Wiraswasta',  'Lainnya', 'Tidak Ada'];
         $tanggalLahirMaksimal = now()->subYears(13)->format('Y-m-d');
@@ -26,7 +24,7 @@
         $documentGuides = [
             'surat_keterangan_lulus' => [
                 'label' => 'Ijazah / SKL',
-                'description' => 'Ijazah SMP/Sederajat atau Surat Keterangan Lulus.',
+                'description' => 'Ijazah SD/Sederajat atau Surat Keterangan Lulus.',
                 'hint' => 'Format PDF, JPG, JPEG, PNG, atau WEBP, maksimal 1 MB. Tulisan harus jelas dan terbaca.',
                 'accept' => '.pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp',
             ],
@@ -39,7 +37,7 @@
             'foto_selfie' => [
                 'label' => 'Pas Foto',
                 'description' => 'Pas foto ukuran 3x4 dengan latar belakang biru.',
-                'hint' => 'Format *.jpg, *.jpeg, atau *.png, maksimal 1 MB. Proporsi wajah 60%, menggunakan seragam SMA dan berdasi.',
+                'hint' => 'Format *.jpg, *.jpeg, atau *.png, maksimal 1 MB. Wajah harus terlihat jelas.',
                 'accept' => '.jpg,.jpeg,.png,image/jpeg,image/png',
             ],
         ];
@@ -48,7 +46,7 @@
     <div class="page-title">
         <div>
             <h3 class="fw-bold">{{ $isEdit ? 'Edit Formulir Registrasi' : 'Formulir Registrasi' }}</h3>
-            <div class="text-muted">Lengkapi data diri, orang tua, minat program keahlian, dan berkas pendaftaran.</div>
+            <div class="text-muted">Lengkapi biodata dan berkas dasar. Pemilihan jalur serta sekolah dilakukan pada tahap berikutnya.</div>
         </div>
     </div>
 
@@ -86,15 +84,8 @@
                         <small>Kontak keluarga</small>
                     </div>
                 </a>
-                <a href="#program-keahlian" class="registration-nav-link">
-                    <span>3</span>
-                    <div>
-                        <strong>Program Keahlian</strong>
-                        <small>Minat jurusan</small>
-                    </div>
-                </a>
                 <a href="#upload-dokumen" class="registration-nav-link">
-                    <span>4</span>
+                    <span>3</span>
                     <div>
                         <strong>Unggah Dokumen</strong>
                         <small>Berkas persyaratan</small>
@@ -287,37 +278,9 @@
                     </div>
                 </section>
 
-                <section id="program-keahlian" class="card shadow-sm mb-3 form-section">
-                    <div class="card-header">
-                        <span class="section-number">3</span>
-                        <div>
-                            <div class="fw-bold">Pilihan Program Keahlian</div>
-                            <div class="small text-muted">Pilih dua program keahlian yang diminati.</div>
-                        </div>
-                    </div>
-                    <div class="card-body row g-3">
-                        <div class="col-md-6">
-                            <select name="program_keahlian_1" class="form-select" data-program-choice data-field-label="Pilih program keahlian" aria-label="Pilih program keahlian A" required>
-                                <option value="">--Pilih salah satu--</option>
-                                @foreach($programs as $option)
-                                    <option value="{{ $option }}" @selected(old('program_keahlian_1', $formulir->program_keahlian_1) === $option)>{{ $option }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <select name="program_keahlian_2" class="form-select" data-program-choice data-field-label="Pilih program keahlian" aria-label="Pilih program keahlian B" required>
-                                <option value="">--Pilih salah satu--</option>
-                                @foreach($programsSecond as $option)
-                                    <option value="{{ $option }}" @selected(old('program_keahlian_2', $formulir->program_keahlian_2) === $option)>{{ $option }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </section>
-
                 <section id="upload-dokumen" class="card shadow-sm mb-3 form-section">
                     <div class="card-header">
-                        <span class="section-number">4</span>
+                        <span class="section-number">3</span>
                         <div>
                             <div class="fw-bold">Unggah Dokumen</div>
                             <div class="small text-muted">Siapkan file hasil scan sesuai ketentuan juknis.</div>
@@ -677,18 +640,6 @@
                 return true;
             };
 
-            const validatePrograms = function () {
-                const first = form.querySelector('[name="program_keahlian_1"]');
-                const second = form.querySelector('[name="program_keahlian_2"]');
-
-                if (! first || ! second || ! first.value || ! second.value || first.value !== second.value) {
-                    return true;
-                }
-
-                setError(second, 'Dua minat program keahlian harus berbeda.');
-                return false;
-            };
-
             const validateControl = function (control) {
                 const label = getLabel(control);
 
@@ -723,9 +674,6 @@
                 control.addEventListener(control.type === 'file' ? 'change' : 'input', function () {
                     validateControl(control);
 
-                    if (control.dataset.programChoice !== undefined) {
-                        validatePrograms();
-                    }
                 });
 
                 control.addEventListener('blur', function () {
@@ -757,10 +705,6 @@
                         isValid = false;
                     }
                 });
-
-                if (! validatePrograms()) {
-                    isValid = false;
-                }
 
                 if (! isValid) {
                     event.preventDefault();

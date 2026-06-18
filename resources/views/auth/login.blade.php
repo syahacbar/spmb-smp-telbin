@@ -4,15 +4,15 @@
             <div class="row align-items-center justify-content-center g-4 g-xl-5">
                 <div class="col-lg-6 auth-copy">
                     <div class="auth-school-badge mb-4">
-                        <img src="{{ asset('images/logobintuni.jpeg') }}" alt="Logo" class="auth-logo">
+                        <img src="{{ asset('images/logotelukbintuni.png') }}" alt="Logo Kabupaten Teluk Bintuni" class="auth-logo">
                         <div>
                             <div class="auth-kicker">Portal Resmi SPMB</div>
-                            <div class="auth-school-name">SMK Negeri 1 Bintuni</div>
+                            <div class="auth-school-name">SMP Kabupaten Teluk Bintuni</div>
                         </div>
                     </div>
 
                     <h1 class="fw-bold">Sistem Penerimaan Murid Baru (SPMB)</h1>
-                    <p class="mt-3 mb-4">Selamat datang di layanan pendaftaran online SMK Negeri 1 Bintuni.</p>
+                    <p class="mt-3 mb-4">Selamat datang di portal pendaftaran SMP se-Kabupaten Teluk Bintuni.</p>
 
                     <div class="auth-info-grid">
                         <div class="auth-feature">

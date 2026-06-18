@@ -7,6 +7,8 @@ use App\Http\Controllers\FormulirBerkasController;
 use App\Http\Controllers\FormulirController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PenggunaWhatsappController;
+use App\Http\Controllers\RegistrasiAkunBerkasController;
+use App\Http\Controllers\RegistrasiAkunController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -14,6 +16,9 @@ Route::post('/cek-status', [LandingController::class, 'checkStatus'])
     ->middleware('throttle:spmb-status')
     ->name('status.check');
 Route::get('/cek-status', fn () => redirect('/#cek-status'));
+Route::get('/akun/status', [RegistrasiAkunController::class, 'show'])->name('akun.status');
+Route::put('/akun/perbaikan', [RegistrasiAkunController::class, 'update'])->name('akun.perbaikan');
+Route::post('/akun/logout', [AuthController::class, 'logout'])->name('akun.logout');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'login'])->name('login');
@@ -47,13 +52,9 @@ Route::middleware('spmb.auth')->group(function (): void {
     Route::middleware('spmb.admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/pendaftar', [AdminController::class, 'pendaftar'])->name('pendaftar');
         Route::get('/pengguna', [AdminController::class, 'pengguna'])->name('pengguna');
-        Route::post('/pengguna', [AdminController::class, 'storePengguna'])->name('pengguna.store');
         Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
         Route::get('/pengaturan/tanda-tangan', [AdminController::class, 'showSignature'])->name('pengaturan.signature.show');
         Route::post('/pengaturan/identitas', [AdminController::class, 'updateIdentitas'])->name('pengaturan.identitas');
-        Route::post('/pengaturan/program-keahlian', [AdminController::class, 'updateProgramKeahlian'])->name('pengaturan.program.update');
-        Route::post('/pengaturan/program-keahlian/tambah', [AdminController::class, 'storeProgramKeahlian'])->name('pengaturan.program.store');
-        Route::delete('/pengaturan/program-keahlian/{program}', [AdminController::class, 'destroyProgramKeahlian'])->name('pengaturan.program.destroy');
         Route::post('/pengaturan/whitelist-calon-siswa/import', [AdminController::class, 'importCalonSiswa'])->name('pengaturan.whitelist.import');
         Route::post('/pengaturan/whitelist-calon-siswa/aktifkan', [AdminController::class, 'activateCalonSiswaWhitelist'])->name('pengaturan.whitelist.activate');
         Route::post('/pengaturan/whitelist-calon-siswa/nonaktifkan', [AdminController::class, 'deactivateCalonSiswaWhitelist'])->name('pengaturan.whitelist.deactivate');
@@ -62,9 +63,10 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::post('/pengaturan/kontak-panitia/{kontak}/utama', [AdminController::class, 'setKontakPanitiaUtama'])->name('pengaturan.kontak.primary');
         Route::delete('/pengaturan/kontak-panitia/{kontak}', [AdminController::class, 'destroyKontakPanitia'])->name('pengaturan.kontak.destroy');
         Route::post('/pengguna/{pengguna}/verifikasi', [AdminController::class, 'verifikasiPengguna'])->name('pengguna.verifikasi');
+        Route::post('/pengguna/{pengguna}/status-verifikasi', [AdminController::class, 'updateStatusVerifikasiPengguna'])->name('pengguna.status-verifikasi');
+        Route::get('/registrasi-akun/{registrasi}/kartu-keluarga', RegistrasiAkunBerkasController::class)->name('registrasi.kk');
         Route::get('/pengguna/{pengguna}/notifikasi-whatsapp', PenggunaWhatsappController::class)->name('pengguna.notifikasi-whatsapp');
         Route::post('/pengguna/{pengguna}/toggle-active', [AdminController::class, 'togglePenggunaAktif'])->name('pengguna.toggle-active');
-        Route::post('/pengguna/{pengguna}/reset-password', [AdminController::class, 'resetPasswordPengguna'])->name('pengguna.reset-password');
         Route::delete('/pengguna/{pengguna}', [AdminController::class, 'destroyPengguna'])->name('pengguna.destroy');
         Route::get('/pengguna/{pengguna}/formulir', [FormulirController::class, 'adminCreate'])->name('pengguna.formulir.create');
         Route::post('/pengguna/{pengguna}/formulir', [FormulirController::class, 'adminStore'])->name('pengguna.formulir.store');

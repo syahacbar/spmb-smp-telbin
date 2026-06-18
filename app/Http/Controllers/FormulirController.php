@@ -6,7 +6,6 @@ use App\Models\CalonSiswa;
 use App\Models\Formulir;
 use App\Models\PengaturanSpmb;
 use App\Models\Pengguna;
-use App\Models\ProgramKeahlian;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -102,7 +101,7 @@ class FormulirController extends Controller
 
         $this->authorizeFormulir($pengguna, $formulir);
 
-        if ($pengguna->level !== 'Administrator' && $formulir->isSubmitted()) {
+        if (! $pengguna->isAdminDinas() && $formulir->isSubmitted()) {
             return redirect()->route('formulir.riwayat')->with('warning', 'Formulir yang sudah dikirim final tidak dapat diedit.');
         }
 
@@ -121,7 +120,7 @@ class FormulirController extends Controller
     {
         $admin = $request->attributes->get('pengguna');
 
-        if ($pengguna->level === 'Administrator') {
+        if ($pengguna->isAdminDinas()) {
             abort(403);
         }
 
@@ -146,7 +145,7 @@ class FormulirController extends Controller
 
     public function adminStore(Request $request, Pengguna $pengguna): RedirectResponse
     {
-        if ($pengguna->level === 'Administrator') {
+        if ($pengguna->isAdminDinas()) {
             abort(403);
         }
 
@@ -189,7 +188,7 @@ class FormulirController extends Controller
 
         $this->authorizeFormulir($pengguna, $formulir);
 
-        if ($pengguna->level !== 'Administrator' && $formulir->isSubmitted()) {
+        if (! $pengguna->isAdminDinas() && $formulir->isSubmitted()) {
             return redirect()->route('formulir.riwayat')->with('warning', 'Formulir yang sudah dikirim final tidak dapat diedit.');
         }
 
@@ -220,7 +219,7 @@ class FormulirController extends Controller
 
         $this->deleteDocumentFiles($replacedPaths, true);
 
-        if ($pengguna->level === 'Administrator') {
+        if ($pengguna->isAdminDinas()) {
             return redirect()->route('admin.pendaftar')->with('success', 'Formulir berhasil diperbarui.');
         }
 
@@ -315,17 +314,12 @@ class FormulirController extends Controller
             'alamat_ortu_kabupaten' => [$parentAddressSame ? 'nullable' : 'required', 'string', 'max:100'],
             'alamat_ortu_kecamatan' => [$parentAddressSame ? 'nullable' : 'required', 'string', 'max:100'],
             'alamat_ortu_kelurahan' => [$parentAddressSame ? 'nullable' : 'required', 'string', 'max:100'],
-            'program_keahlian_1' => ['required', 'string', 'max:100', 'different:program_keahlian_2', Rule::in($this->programOptions())],
-            'program_keahlian_2' => ['required', 'string', 'max:100', 'not_in:Teknik Komputer dan Jaringan (TKJ)', Rule::in($this->programSecondOptions())],
             'surat_keterangan_lulus' => [$requiredFileRule, 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:1024'],
             'kartu_keluarga' => [$requiredFileRule, 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:1024'],
             'foto_selfie' => [$requiredFileRule, 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
         ]), [
             'nik.digits' => 'NIK harus terdiri dari tepat 16 digit angka.',
             'nik.unique' => 'NIK tersebut sudah digunakan oleh pendaftar lain.',
-            'program_keahlian_1.required' => 'Pilih program keahlian wajib diisi.',
-            'program_keahlian_2.required' => 'Pilih program keahlian wajib diisi.',
-            'program_keahlian_2.not_in' => 'Program keahlian B belum dapat memilih Teknik Komputer dan Jaringan (TKJ). Silakan pilih program keahlian lain.',
         ]);
 
         unset($data['surat_keterangan_lulus'], $data['kartu_keluarga'], $data['foto_selfie']);
@@ -462,17 +456,17 @@ class FormulirController extends Controller
             ]);
 
         return [
-            'programs' => $this->programOptions(),
-            'programsSecond' => $this->programSecondOptions(),
             'kecamatanOptions' => $kecamatan->pluck('nama')->all(),
             'kelurahanOptionsByKecamatan' => $kelurahan
                 ->groupBy('kecamatan')
                 ->map(fn ($items) => $items->pluck('nama')->values()->all())
                 ->all(),
-            'sekolahAsalOptions' => DB::table('ref_sekolah_asal')
-                ->orderBy('urutan')
-                ->orderBy('nama')
-                ->pluck('nama')
+            'sekolahAsalOptions' => CalonSiswa::query()
+                ->where('is_active', true)
+                ->whereNotNull('asal_sekolah')
+                ->distinct()
+                ->orderBy('asal_sekolah')
+                ->pluck('asal_sekolah')
                 ->all(),
             'wilayahProvinsiOptions' => DB::table('ref_wilayah_provinsi')
                 ->orderBy('urutan')
@@ -508,26 +502,9 @@ class FormulirController extends Controller
         ];
     }
 
-    private function programOptions(): array
-    {
-        return ProgramKeahlian::query()
-            ->where('is_active', true)
-            ->ordered()
-            ->pluck('nama')
-            ->all();
-    }
-
-    private function programSecondOptions(): array
-    {
-        return array_values(array_filter(
-            $this->programOptions(),
-            fn (string $program) => $program !== 'Teknik Komputer dan Jaringan (TKJ)',
-        ));
-    }
-
     private function authorizeFormulir($pengguna, Formulir $formulir): void
     {
-        if ($pengguna->level !== 'Administrator' && $formulir->nisn !== $pengguna->id_pengguna) {
+        if (! $pengguna->isAdminDinas() && $formulir->nisn !== $pengguna->id_pengguna) {
             abort(403);
         }
     }
