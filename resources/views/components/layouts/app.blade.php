@@ -1051,7 +1051,7 @@
     </style>
 </head>
 <body>
-@unless(request()->routeIs('login', 'register'))
+@unless(request()->routeIs('login', 'register', 'akun.status'))
     <nav class="navbar">
         <div class="container-fluid flex-column flex-md-row align-items-stretch align-items-md-center gap-2 px-3 px-md-4">
             <a class="topbar-brand" href="{{ route('dashboard') }}">
@@ -1089,7 +1089,7 @@
     </nav>
 @endunless
 
-@isset($pengguna)
+@if(isset($pengguna) && ! request()->routeIs('akun.status'))
     <div class="container-fluid app-shell">
         <div class="row min-vh-100">
             <aside class="col-md-3 col-lg-2 sidebar p-3">
@@ -1110,13 +1110,13 @@
         </div>
     </div>
 @else
-    <main class="{{ request()->routeIs('login', 'register') ? '' : 'container py-5' }}">
-        @unless(request()->routeIs('login', 'register'))
+    <main class="{{ request()->routeIs('login', 'register', 'akun.status') ? '' : 'container py-5' }}">
+        @unless(request()->routeIs('login', 'register', 'akun.status'))
             @include('partials.flash')
         @endunless
         {{ $slot }}
     </main>
-@endisset
+@endif
 
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

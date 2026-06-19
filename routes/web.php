@@ -56,8 +56,8 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::get('/pengaturan/tanda-tangan', [AdminController::class, 'showSignature'])->name('pengaturan.signature.show');
         Route::post('/pengaturan/identitas', [AdminController::class, 'updateIdentitas'])->name('pengaturan.identitas');
         Route::post('/pengaturan/whitelist-calon-siswa/import', [AdminController::class, 'importCalonSiswa'])->name('pengaturan.whitelist.import');
-        Route::post('/pengaturan/whitelist-calon-siswa/aktifkan', [AdminController::class, 'activateCalonSiswaWhitelist'])->name('pengaturan.whitelist.activate');
         Route::post('/pengaturan/whitelist-calon-siswa/nonaktifkan', [AdminController::class, 'deactivateCalonSiswaWhitelist'])->name('pengaturan.whitelist.deactivate');
+        Route::post('/pengaturan/whitelist-calon-siswa/{calonSiswa}/toggle', [AdminController::class, 'toggleCalonSiswaWhitelist'])->name('pengaturan.whitelist.toggle');
         Route::post('/pengaturan/kontak-panitia', [AdminController::class, 'storeKontakPanitia'])->name('pengaturan.kontak.store');
         Route::put('/pengaturan/kontak-panitia/{kontak}', [AdminController::class, 'updateKontakPanitia'])->name('pengaturan.kontak.update');
         Route::post('/pengaturan/kontak-panitia/{kontak}/utama', [AdminController::class, 'setKontakPanitiaUtama'])->name('pengaturan.kontak.primary');

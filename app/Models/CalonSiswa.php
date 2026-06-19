@@ -24,7 +24,7 @@ class CalonSiswa extends Model
         'asal_sekolah',
         'nilai_tka_matematika',
         'nilai_tka_bahasa_indonesia',
-        'tahun_pendaftaran',
+        'tahun_lulus',
         'is_active',
     ];
 
@@ -35,8 +35,8 @@ class CalonSiswa extends Model
         'is_active' => 'boolean',
     ];
 
-    public function scopeActiveForYear($query, string $year)
+    public function scopeActive($query)
     {
-        return $query->where('tahun_pendaftaran', $year)->where('is_active', true);
+        return $query->where('is_active', true);
     }
 }

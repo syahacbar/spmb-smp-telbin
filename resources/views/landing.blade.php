@@ -3,6 +3,10 @@
     $whatsappPhone = preg_replace('/\D+/', '', $whatsapp);
     $whatsappMessage = 'Halo Admin SPMB SMP Kabupaten Teluk Bintuni, saya ingin bertanya tentang pendaftaran SPMB.';
     $whatsappUrl = 'https://wa.me/'.$whatsappPhone.'?text='.rawurlencode($whatsappMessage);
+    $hasNewLandingLogo = file_exists(public_path('landing/assets/logo_telbin_new.png'));
+    $landingLogo = $hasNewLandingLogo
+        ? asset('landing/assets/logo_telbin_new.png')
+        : asset('images/logotelukbintuni.png');
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -13,6 +17,13 @@
     <style>
         html {
             scroll-behavior: smooth;
+            --telbin-forest: #0b5d4b;
+            --telbin-forest-dark: #063f35;
+            --telbin-lagoon: #0788a8;
+            --telbin-gold: #f2b84b;
+            --telbin-ink: #12372f;
+            --telbin-soft: #eef7f3;
+            --telbin-line: #cfe4dc;
         }
 
         * {
@@ -21,8 +32,8 @@
         }
 
         body {
-            background: #f4f7fb;
-            color: #10233f;
+            background: #f3f8f5;
+            color: var(--telbin-ink);
             font-family: Poppins, "Segoe UI", Arial, sans-serif;
         }
 
@@ -35,8 +46,8 @@
             min-height: 75vh;
             color: #ffffff;
             background:
-                linear-gradient(rgba(13, 45, 110, .65), rgba(13, 45, 110, .75)),
-                url("{{ asset('landing/assets/hero.jpg') }}") center/cover;
+                linear-gradient(105deg, rgba(3, 45, 38, .88) 0%, rgba(5, 92, 76, .66) 46%, rgba(7, 81, 93, .28) 100%),
+                url("{{ asset('landing/assets/tugu7suku.png') }}") center 48%/cover;
             overflow: hidden;
         }
 
@@ -55,12 +66,45 @@
             font-size: 20px;
             font-weight: 800;
             letter-spacing: 0;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, .35);
+        }
+
+        .brand-logo {
+            display: inline-flex;
+            width: 68px;
+            height: 68px;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            border: 1px solid rgba(255, 255, 255, .28);
+            border-radius: 18px;
+            background: linear-gradient(145deg, rgba(11, 93, 75, .76), rgba(7, 136, 168, .48));
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, .24),
+                0 12px 28px rgba(0, 0, 0, .24);
+            backdrop-filter: blur(10px);
         }
 
         .brand img {
-            width: 60px;
-            height: 60px;
+            width: 58px;
+            height: 58px;
             object-fit: contain;
+            clip-path: polygon(10% 0, 90% 0, 97% 12%, 94% 68%, 82% 83%, 50% 100%, 18% 83%, 6% 68%, 3% 12%);
+            filter: drop-shadow(0 5px 7px rgba(0, 0, 0, .32));
+        }
+
+        .brand-logo.is-transparent {
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+
+        .brand-logo.is-transparent img {
+            width: 66px;
+            height: 66px;
+            clip-path: none;
+            filter: drop-shadow(0 7px 9px rgba(0, 0, 0, .34));
         }
 
         .menu {
@@ -98,7 +142,7 @@
         }
 
         .yellow {
-            color: #ffcc00;
+            color: var(--telbin-gold);
         }
 
         .content h3 {
@@ -126,8 +170,8 @@
         }
 
         .hero-cta {
-            background: #ffcc00;
-            color: #0b3b91;
+            background: var(--telbin-gold);
+            color: var(--telbin-forest-dark);
             padding: 15px 24px;
             box-shadow: 0 16px 34px rgba(0, 0, 0, .24);
         }
@@ -236,7 +280,7 @@
         }
 
         .timeline .item {
-            border-top: 5px solid #1e4fa8;
+            border-top: 5px solid var(--telbin-forest);
             padding: 22px;
             text-align: center;
             transition: transform .3s ease;
@@ -264,15 +308,15 @@
         }
 
         .schedule-icon.online {
-            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            background: linear-gradient(135deg, var(--telbin-forest), var(--telbin-lagoon));
         }
 
         .schedule-icon.interview {
-            background: linear-gradient(135deg, #7c3aed, #db2777);
+            background: linear-gradient(135deg, #0f766e, #65a30d);
         }
 
         .schedule-icon.announcement {
-            background: linear-gradient(135deg, #f97316, #facc15);
+            background: linear-gradient(135deg, #d97706, var(--telbin-gold));
         }
 
         .schedule-icon.reregistration {
@@ -280,7 +324,7 @@
         }
 
         .schedule-icon.orientation {
-            background: linear-gradient(135deg, #0f766e, #1d4ed8);
+            background: linear-gradient(135deg, var(--telbin-lagoon), var(--telbin-forest-dark));
         }
 
         .timeline h3,
@@ -308,7 +352,7 @@
         }
 
         #persyaratan {
-            background: linear-gradient(180deg, #ffffff 0%, #edf4ff 100%);
+            background: linear-gradient(180deg, #ffffff 0%, var(--telbin-soft) 100%);
         }
 
         .requirements-layout {
@@ -325,10 +369,10 @@
             gap: 28px;
             min-height: 100%;
             border-radius: 18px;
-            background: #0b3b91;
+            background: linear-gradient(145deg, var(--telbin-forest-dark), var(--telbin-forest));
             color: #ffffff;
             padding: 28px;
-            box-shadow: 0 14px 34px rgba(11, 59, 145, .20);
+            box-shadow: 0 14px 34px rgba(6, 63, 53, .22);
         }
 
         .requirements-note h3 {
@@ -349,8 +393,8 @@
             width: fit-content;
             min-height: 42px;
             border-radius: 10px;
-            background: #ffcc00;
-            color: #0b3b91;
+            background: var(--telbin-gold);
+            color: var(--telbin-forest-dark);
             padding: 10px 14px;
             font-weight: 900;
         }
@@ -444,7 +488,7 @@
         .doc-thumb b {
             display: block;
             padding: 8px;
-            color: #0b3b91;
+            color: var(--telbin-forest);
             font-size: 13px;
             text-align: center;
         }
@@ -459,7 +503,7 @@
             grid-template-columns: 54px 1fr;
             gap: 16px;
             align-items: center;
-            border: 1px solid #d9e6f8;
+            border: 1px solid var(--telbin-line);
             border-radius: 16px;
             background: #ffffff;
             padding: 18px;
@@ -469,7 +513,7 @@
 
         .requirement-card:hover {
             transform: translateY(-4px);
-            border-color: #9bbbea;
+            border-color: #79b9a6;
             box-shadow: 0 14px 30px rgba(16, 35, 63, .12);
         }
 
@@ -479,8 +523,8 @@
             width: 54px;
             height: 54px;
             border-radius: 14px;
-            background: #eef5ff;
-            color: #0b3b91;
+            background: #e4f3ed;
+            color: var(--telbin-forest);
             font-size: 20px;
             font-weight: 900;
         }
@@ -550,8 +594,8 @@
             justify-content: center;
             min-height: 42px;
             border-radius: 10px;
-            background: #eef5ff;
-            color: #0b3b91;
+            background: #e4f3ed;
+            color: var(--telbin-forest);
             font-size: 24px;
             font-weight: 900;
         }
@@ -580,7 +624,7 @@
             flex-direction: column;
             justify-content: space-between;
             gap: 28px;
-            background: linear-gradient(135deg, #0b3b91, #1570c9);
+            background: linear-gradient(135deg, var(--telbin-forest-dark), var(--telbin-lagoon));
             color: #ffffff;
             padding: 30px;
         }
@@ -615,12 +659,12 @@
             height: 34px;
             border-radius: 10px;
             background: rgba(255, 255, 255, .16);
-            color: #ffcc00;
+            color: var(--telbin-gold);
         }
 
         .status-form-card {
-            background: #f8fbff;
-            border: 1px solid #d9e6f8;
+            background: #f7fbf9;
+            border: 1px solid var(--telbin-line);
             padding: 28px;
         }
 
@@ -642,8 +686,8 @@
         }
 
         .status-alert.info {
-            background: #eef5ff;
-            color: #0b3b91;
+            background: #e4f3ed;
+            color: var(--telbin-forest-dark);
         }
 
         .status-alert.warning,
@@ -688,8 +732,8 @@
         }
 
         .form-field input:focus {
-            outline: 3px solid rgba(37, 99, 235, .18);
-            border-color: #2563eb;
+            outline: 3px solid rgba(11, 93, 75, .16);
+            border-color: var(--telbin-forest);
         }
 
         .captcha-row {
@@ -724,16 +768,16 @@
             min-height: 54px;
             border: 0;
             border-radius: 12px;
-            background: #0b3b91;
+            background: var(--telbin-forest);
             color: #ffffff;
             cursor: pointer;
             font: inherit;
             font-weight: 900;
-            box-shadow: 0 12px 24px rgba(11, 59, 145, .18);
+            box-shadow: 0 12px 24px rgba(6, 63, 53, .20);
         }
 
         .status-submit:hover {
-            background: #123f9f;
+            background: var(--telbin-forest-dark);
         }
 
         .status-submit:disabled {
@@ -780,7 +824,7 @@
         }
 
         footer {
-            background: #0b3b91;
+            background: var(--telbin-forest-dark);
             color: #ffffff;
             padding: 30px;
             text-align: center;
@@ -812,8 +856,14 @@
             }
 
             .brand img {
-                width: 55px;
-                height: 55px;
+                width: 50px;
+                height: 50px;
+            }
+
+            .brand-logo {
+                width: 58px;
+                height: 58px;
+                border-radius: 15px;
             }
 
             .menu {
@@ -966,7 +1016,9 @@
     <section class="hero" id="beranda">
         <nav>
             <div class="brand">
-                <img src="{{ asset('images/logotelukbintuni.png') }}" alt="Logo Kabupaten Teluk Bintuni">
+                <span class="brand-logo {{ $hasNewLandingLogo ? 'is-transparent' : '' }}">
+                    <img src="{{ $landingLogo }}" alt="Logo Kabupaten Teluk Bintuni">
+                </span>
                 <span>SPMB SMP KABUPATEN TELUK BINTUNI</span>
             </div>
             <div class="menu">
@@ -1226,8 +1278,8 @@
                         </div>
                     @elseif(session('status_result') === 'inactive')
                         <div class="status-alert warning">
-                            <strong>NISN {{ session('status_nisn') }} tidak tersedia pada whitelist aktif tahun ini.</strong>
-                            Tidak ditemukan pada whitelist calon peserta didik aktif tahun ini. Silakan menghubungi panitia SPMB melalui WhatsApp.
+                            <strong>NISN {{ session('status_nisn') }} tidak tersedia pada whitelist aktif.</strong>
+                            Tidak ditemukan pada whitelist calon peserta didik aktif. Silakan menghubungi panitia SPMB melalui WhatsApp.
                         </div>
                     @elseif(session('status_result') === 'not_found')
                         <div class="status-alert warning">

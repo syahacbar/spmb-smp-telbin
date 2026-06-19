@@ -43,6 +43,9 @@ class ExampleTest extends TestCase
             ->assertOk()
             ->assertSee('Masukkan NISN')
             ->assertSee('Selanjutnya')
+            ->assertSee('Konfirmasi Data Calon Siswa')
+            ->assertSee('Data Benar, Lanjutkan')
+            ->assertSee('Data Salah, Hubungi Panitia')
             ->assertDontSee('Cek Status SPMB')
             ->assertDontSee('Email Aktif');
     }

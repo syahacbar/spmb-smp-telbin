@@ -50,19 +50,19 @@ class AdminController extends Controller
             'settings' => PengaturanSpmb::allSettings(),
             'contacts' => KontakPanitia::query()->orderByDesc('is_primary')->orderBy('id')->get(),
             'whitelistStats' => CalonSiswa::query()
-                ->select('tahun_pendaftaran')
+                ->select('tahun_lulus')
                 ->selectRaw('count(*) as total')
                 ->selectRaw('sum(case when is_active = 1 then 1 else 0 end) as active_total')
-                ->groupBy('tahun_pendaftaran')
-                ->orderByDesc('tahun_pendaftaran')
+                ->groupBy('tahun_lulus')
+                ->orderByDesc('tahun_lulus')
                 ->get(),
             'whitelistYears' => CalonSiswa::query()
-                ->select('tahun_pendaftaran')
+                ->select('tahun_lulus')
                 ->distinct()
-                ->orderByDesc('tahun_pendaftaran')
-                ->pluck('tahun_pendaftaran'),
+                ->orderByDesc('tahun_lulus')
+                ->pluck('tahun_lulus'),
             'whitelist' => CalonSiswa::query()
-                ->orderByDesc('tahun_pendaftaran')
+                ->orderByDesc('tahun_lulus')
                 ->orderByDesc('is_active')
                 ->orderBy('nama')
                 ->get(),
@@ -128,10 +128,12 @@ class AdminController extends Controller
     public function importCalonSiswa(Request $request, CalonSiswaImportReader $reader): RedirectResponse
     {
         $data = $request->validate([
-            'tahun_pendaftaran' => ['required', 'digits:4'],
+            'tahun_lulus' => ['required', 'digits:4'],
             'calon_siswa_file' => ['required', 'file', 'mimes:xlsx,csv,txt', 'max:5120'],
             'deactivate_missing_in_year' => ['nullable', 'boolean'],
         ], [
+            'tahun_lulus.required' => 'Tahun lulus wajib diisi.',
+            'tahun_lulus.digits' => 'Tahun lulus harus berisi 4 digit.',
             'calon_siswa_file.required' => 'File whitelist calon siswa wajib dipilih.',
             'calon_siswa_file.mimes' => 'File whitelist harus berformat XLSX, CSV, atau TXT.',
             'calon_siswa_file.max' => 'Ukuran file whitelist maksimal 5 MB.',
@@ -153,14 +155,19 @@ class AdminController extends Controller
             return back()->with('warning', 'Tidak ada data valid yang dapat diimpor. '.$detail);
         }
 
-        $tahun = $data['tahun_pendaftaran'];
+        $tahun = $data['tahun_lulus'];
         $validRows = $result['valid'];
         $importedNisn = $validRows->pluck('nisn')->all();
 
         DB::transaction(function () use ($tahun, $validRows, $importedNisn, $request): void {
+            CalonSiswa::query()
+                ->where('tahun_lulus', '!=', $tahun)
+                ->where('is_active', true)
+                ->update(['is_active' => false]);
+
             if ($request->boolean('deactivate_missing_in_year')) {
                 CalonSiswa::query()
-                    ->where('tahun_pendaftaran', $tahun)
+                    ->where('tahun_lulus', $tahun)
                     ->whereNotIn('nisn', $importedNisn)
                     ->update(['is_active' => false]);
             }
@@ -175,14 +182,14 @@ class AdminController extends Controller
                         'asal_sekolah' => $row['asal_sekolah'],
                         'nilai_tka_matematika' => $row['nilai_tka_matematika'],
                         'nilai_tka_bahasa_indonesia' => $row['nilai_tka_bahasa_indonesia'],
-                        'tahun_pendaftaran' => $tahun,
+                        'tahun_lulus' => $tahun,
                         'is_active' => true,
                     ],
                 );
             }
         });
 
-        $message = "Whitelist calon siswa berhasil diimpor: {$validRows->count()} data aktif untuk tahun {$tahun}.";
+        $message = "Whitelist calon siswa berhasil diimpor: {$validRows->count()} data aktif untuk tahun lulus {$tahun}. Data tahun lulus lain tetap tersimpan dalam status nonaktif.";
 
         if ($result['skipped'] > 0) {
             $message .= " {$result['skipped']} baris dilewati karena tidak valid.";
@@ -200,35 +207,32 @@ class AdminController extends Controller
         $tahun = $this->validatedWhitelistYear($request);
 
         $updated = CalonSiswa::query()
-            ->where('tahun_pendaftaran', $tahun)
+            ->where('tahun_lulus', $tahun)
             ->where('is_active', true)
             ->update(['is_active' => false]);
 
         return back()->with('success', "Whitelist tahun {$tahun} berhasil dinonaktifkan ({$updated} data).");
     }
 
-    public function activateCalonSiswaWhitelist(Request $request): RedirectResponse
-    {
-        $tahun = $this->validatedWhitelistYear($request);
-
-        $updated = CalonSiswa::query()
-            ->where('tahun_pendaftaran', $tahun)
-            ->where('is_active', false)
-            ->update(['is_active' => true]);
-
-        return back()->with('success', "Whitelist tahun {$tahun} berhasil diaktifkan ({$updated} data).");
-    }
-
     private function validatedWhitelistYear(Request $request): string
     {
         $data = $request->validate([
-            'tahun_pendaftaran' => ['required', 'digits:4', 'exists:tb_calon_siswa,tahun_pendaftaran'],
+            'tahun_lulus' => ['required', 'digits:4', 'exists:tb_calon_siswa,tahun_lulus'],
         ], [
-            'tahun_pendaftaran.required' => 'Pilih tahun pendaftaran terlebih dahulu.',
-            'tahun_pendaftaran.exists' => 'Tahun pendaftaran yang dipilih tidak ditemukan.',
+            'tahun_lulus.required' => 'Pilih tahun lulus terlebih dahulu.',
+            'tahun_lulus.exists' => 'Tahun lulus yang dipilih tidak ditemukan.',
         ]);
 
-        return $data['tahun_pendaftaran'];
+        return $data['tahun_lulus'];
+    }
+
+    public function toggleCalonSiswaWhitelist(CalonSiswa $calonSiswa): RedirectResponse
+    {
+        $calonSiswa->update(['is_active' => ! $calonSiswa->is_active]);
+
+        $status = $calonSiswa->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        return back()->with('success', "NISN {$calonSiswa->nisn} berhasil {$status}.");
     }
 
     public function storeKontakPanitia(Request $request): RedirectResponse

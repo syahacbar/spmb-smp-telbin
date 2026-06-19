@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CalonSiswa;
 use App\Models\KontakPanitia;
-use App\Models\PengaturanSpmb;
 use App\Models\Pengguna;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -121,7 +120,7 @@ class LandingController extends Controller
             'perlu_perbaikan' => "Registrasi NISN {$nisn} perlu diperbaiki.",
             'ditolak' => "Registrasi NISN {$nisn} ditolak.",
             'not_registered' => "NISN {$nisn} tersedia di database calon siswa.",
-            'inactive' => "NISN {$nisn} tidak tersedia pada whitelist aktif tahun ini.",
+            'inactive' => "NISN {$nisn} tidak tersedia pada whitelist aktif.",
             default => "NISN {$nisn} belum ditemukan.",
         };
     }
@@ -135,16 +134,14 @@ class LandingController extends Controller
             'perlu_perbaikan' => 'Silakan login menggunakan NISN dan kata sandi untuk membaca catatan serta memperbaiki data.',
             'ditolak' => 'Silakan perhatikan catatan Dinas Pendidikan atau hubungi admin untuk informasi lebih lanjut.',
             'not_registered' => 'Silakan daftar akun SPMB melalui tombol daftar pada halaman ini.',
-            'inactive' => 'Tidak ditemukan pada whitelist calon peserta didik aktif tahun ini. Silakan menghubungi panitia SPMB melalui WhatsApp.',
+            'inactive' => 'Tidak ditemukan pada whitelist calon peserta didik aktif. Silakan menghubungi panitia SPMB melalui WhatsApp.',
             default => 'Silakan hubungi panitia SPMB untuk pengecekan data calon peserta didik.',
         };
     }
 
     private function calonSiswaStatus(string $nisn): string
     {
-        $tahun = (string) PengaturanSpmb::getValue('tahun_pendaftaran', date('Y'));
-
-        if (CalonSiswa::activeForYear($tahun)->whereKey($nisn)->exists()) {
+        if (CalonSiswa::active()->whereKey($nisn)->exists()) {
             return 'not_registered';
         }
 

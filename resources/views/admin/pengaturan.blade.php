@@ -200,14 +200,14 @@
         <section class="tab-pane fade card shadow-sm" id="whitelist-pane" role="tabpanel" aria-labelledby="whitelist-tab" tabindex="0">
             <div class="card-header">
                 <h4 class="settings-section-title">Whitelist Calon Siswa</h4>
-                <p class="settings-section-subtitle">Import data NISN yang diperbolehkan membuat akun. Data tahun lama bisa dinonaktifkan tanpa dihapus.</p>
+                <p class="settings-section-subtitle">Import data NISN berdasarkan tahun lulus. Saat cohort baru diimpor, data lama tetap tersimpan dan otomatis dinonaktifkan.</p>
             </div>
             <div class="card-body">
                 <form method="post" action="{{ route('admin.pengaturan.whitelist.import') }}" enctype="multipart/form-data" class="row g-3 align-items-end">
                     @csrf
                     <div class="col-md-3">
-                        <label class="form-label">Tahun Pendaftaran</label>
-                        <input type="text" name="tahun_pendaftaran" value="{{ old('tahun_pendaftaran', $settings['tahun_pendaftaran']) }}" class="form-control" maxlength="4" required>
+                        <label class="form-label">Tahun Lulus</label>
+                        <input type="text" name="tahun_lulus" value="{{ old('tahun_lulus', $settings['tahun_pendaftaran']) }}" class="form-control" maxlength="4" inputmode="numeric" required>
                     </div>
                     <div class="col-md-5">
                         <label class="form-label">File Whitelist</label>
@@ -220,8 +220,8 @@
                         <div class="small text-muted mb-2">Format XLSX/CSV: <strong>NISN, Nama Siswa, Tempat Lahir, Tanggal Lahir, Asal Sekolah, Nilai Matematika, Nilai Bahasa Indonesia</strong>.</div>
                         <div class="form-check">
                             <input type="checkbox" name="deactivate_missing_in_year" value="1" class="form-check-input" id="nonaktifTidakAdaCsv" checked>
-                            <label class="form-check-label" for="nonaktifTidakAdaCsv">Nonaktifkan NISN pada tahun yang sama jika tidak ada di CSV baru</label>
-                            <div class="form-text">Penonaktifan tahun pendaftaran lain dilakukan melalui Aksi Massal di bawah.</div>
+                            <label class="form-check-label" for="nonaktifTidakAdaCsv">Nonaktifkan NISN pada tahun lulus yang sama jika tidak ada di file baru</label>
+                            <div class="form-text">Data tahun lulus lain otomatis dinonaktifkan tetapi tidak dihapus. Siswa lama dapat diaktifkan kembali satu per satu.</div>
                         </div>
                     </div>
                 </form>
@@ -232,26 +232,19 @@
                     <form method="post" action="{{ route('admin.pengaturan.whitelist.deactivate') }}" class="row g-3 align-items-end">
                         @csrf
                         <div class="col-lg-7">
-                            <label class="form-label fw-bold">Aksi Massal Berdasarkan Tahun</label>
-                            <select name="tahun_pendaftaran" class="form-select" required>
-                                <option value="">Pilih tahun pendaftaran</option>
+                            <label class="form-label fw-bold">Penonaktifan Massal Berdasarkan Tahun Lulus</label>
+                            <select name="tahun_lulus" class="form-select" required>
+                                <option value="">Pilih tahun lulus</option>
                                 @foreach($whitelistYears as $year)
-                                    @php($stat = $whitelistStats->firstWhere('tahun_pendaftaran', $year))
+                                    @php($stat = $whitelistStats->firstWhere('tahun_lulus', $year))
                                     <option value="{{ $year }}">
                                         {{ $year }} — {{ number_format((int) ($stat?->active_total ?? 0)) }} aktif dari {{ number_format((int) ($stat?->total ?? 0)) }} data
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="form-text">Pilih satu tahun, kemudian aktifkan atau nonaktifkan seluruh calon siswa pada tahun tersebut.</div>
+                            <div class="form-text">Pengaktifan kembali siswa lama hanya dilakukan per NISN melalui tombol pada tabel.</div>
                         </div>
-                        <div class="col-sm-6 col-lg-2 d-grid">
-                            <button
-                                class="btn btn-outline-success"
-                                formaction="{{ route('admin.pengaturan.whitelist.activate') }}"
-                                data-confirm="Aktifkan seluruh calon siswa pada tahun yang dipilih?"
-                            >Aktifkan</button>
-                        </div>
-                        <div class="col-sm-6 col-lg-3 d-grid">
+                        <div class="col-lg-5 d-grid">
                             <button class="btn btn-outline-danger" data-confirm="Nonaktifkan seluruh calon siswa aktif pada tahun yang dipilih?">Nonaktifkan</button>
                         </div>
                     </form>
@@ -268,8 +261,9 @@
                                 <th>Asal Sekolah</th>
                                 <th>TKA Matematika</th>
                                 <th>TKA Bahasa Indonesia</th>
-                                <th>Tahun Pendaftaran</th>
+                                <th>Tahun Lulus</th>
                                 <th>Status</th>
+                                <th>Aksi</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -281,13 +275,24 @@
                                     <td>{{ $calonSiswa->asal_sekolah }}</td>
                                     <td>{{ $calonSiswa->nilai_tka_matematika ?? '-' }}</td>
                                     <td>{{ $calonSiswa->nilai_tka_bahasa_indonesia ?? '-' }}</td>
-                                    <td>{{ $calonSiswa->tahun_pendaftaran }}</td>
+                                    <td>{{ $calonSiswa->tahun_lulus }}</td>
                                     <td>
                                         @if($calonSiswa->is_active)
                                             <span class="badge text-bg-success">Aktif</span>
                                         @else
                                             <span class="badge text-bg-secondary">Nonaktif</span>
                                         @endif
+                                    </td>
+                                    <td>
+                                        <form method="post" action="{{ route('admin.pengaturan.whitelist.toggle', $calonSiswa) }}">
+                                            @csrf
+                                            <button
+                                                class="btn btn-sm {{ $calonSiswa->is_active ? 'btn-outline-danger' : 'btn-outline-success' }}"
+                                                data-confirm="{{ $calonSiswa->is_active ? 'Nonaktifkan' : 'Aktifkan' }} NISN {{ $calonSiswa->nisn }}?"
+                                            >
+                                                {{ $calonSiswa->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             @endforeach

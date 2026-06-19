@@ -11,8 +11,8 @@ class ImportCalonSiswa extends Command
 {
     protected $signature = 'spmb:import-calon-siswa
         {file : Path file XLSX/CSV whitelist}
-        {--year= : Tahun pendaftaran}
-        {--deactivate-missing : Nonaktifkan data tahun yang tidak ada dalam file}';
+        {--year= : Tahun lulus}
+        {--deactivate-missing : Nonaktifkan data tahun lulus yang sama jika tidak ada dalam file}';
 
     protected $description = 'Mengimpor whitelist calon siswa beserta nilai TKA';
 
@@ -43,9 +43,14 @@ class ImportCalonSiswa extends Command
         $importedNisn = $result['valid']->pluck('nisn')->all();
 
         DB::transaction(function () use ($tahun, $result, $importedNisn): void {
+            CalonSiswa::query()
+                ->where('tahun_lulus', '!=', $tahun)
+                ->where('is_active', true)
+                ->update(['is_active' => false]);
+
             if ($this->option('deactivate-missing')) {
                 CalonSiswa::query()
-                    ->where('tahun_pendaftaran', $tahun)
+                    ->where('tahun_lulus', $tahun)
                     ->whereNotIn('nisn', $importedNisn)
                     ->update(['is_active' => false]);
             }
@@ -53,12 +58,12 @@ class ImportCalonSiswa extends Command
             foreach ($result['valid'] as $row) {
                 CalonSiswa::updateOrCreate(
                     ['nisn' => $row['nisn']],
-                    [...$row, 'tahun_pendaftaran' => $tahun, 'is_active' => true],
+                    [...$row, 'tahun_lulus' => $tahun, 'is_active' => true],
                 );
             }
         });
 
-        $this->info("Berhasil mengimpor {$result['valid']->count()} calon siswa untuk tahun {$tahun}.");
+        $this->info("Berhasil mengimpor {$result['valid']->count()} calon siswa untuk tahun lulus {$tahun}. Data tahun lain dinonaktifkan tanpa dihapus.");
 
         if ($result['missing_score_count'] > 0) {
             $this->warn("{$result['missing_score_count']} siswa memiliki nilai TKA yang belum lengkap.");
