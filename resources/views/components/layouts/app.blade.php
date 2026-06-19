@@ -787,18 +787,18 @@
             inset: 0;
             background:
                 linear-gradient(135deg, rgba(185, 28, 28, .94), rgba(127, 29, 29, .84)),
-                url("{{ asset('landing/assets/hero.jpg') }}") center/cover;
+                url("{{ asset('landing/assets/background1.png') }}") center/cover;
             z-index: -2;
         }
         .login-auth-page::before {
             background:
                 linear-gradient(110deg, rgba(15, 23, 42, .86) 0%, rgba(30, 64, 175, .76) 48%, rgba(14, 116, 144, .56) 100%),
-                url("{{ asset('landing/assets/hero.jpg') }}") center/cover;
+                url("{{ asset('landing/assets/background1.png') }}") center/cover;
         }
         .register-auth-page::before {
             background:
                 linear-gradient(110deg, rgba(15, 23, 42, .86) 0%, rgba(30, 64, 175, .74) 48%, rgba(14, 116, 144, .56) 100%),
-                url("{{ asset('landing/assets/hero.jpg') }}") center/cover;
+                url("{{ asset('landing/assets/background2.png') }}") center/cover;
         }
         .login-auth-page,
         .register-auth-page {
