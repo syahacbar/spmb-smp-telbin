@@ -8,11 +8,11 @@ use App\Models\Pengguna;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AuthController extends Controller
@@ -77,6 +77,14 @@ class AuthController extends Controller
         }
 
         if ($pengguna->isCalonMurid() && ! $pengguna->is_verified) {
+            $request->session()->regenerate();
+            $request->session()->put('pengguna_id', $pengguna->id_pengguna);
+            $request->session()->forget(['login_captcha_question', 'login_captcha_answer']);
+
+            return redirect()->route('akun.status');
+        }
+
+        if ($pengguna->isCalonMurid() && ! $pengguna->verification_notice_seen_at) {
             $request->session()->regenerate();
             $request->session()->put('pengguna_id', $pengguna->id_pengguna);
             $request->session()->forget(['login_captcha_question', 'login_captcha_answer']);

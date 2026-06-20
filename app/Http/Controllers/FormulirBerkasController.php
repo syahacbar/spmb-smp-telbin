@@ -18,7 +18,12 @@ class FormulirBerkasController extends Controller
         $pengguna = $request->attributes->get('pengguna');
 
         abort_unless(
-            $pengguna->isAdminDinas() || $formulir->nisn === $pengguna->id_pengguna,
+            $pengguna->isAdminDinas()
+            || $formulir->nisn === $pengguna->id_pengguna
+            || (
+                $pengguna->isAdminSekolah()
+                && $pengguna->sekolah()->whereKey($formulir->sekolah_id)->exists()
+            ),
             403,
         );
 
@@ -27,7 +32,10 @@ class FormulirBerkasController extends Controller
         abort_unless($path, 404);
         $disposition = $request->boolean('download') ? 'attachment' : 'inline';
 
-        if (str_starts_with($path, 'dokumen/') && Storage::disk('local')->exists($path)) {
+        if (
+            (str_starts_with($path, 'dokumen/') || str_starts_with($path, 'registrasi/kk/'))
+            && Storage::disk('local')->exists($path)
+        ) {
             return Storage::disk('local')->response($path, basename($path), [
                 'Content-Disposition' => $disposition.'; filename="'.basename($path).'"',
             ]);

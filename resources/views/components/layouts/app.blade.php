@@ -8,6 +8,10 @@
     @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
         <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
     @endif
+    @if(request()->routeIs('admin.sekolah-zonasi'))
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    @endif
     <style>
         :root {
             --spmb-red: #b91c1c;
@@ -17,6 +21,12 @@
             --spmb-line: #e5e7eb;
             --spmb-soft: #f6f8fb;
             --spmb-sidebar: #101828;
+            --telbin-forest: #0b5d4b;
+            --telbin-forest-dark: #063f35;
+            --telbin-lagoon: #0788a8;
+            --telbin-gold: #f2b84b;
+            --telbin-soft: #eef7f3;
+            --telbin-line: #cfe4dc;
         }
         body { background: var(--spmb-soft); color: var(--spmb-ink); }
         .navbar {
@@ -513,15 +523,26 @@
             display: flex;
             align-items: center;
             gap: .75rem;
+            width: 100%;
             padding: .8rem;
             border: 1px solid transparent;
             border-radius: .6rem;
+            background: transparent;
             color: var(--spmb-ink);
             text-decoration: none;
+            text-align: left;
         }
         .registration-nav-link:hover {
             background: #f8fafc;
             border-color: #dbe4f0;
+        }
+        .registration-nav-link.active {
+            border-color: #fecaca;
+            background: #fff1f2;
+        }
+        .registration-nav-link.completed span {
+            background: #dcfce7;
+            color: #15803d;
         }
         .registration-nav-link span {
             width: 34px;
@@ -547,6 +568,99 @@
         }
         .registration-content section {
             scroll-margin-top: 1rem;
+        }
+        .form-step[hidden] { display: none !important; }
+        .domicile-map {
+            min-height: 390px;
+            border: 1px solid var(--spmb-line);
+            border-radius: .8rem;
+            background: #eef2f6;
+            overflow: hidden;
+        }
+        .school-choice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .85rem;
+        }
+        .school-choice-card {
+            border: 1px solid #dbe4f0;
+            border-radius: .8rem;
+            background: #fff;
+            padding: 1rem;
+            transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        }
+        .school-choice-card.selected {
+            border-color: var(--telbin-forest);
+            box-shadow: 0 0 0 3px rgba(11, 93, 75, .12);
+            transform: translateY(-1px);
+        }
+        .achievement-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .75rem;
+        }
+        .achievement-stat {
+            border: 1px solid #dbe4f0;
+            border-radius: .75rem;
+            background: linear-gradient(145deg, #fff, #f8fafc);
+            padding: .9rem;
+        }
+        .achievement-stat span {
+            display: block;
+            color: var(--spmb-muted);
+            font-size: .78rem;
+            font-weight: 700;
+        }
+        .achievement-stat strong {
+            display: block;
+            margin-top: .2rem;
+            font-size: 1.35rem;
+            font-weight: 900;
+        }
+        .opportunity-progress {
+            height: .65rem;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+        .opportunity-progress-bar {
+            height: 100%;
+            border-radius: inherit;
+        }
+        .opportunity-high { background: #16a34a; }
+        .opportunity-medium { background: #eab308; }
+        .opportunity-low { background: #dc2626; }
+        .opportunity-text-high { color: #15803d; }
+        .opportunity-text-medium { color: #a16207; }
+        .opportunity-text-low { color: #b91c1c; }
+        .prestasi-school-card { cursor: pointer; }
+        .school-quota-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .5rem;
+        }
+        .school-quota-item {
+            border-radius: .55rem;
+            background: #f8fafc;
+            padding: .65rem;
+            text-align: center;
+        }
+        .school-quota-item strong,
+        .school-quota-item span { display: block; }
+        .school-quota-item span {
+            color: var(--spmb-muted);
+            font-size: .72rem;
+        }
+        .review-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .75rem;
+        }
+        .review-summary-item {
+            border: 1px solid var(--spmb-line);
+            border-radius: .65rem;
+            background: #f8fafc;
+            padding: .85rem;
         }
         .upload-box-modern {
             display: flex;
@@ -792,12 +906,12 @@
         }
         .login-auth-page::before {
             background:
-                linear-gradient(110deg, rgba(15, 23, 42, .86) 0%, rgba(30, 64, 175, .76) 48%, rgba(14, 116, 144, .56) 100%),
+                linear-gradient(105deg, rgba(3, 45, 38, .92) 0%, rgba(5, 92, 76, .76) 48%, rgba(7, 136, 168, .48) 100%),
                 url("{{ asset('landing/assets/background1.png') }}") center/cover;
         }
         .register-auth-page::before {
             background:
-                linear-gradient(110deg, rgba(15, 23, 42, .86) 0%, rgba(30, 64, 175, .74) 48%, rgba(14, 116, 144, .56) 100%),
+                linear-gradient(105deg, rgba(3, 45, 38, .92) 0%, rgba(5, 92, 76, .76) 48%, rgba(7, 136, 168, .48) 100%),
                 url("{{ asset('landing/assets/background2.png') }}") center/cover;
         }
         .login-auth-page,
@@ -820,17 +934,19 @@
         }
         .login-auth-page .btn-primary,
         .register-auth-page .btn-primary {
-            background: #1d4ed8;
-            border-color: #1d4ed8;
+            background: var(--telbin-forest);
+            border-color: var(--telbin-forest);
         }
         .login-auth-page .btn-primary:hover,
-        .register-auth-page .btn-primary:hover {
-            background: #1e40af;
-            border-color: #1e40af;
+        .register-auth-page .btn-primary:hover,
+        .login-auth-page .btn-primary:focus,
+        .register-auth-page .btn-primary:focus {
+            background: var(--telbin-forest-dark);
+            border-color: var(--telbin-forest-dark);
         }
         .login-auth-page a,
         .register-auth-page a {
-            color: #1d4ed8;
+            color: var(--telbin-forest);
         }
         .login-auth-page a.btn-primary,
         .register-auth-page a.btn-primary,
@@ -841,7 +957,7 @@
         .auth-panel {
             border: 0;
             background: rgba(255, 255, 255, .96);
-            box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+            box-shadow: 0 28px 80px rgba(3, 45, 38, .3);
             backdrop-filter: blur(12px);
         }
         .auth-logo {
@@ -860,8 +976,8 @@
             padding: .7rem 1rem .7rem .7rem;
             border: 1px solid rgba(255, 255, 255, .28);
             border-radius: .75rem;
-            background: rgba(15, 23, 42, .24);
-            box-shadow: 0 16px 36px rgba(15, 23, 42, .18);
+            background: rgba(6, 63, 53, .38);
+            box-shadow: 0 16px 36px rgba(3, 45, 38, .22);
             backdrop-filter: blur(10px);
         }
         .auth-school-badge .auth-logo {
@@ -904,7 +1020,7 @@
             padding: .85rem .95rem;
             border: 1px solid rgba(255, 255, 255, .18);
             border-radius: .65rem;
-            background: rgba(15, 23, 42, .26);
+            background: rgba(6, 63, 53, .34);
             backdrop-filter: blur(10px);
         }
         .auth-feature-mark {
@@ -942,7 +1058,7 @@
         .captcha-question {
             font-size: 1.25rem;
             font-weight: 800;
-            color: #1d4ed8;
+            color: var(--telbin-forest);
             letter-spacing: 0;
         }
         .password-toggle-group .form-control {
@@ -959,9 +1075,37 @@
         }
         .password-toggle:hover,
         .password-toggle:focus {
-            background: #f9fafb;
-            color: #1d4ed8;
-            border-color: #d0d5dd;
+            background: var(--telbin-soft);
+            color: var(--telbin-forest);
+            border-color: #79b9a6;
+        }
+        .login-auth-page .form-control:focus,
+        .login-auth-page .form-select:focus,
+        .register-auth-page .form-control:focus,
+        .register-auth-page .form-select:focus {
+            border-color: var(--telbin-forest);
+            box-shadow: 0 0 0 .2rem rgba(11, 93, 75, .16);
+        }
+        .login-auth-page .btn-outline-primary,
+        .register-auth-page .btn-outline-primary {
+            color: var(--telbin-forest);
+            border-color: var(--telbin-forest);
+        }
+        .login-auth-page .btn-outline-primary:hover,
+        .register-auth-page .btn-outline-primary:hover,
+        .login-auth-page .btn-outline-primary:focus,
+        .register-auth-page .btn-outline-primary:focus {
+            background: var(--telbin-forest);
+            border-color: var(--telbin-forest);
+            color: #fff;
+        }
+        .login-auth-page .text-primary,
+        .register-auth-page .text-primary {
+            color: var(--telbin-forest) !important;
+        }
+        .login-auth-page .captcha-box {
+            border-color: var(--telbin-line);
+            background: var(--telbin-soft);
         }
         .password-icon {
             width: 22px;
@@ -1008,6 +1152,10 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
             .registration-nav-link { align-items: flex-start; }
+            .school-choice-grid,
+            .review-summary { grid-template-columns: 1fr; }
+            .achievement-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .domicile-map { min-height: 320px; }
             .sticky-actions { margin-left: -1rem; margin-right: -1rem; border-radius: 0; border-left: 0; border-right: 0; }
             .auth-page { min-height: calc(100vh - 56px); }
             .login-auth-page,
@@ -1095,12 +1243,14 @@
             <aside class="col-md-3 col-lg-2 sidebar p-3">
                 <a class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dasbor</a>
                 @if($pengguna->isAdminDinas())
-                    <a class="sidebar-link {{ request()->routeIs('admin.pendaftar') ? 'active' : '' }}" href="{{ route('admin.pendaftar') }}">Data Registrasi</a>
-                    <a class="sidebar-link {{ request()->routeIs('admin.pengguna') ? 'active' : '' }}" href="{{ route('admin.pengguna') }}">Data User</a>
+                    <a class="sidebar-link {{ request()->routeIs('admin.pengguna', 'admin.verifikasi-akun.*') ? 'active' : '' }}" href="{{ route('admin.pengguna', ['status' => 'menunggu_verifikasi']) }}">Verifikasi Akun</a>
+                    <a class="sidebar-link {{ request()->routeIs('admin.pendaftar') ? 'active' : '' }}" href="{{ route('admin.pendaftar') }}">Data Pendaftaran</a>
+                    <a class="sidebar-link {{ request()->routeIs('admin.sekolah-zonasi') ? 'active' : '' }}" href="{{ route('admin.sekolah-zonasi') }}">Sekolah & Zonasi</a>
                     <a class="sidebar-link {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}" href="{{ route('admin.pengaturan') }}">Pengaturan SPMB</a>
+                @elseif($pengguna->isAdminSekolah())
+                    <span class="sidebar-link active">Pendaftar Sekolah</span>
                 @else
-                    <a class="sidebar-link {{ request()->routeIs('formulir.create', 'formulir.edit', 'formulir.periksa') ? 'active' : '' }}" href="{{ route('formulir.create') }}">Formulir Registrasi</a>
-                    <a class="sidebar-link {{ request()->routeIs('formulir.riwayat') ? 'active' : '' }}" href="{{ route('formulir.riwayat') }}">Riwayat Registrasi</a>
+                    <span class="sidebar-link active">Dashboard Calon Murid</span>
                 @endif
             </aside>
             <main class="col-md-9 col-lg-10 p-4">
@@ -1160,10 +1310,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
+@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'admin.sekolah-zonasi'))
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+@endif
+@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
+@endif
+@if(request()->routeIs('admin.sekolah-zonasi'))
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @endif
 <script>
     document.addEventListener('DOMContentLoaded', function () {

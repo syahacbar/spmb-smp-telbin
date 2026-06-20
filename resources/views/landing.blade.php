@@ -52,11 +52,34 @@
         }
 
         nav {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+
+            width: calc(100% - 40px);
+            max-width: 1280px;
+
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
-            padding: 20px 40px;
+
+            padding: 14px 24px;
+
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 18px;
+
+            background: rgba(5, 35, 29, .45);
+            backdrop-filter: blur(16px);
+
+            transition: all .3s ease;
+        }
+
+        nav.scrolled {
+            background: rgba(6, 63, 53, .92);
+            box-shadow: 0 12px 30px rgba(0,0,0,.22);
         }
 
         .brand {
@@ -116,9 +139,15 @@
         }
 
         .menu a {
-            color: #ffffff;
+            color: #fff;
             font-weight: 700;
-            padding: 9px 8px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            transition: .25s;
+        }
+
+        .menu a:hover {
+            background: rgba(255,255,255,.12);
         }
 
         .menu .login {
@@ -131,7 +160,7 @@
             position: relative;
             z-index: 2;
             max-width: 610px;
-            padding: 64px 0 130px 80px;
+            padding: 140px 0 130px 80px;
         }
 
         .content h1 {
@@ -277,6 +306,83 @@
             border-radius: 18px;
             background: #ffffff;
             box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
+        }
+
+        .path-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            background: #ffffff;
+            padding: 24px;
+            box-shadow: 0 8px 25px rgba(0,0,0,.08);
+            transition: all .3s ease;
+        }
+
+        .path-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 34px rgba(0,0,0,.14);
+        }
+
+        .path-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+        }
+
+        .path-card.domisili::before {
+            background: var(--telbin-forest);
+        }
+
+        .path-card.prestasi::before {
+            background: var(--telbin-gold);
+        }
+
+        .path-card.afirmasi::before {
+            background: #2563eb;
+        }
+
+        .path-card.mutasi::before {
+            background: #9333ea;
+        }
+
+        .path-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin-bottom: 16px;
+        }
+
+        .domisili .path-icon {
+            background: rgba(11,93,75,.12);
+        }
+
+        .prestasi .path-icon {
+            background: rgba(242,184,75,.18);
+        }
+
+        .afirmasi .path-icon {
+            background: rgba(37,99,235,.12);
+        }
+
+        .mutasi .path-icon {
+            background: rgba(147,51,234,.12);
+        }
+
+        .path-card h3 {
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .path-card p {
+            color: #52647d;
+            line-height: 1.6;
         }
 
         .timeline .item {
@@ -1010,6 +1116,18 @@
                 padding: 14px;
             }
         }
+
+        #informasi {
+            scroll-margin-top: 100px;
+        }
+        #persyaratan {
+            scroll-margin-top: 100px;
+        }
+        #jalur {
+            scroll-margin-top: 100px;
+        }
+
+        
     </style>
 </head>
 <body>
@@ -1023,9 +1141,9 @@
             </div>
             <div class="menu">
                 <a href="#beranda">Beranda</a>
-                <a href="#jadwal">Jadwal</a>
+                <a href="#informasi">Informasi</a>
                 <a href="#persyaratan">Persyaratan</a>
-                <a href="#kuota">Kuota</a>
+                <a href="#jalur">Jalur Pendaftaran</a>
                 <a href="#cek-status">Cek Status SPMB</a>
                 <a class="login" href="{{ route('login') }}">Login</a>
             </div>
@@ -1050,7 +1168,7 @@
         </div>
     </section>
 
-    <section class="section" id="banner">
+    <section class="section" id="informasi">
         <div class="wrap">
             <h2>Informasi SPMB 2026</h2>
             <div class="banner-frame">
@@ -1168,7 +1286,7 @@
                             <b>Pas Foto Seragam</b>
                         </div>
                     </div>
-                    <span class="requirements-badge">4 Berkas Utama</span>
+                    <span class="requirements-badge">3 Berkas Utama</span>
                 </div>
                 <div class="requirements-list">
                     <div class="requirement-card">
@@ -1204,14 +1322,47 @@
         </div>
     </section>
 
-    <section id="kuota" class="section">
+    <section id="jalur" class="section">
         <div class="wrap">
             <h2>Jalur Pendaftaran</h2>
             <div class="grid">
-                <div class="card"><h3>Jalur Domisili</h3><p>Pilihan SMP berdasarkan wilayah domisili yang telah diverifikasi melalui Kartu Keluarga.</p></div>
-                <div class="card"><h3>Jalur Prestasi</h3><p>Pilihan lintas domisili dengan pemeringkatan berdasarkan nilai TKA.</p></div>
-                <div class="card"><h3>Jalur Afirmasi</h3><p>Untuk keluarga tidak mampu, penyandang disabilitas, dan kelompok khusus sesuai ketentuan.</p></div>
-                <div class="card"><h3>Jalur Mutasi</h3><p>Untuk calon murid yang mengikuti perpindahan tugas atau pekerjaan orang tua/wali.</p></div>
+                <div class="grid">
+                    <div class="path-card domisili">
+                        <div class="path-icon">🏠</div>
+                        <h3>Jalur Domisili</h3>
+                        <p>
+                            Pilihan SMP berdasarkan wilayah domisili yang telah diverifikasi
+                            melalui Kartu Keluarga.
+                        </p>
+                    </div>
+
+                    <div class="path-card prestasi">
+                        <div class="path-icon">🏆</div>
+                        <h3>Jalur Prestasi</h3>
+                        <p>
+                            Pilihan lintas domisili dengan pemeringkatan berdasarkan
+                            nilai TKA dan prestasi yang dimiliki calon murid.
+                        </p>
+                    </div>
+
+                    <div class="path-card afirmasi">
+                        <div class="path-icon">🤝</div>
+                        <h3>Jalur Afirmasi</h3>
+                        <p>
+                            Untuk keluarga tidak mampu, penyandang disabilitas,
+                            dan kelompok khusus sesuai ketentuan yang berlaku.
+                        </p>
+                    </div>
+
+                    <div class="path-card mutasi">
+                        <div class="path-icon">📄</div>
+                        <h3>Jalur Mutasi</h3>
+                        <p>
+                            Untuk calon murid yang mengikuti perpindahan tugas
+                            atau pekerjaan orang tua/wali.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -1448,6 +1599,16 @@
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Cek Status Sekarang';
+            }
+        });
+
+        const navbar = document.querySelector('nav');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 60) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
             }
         });
     </script>

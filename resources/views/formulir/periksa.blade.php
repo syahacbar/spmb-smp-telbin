@@ -15,10 +15,12 @@
             $formulir->alamat_ortu_provinsi,
         ])->filter()->implode(', ');
         $documents = [
-            'surat_keterangan_lulus' => ['label' => 'Ijazah / SKL'],
             'kartu_keluarga' => ['label' => 'Kartu Keluarga'],
             'foto_selfie' => ['label' => 'Pas Foto'],
         ];
+        if ($formulir->dokumen_pendukung) {
+            $documents['dokumen_pendukung'] = ['label' => 'Dokumen Pendukung Jalur'];
+        }
     @endphp
 
     <div class="page-title">
@@ -85,6 +87,20 @@
                             <div class="history-grid-full">
                                 <span>Domisili</span>
                                 <strong>{{ $alamatSiswa }}</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="history-section">
+                        <div class="history-section-title">Jalur dan Sekolah Tujuan</div>
+                        <div class="history-grid">
+                            <div>
+                                <span>Jalur Pendaftaran</span>
+                                <strong>{{ $formulir->jalur?->nama ?? '-' }}</strong>
+                            </div>
+                            <div>
+                                <span>Sekolah Tujuan</span>
+                                <strong>{{ $formulir->sekolah?->nama ?? '-' }}</strong>
                             </div>
                         </div>
                     </section>

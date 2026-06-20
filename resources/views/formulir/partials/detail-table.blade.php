@@ -25,6 +25,8 @@
             'alamat_ortu_kabupaten' => 'Kabupaten Orang Tua',
             'alamat_ortu_kecamatan' => 'Kecamatan Orang Tua',
             'alamat_ortu_kelurahan' => 'Kelurahan/Desa Orang Tua',
+            'jalur.nama' => 'Jalur Pendaftaran',
+            'sekolah.nama' => 'Sekolah Tujuan',
             'alamat_ortu' => 'Alamat Detail Orang Tua',
         ] as $field => $label)
             <tr>
@@ -33,7 +35,7 @@
                     @if($field === 'alamat_ortu_sama_dengan_siswa')
                         {{ $formulir->{$field} ? 'Ya' : 'Tidak' }}
                     @else
-                        {{ $formulir->{$field} }}
+                        {{ data_get($formulir, $field) }}
                     @endif
                 </td>
             </tr>

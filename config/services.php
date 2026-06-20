@@ -39,4 +39,9 @@ return [
         'panitia_whatsapp' => env('SPMB_PANITIA_WHATSAPP', '6281111110002'),
     ],
 
+    'nominatim' => [
+        'url' => env('NOMINATIM_URL', 'https://nominatim.openstreetmap.org/search'),
+        'user_agent' => env('NOMINATIM_USER_AGENT', 'SPMB-SMP-Teluk-Bintuni/1.0'),
+    ],
+
 ];

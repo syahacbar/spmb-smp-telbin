@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class FormulirBerkasTest extends TestCase
 {
-    public function test_upload_dokumen_disimpan_pada_disk_lokal_private(): void
+    public function test_upload_kartu_keluarga_formulir_diabaikan(): void
     {
         Storage::fake('local');
 
@@ -24,9 +24,21 @@ class FormulirBerkasTest extends TestCase
         $method = new \ReflectionMethod(FormulirController::class, 'storeUploads');
         $paths = $method->invoke(app(FormulirController::class), $request);
 
-        $this->assertArrayHasKey('kartu_keluarga', $paths);
-        $this->assertStringStartsWith('dokumen/', $paths['kartu_keluarga']);
-        Storage::disk('local')->assertExists($paths['kartu_keluarga']);
+        $this->assertArrayNotHasKey('kartu_keluarga', $paths);
+    }
+
+    public function test_upload_ijazah_formulir_diabaikan_pada_alur_baru(): void
+    {
+        Storage::fake('local');
+
+        $request = Request::create('/', 'POST', [], [], [
+            'surat_keterangan_lulus' => UploadedFile::fake()->create('ijazah.pdf', 100, 'application/pdf'),
+        ]);
+
+        $method = new \ReflectionMethod(FormulirController::class, 'storeUploads');
+        $paths = $method->invoke(app(FormulirController::class), $request);
+
+        $this->assertArrayNotHasKey('surat_keterangan_lulus', $paths);
     }
 
     public function test_pemilik_dapat_membuka_dokumen_private(): void
@@ -81,6 +93,18 @@ class FormulirBerkasTest extends TestCase
 
         $this->assertTrue($formulir->berkasIsImage('surat_keterangan_lulus'));
         $this->assertFalse($formulir->berkasIsImage('kartu_keluarga'));
+    }
+
+    public function test_formulir_mendeteksi_kk_dari_registrasi_akun(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('registrasi/kk/kk.pdf', 'isi kk');
+
+        $formulir = new Formulir([
+            'kartu_keluarga' => 'registrasi/kk/kk.pdf',
+        ]);
+
+        $this->assertTrue($formulir->berkasTersedia('kartu_keluarga'));
     }
 
     public function test_pembersihan_dokumen_hanya_menghapus_file_dokumen_private(): void

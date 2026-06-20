@@ -25,6 +25,41 @@
             border-color: #d0d5dd;
             border-radius: .45rem;
         }
+        .verification-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .65rem;
+            margin-bottom: 1rem;
+        }
+        .verification-filter-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            border: 1px solid #cfe4dc;
+            border-radius: 999px;
+            background: #fff;
+            color: #12372f;
+            padding: .55rem .85rem;
+            text-decoration: none;
+            font-size: .86rem;
+            font-weight: 800;
+        }
+        .verification-filter-link:hover,
+        .verification-filter-link.active {
+            border-color: #0b5d4b;
+            background: #e4f3ed;
+            color: #063f35;
+        }
+        .verification-filter-count {
+            display: inline-grid;
+            min-width: 1.6rem;
+            height: 1.6rem;
+            place-items: center;
+            border-radius: 999px;
+            background: #0b5d4b;
+            color: #fff;
+            font-size: .75rem;
+        }
     </style>
 
     <div class="page-title">
@@ -33,6 +68,29 @@
             <div class="text-muted">Periksa domisili dan Kartu Keluarga calon murid sebelum mengaktifkan akun.</div>
         </div>
     </div>
+
+    <nav class="verification-filter" aria-label="Filter status verifikasi">
+        <a href="{{ route('admin.pengguna') }}" class="verification-filter-link {{ $activeStatus === '' ? 'active' : '' }}">
+            Semua
+            <span class="verification-filter-count">{{ $statusCounts->sum() }}</span>
+        </a>
+        <a href="{{ route('admin.pengguna', ['status' => 'menunggu_verifikasi']) }}" class="verification-filter-link {{ $activeStatus === 'menunggu_verifikasi' ? 'active' : '' }}">
+            Menunggu
+            <span class="verification-filter-count">{{ (int) ($statusCounts['menunggu_verifikasi'] ?? 0) }}</span>
+        </a>
+        <a href="{{ route('admin.pengguna', ['status' => 'perlu_perbaikan']) }}" class="verification-filter-link {{ $activeStatus === 'perlu_perbaikan' ? 'active' : '' }}">
+            Perlu Perbaikan
+            <span class="verification-filter-count">{{ (int) ($statusCounts['perlu_perbaikan'] ?? 0) }}</span>
+        </a>
+        <a href="{{ route('admin.pengguna', ['status' => 'terverifikasi']) }}" class="verification-filter-link {{ $activeStatus === 'terverifikasi' ? 'active' : '' }}">
+            Disetujui
+            <span class="verification-filter-count">{{ (int) ($statusCounts['terverifikasi'] ?? 0) }}</span>
+        </a>
+        <a href="{{ route('admin.pengguna', ['status' => 'ditolak']) }}" class="verification-filter-link {{ $activeStatus === 'ditolak' ? 'active' : '' }}">
+            Ditolak
+            <span class="verification-filter-count">{{ (int) ($statusCounts['ditolak'] ?? 0) }}</span>
+        </a>
+    </nav>
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -65,6 +123,8 @@
                                 <option value="">Semua status</option>
                                 <option value="Aktif">Aktif</option>
                                 <option value="Menunggu">Menunggu</option>
+                                <option value="Perlu Perbaikan">Perlu Perbaikan</option>
+                                <option value="Ditolak">Ditolak</option>
                                 <option value="Nonaktif">Nonaktif</option>
                             </select>
                         </th>
@@ -152,6 +212,11 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
+                                    @if($user->registrasiAkun)
+                                        <a href="{{ route('admin.verifikasi-akun.show', $user->registrasiAkun) }}" class="btn btn-sm btn-primary">
+                                            Periksa
+                                        </a>
+                                    @endif
                                     <form method="post" action="{{ route('admin.pengguna.verifikasi', $user) }}" class="mb-0">
                                         @csrf
                                         <button class="btn btn-sm {{ $user->is_verified ? 'btn-outline-success' : 'btn-success' }}" data-confirm="Verifikasi akun ini?" aria-label="Verifikasi user {{ $user->id_pengguna }}" title="{{ $user->is_verified ? 'Sudah terverifikasi' : 'Verifikasi akun' }}" @disabled($user->is_verified)>

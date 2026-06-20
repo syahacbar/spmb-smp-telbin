@@ -21,6 +21,14 @@ class RegistrasiAkunController extends Controller
             return redirect()->route('login')->withErrors(['nisn' => 'Silakan login untuk melihat status akun.']);
         }
 
+        if (
+            $pengguna->is_verified
+            && $pengguna->registrasiAkun?->status === 'terverifikasi'
+            && $pengguna->verification_notice_seen_at
+        ) {
+            return redirect()->route('dashboard');
+        }
+
         return view('auth.status-akun', [
             'pengguna' => $pengguna,
             'registrasi' => $pengguna->registrasiAkun,
@@ -28,6 +36,24 @@ class RegistrasiAkunController extends Controller
             'kecamatanOptions' => DB::table('ref_kecamatan')->orderBy('urutan')->orderBy('nama')->get(['id', 'nama']),
             'kelurahanOptions' => DB::table('ref_kelurahan')->orderBy('urutan')->orderBy('nama')->get(['id', 'kecamatan_id', 'nama']),
         ]);
+    }
+
+    public function continueToDashboard(Request $request): RedirectResponse
+    {
+        $pengguna = $this->pengguna($request);
+
+        abort_unless(
+            $pengguna?->isCalonMurid()
+            && $pengguna->is_verified
+            && $pengguna->registrasiAkun?->status === 'terverifikasi',
+            403,
+        );
+
+        if (! $pengguna->verification_notice_seen_at) {
+            $pengguna->update(['verification_notice_seen_at' => now()]);
+        }
+
+        return redirect()->route('dashboard')->with('success', 'Selamat datang. Silakan lanjutkan tahapan pendaftaran.');
     }
 
     public function update(Request $request): RedirectResponse

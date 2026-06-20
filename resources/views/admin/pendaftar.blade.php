@@ -43,6 +43,8 @@
                         <th>NISN</th>
                         <th>Nama</th>
                         <th>Asal Sekolah</th>
+                        <th>Jalur</th>
+                        <th>Sekolah Tujuan</th>
                         <th>Foto</th>
                         <th>Tanggal Kirim</th>
                         <th>Aksi</th>
@@ -53,7 +55,17 @@
                         <th></th>
                         <th>
                             <select class="form-select form-select-sm column-filter" data-column="3" aria-label="Filter asal sekolah">
-                                <option value="">Semua sekolah</option>
+                                <option value="">Semua asal sekolah</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select class="form-select form-select-sm column-filter" data-column="4" aria-label="Filter jalur">
+                                <option value="">Semua jalur</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select class="form-select form-select-sm column-filter" data-column="5" aria-label="Filter sekolah tujuan">
+                                <option value="">Semua sekolah tujuan</option>
                             </select>
                         </th>
                         <th></th>
@@ -68,6 +80,8 @@
                             <td>{{ $formulir->nisn }}</td>
                             <td>{{ $formulir->nama }}</td>
                             <td>{{ $formulir->asal_sekolah }}</td>
+                            <td>{{ $formulir->jalur?->nama ?? '-' }}</td>
+                            <td>{{ $formulir->sekolah?->nama ?? '-' }}</td>
                             <td>
                                 <a href="{{ $formulir->berkasUrl('foto_selfie') }}" target="_blank">
                                     <img src="{{ $formulir->berkasUrl('foto_selfie') }}" class="doc-thumb" alt="Foto {{ $formulir->nama }}">

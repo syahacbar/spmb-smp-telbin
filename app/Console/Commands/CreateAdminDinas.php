@@ -14,7 +14,8 @@ class CreateAdminDinas extends Command
         {--name= : Nama lengkap admin}
         {--username= : Username login}
         {--phone= : Nomor WhatsApp}
-        {--email= : Alamat email}';
+        {--email= : Alamat email}
+        {--password= : Password minimal 12 karakter untuk mode non-interaktif}';
 
     protected $description = 'Membuat akun Admin Dinas tanpa password bawaan';
 
@@ -24,8 +25,13 @@ class CreateAdminDinas extends Command
         $username = trim((string) ($this->option('username') ?: $this->ask('Username')));
         $phone = preg_replace('/\D+/', '', (string) ($this->option('phone') ?: $this->ask('Nomor WhatsApp')));
         $email = trim((string) ($this->option('email') ?: $this->ask('Email')));
-        $password = (string) $this->secret('Password minimal 12 karakter');
-        $confirmation = (string) $this->secret('Ulangi password');
+        $passwordOption = (string) $this->option('password');
+        $password = $passwordOption !== ''
+            ? $passwordOption
+            : (string) $this->secret('Password minimal 12 karakter');
+        $confirmation = $passwordOption !== ''
+            ? $passwordOption
+            : (string) $this->secret('Ulangi password');
 
         if ($name === '' || $username === '' || strlen($password) < 12) {
             $this->error('Nama, username, dan password minimal 12 karakter wajib diisi.');
@@ -41,6 +47,12 @@ class CreateAdminDinas extends Command
 
         if (Pengguna::query()->where('username', $username)->exists()) {
             $this->error('Username sudah digunakan.');
+
+            return self::FAILURE;
+        }
+
+        if (! DB::table('roles')->where('kode', 'admin_dinas')->exists()) {
+            $this->error('Role Admin Dinas belum tersedia. Jalankan migrasi database terlebih dahulu.');
 
             return self::FAILURE;
         }

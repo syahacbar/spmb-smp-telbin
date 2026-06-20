@@ -14,7 +14,7 @@
             gap: .85rem;
         }
         .register-section {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--telbin-line);
             border-radius: .8rem;
             background: #fff;
             padding: 1rem;
@@ -39,8 +39,8 @@
             justify-content: center;
             flex: 0 0 auto;
             border-radius: 50%;
-            background: #dbeafe;
-            color: #1d4ed8;
+            background: #e4f3ed;
+            color: var(--telbin-forest);
             font-size: .78rem;
         }
         .student-summary {
@@ -79,8 +79,8 @@
             align-items: center;
             gap: .4rem;
             border-radius: 999px;
-            background: #eff6ff;
-            color: #1e40af;
+            background: #e4f3ed;
+            color: var(--telbin-forest);
             padding: .35rem .65rem;
             font-size: .78rem;
             font-weight: 700;
@@ -109,24 +109,24 @@
             bottom: .75rem;
             z-index: 5;
             margin-top: 1rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--telbin-line);
             border-radius: .8rem;
             background: rgba(255, 255, 255, .94);
-            box-shadow: 0 12px 30px rgba(15, 23, 42, .12);
+            box-shadow: 0 12px 30px rgba(6, 63, 53, .12);
             padding: .75rem;
             backdrop-filter: blur(10px);
         }
         .student-confirmation {
-            border: 1px solid #bfdbfe;
+            border: 1px solid #a8d5c6;
             border-radius: .9rem;
-            background: #f8fbff;
+            background: #f7fbf9;
             padding: 1rem;
         }
         .student-confirmation-message {
-            border-left: 4px solid #2563eb;
+            border-left: 4px solid var(--telbin-forest);
             border-radius: .4rem;
-            background: #eff6ff;
-            color: #1e3a8a;
+            background: var(--telbin-soft);
+            color: var(--telbin-forest-dark);
             padding: .75rem .85rem;
             font-size: .9rem;
         }

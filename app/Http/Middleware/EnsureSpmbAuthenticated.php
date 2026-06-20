@@ -32,6 +32,10 @@ class EnsureSpmbAuthenticated
             );
         }
 
+        if ($pengguna->isCalonMurid() && ! $pengguna->verification_notice_seen_at) {
+            return redirect()->route('akun.status');
+        }
+
         $request->attributes->set('pengguna', $pengguna);
 
         return $next($request);

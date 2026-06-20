@@ -36,7 +36,7 @@
                     </p>
                 </div>
 
-                <div class="col-md-8 col-lg-5 col-xl-4">
+                <div class="col-md-8 col-lg-6 col-xl-4">
                     <div class="card auth-panel">
                         <div class="card-body p-4 p-md-5">
                             <div class="mb-4">
@@ -65,16 +65,17 @@
                                 </div>
                             @endif
 
-                            <div class="small text-muted mb-3">Jika anda sudah punya akun, masukkan NISN dan kata sandi.</div>
+                            <div class="small text-muted mb-1">Jika anda sudah punya akun, masukkan NISN dan kata sandi.</div>
+                            <div class="small text-muted mb-3">Admin Dinas dan Sekolah dapat menggunakan username pada kolom yang sama.</div>
 
                             <form method="post" action="{{ route('login.store') }}">
                                 @csrf
-                                <div class="mb-3">
-                                    <label class="form-label">NISN</label>
-                                    <input type="text" name="nisn" value="{{ old('nisn') }}" class="form-control form-control-lg" inputmode="numeric" autocomplete="username" required autofocus>
+                                <div class="mb-2">
+                                    <label class="form-label">NISN / Username</label>
+                                    <input type="text" name="nisn" value="{{ old('nisn') }}" class="form-control form-control-lg" autocomplete="username" required autofocus>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="mb-2">
                                     <label class="form-label">Password</label>
                                     <div class="input-group input-group-lg password-toggle-group">
                                         <input type="password" name="password" id="login-password" class="form-control" autocomplete="current-password" required>
@@ -85,7 +86,7 @@
                                     </div>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="mb-2">
                                     <label class="form-label">Captcha</label>
                                     <div class="captcha-box mb-2">
                                         <span class="text-muted small">Hitung</span>

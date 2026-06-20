@@ -12,6 +12,7 @@ class Formulir extends Model
         'surat_keterangan_lulus',
         'kartu_keluarga',
         'foto_selfie',
+        'dokumen_pendukung',
     ];
 
     protected $table = 'tb_formulir';
@@ -43,9 +44,12 @@ class Formulir extends Model
         'alamat_ortu_kabupaten',
         'alamat_ortu_kecamatan',
         'alamat_ortu_kelurahan',
+        'jalur_id',
+        'sekolah_id',
         'surat_keterangan_lulus',
         'kartu_keluarga',
         'foto_selfie',
+        'dokumen_pendukung',
         'status',
         'submitted_at',
     ];
@@ -60,6 +64,16 @@ class Formulir extends Model
     public function pengguna(): BelongsTo
     {
         return $this->belongsTo(Pengguna::class, 'nisn', 'id_pengguna');
+    }
+
+    public function jalur(): BelongsTo
+    {
+        return $this->belongsTo(JalurPendaftaran::class, 'jalur_id');
+    }
+
+    public function sekolah(): BelongsTo
+    {
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
     }
 
     public function isSubmitted(): bool
@@ -105,7 +119,7 @@ class Formulir extends Model
             return false;
         }
 
-        if (str_starts_with($path, 'dokumen/')) {
+        if (str_starts_with($path, 'dokumen/') || str_starts_with($path, 'registrasi/kk/')) {
             return Storage::disk('local')->exists($path);
         }
 

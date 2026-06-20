@@ -7,12 +7,16 @@ use App\Models\Formulir;
 use App\Models\KontakPanitia;
 use App\Models\PengaturanSpmb;
 use App\Models\Pengguna;
+use App\Models\RegistrasiAkun;
+use App\Models\Sekolah;
 use App\Services\CalonSiswaImportReader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -24,22 +28,63 @@ class AdminController extends Controller
     {
         return view('admin.pendaftar', [
             'pengguna' => $request->attributes->get('pengguna'),
-            'formulirs' => Formulir::where('status', 'submitted')->latest('id')->get(),
+            'formulirs' => Formulir::with(['jalur', 'sekolah'])->where('status', 'submitted')->latest('id')->get(),
         ]);
     }
 
     public function pengguna(Request $request): View
     {
+        $status = (string) $request->query('status', '');
+        $allowedStatuses = ['menunggu_verifikasi', 'terverifikasi', 'perlu_perbaikan', 'ditolak'];
+
         $users = Pengguna::with(['calonSiswa', 'registrasiAkun'])
             ->whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))
+            ->when(
+                in_array($status, $allowedStatuses, true),
+                fn ($query) => $query->whereHas('registrasiAkun', fn ($registrasi) => $registrasi->where('status', $status)),
+            )
+            ->orderByRaw("case when exists (
+                select 1 from tb_registrasi_akun
+                where tb_registrasi_akun.nisn = tb_pengguna.id_pengguna
+                and tb_registrasi_akun.status = 'menunggu_verifikasi'
+            ) then 0 else 1 end")
             ->orderBy('id_pengguna')
             ->get();
 
         return view('admin.pengguna', [
             'pengguna' => $request->attributes->get('pengguna'),
             'users' => $users,
+            'activeStatus' => $status,
+            'statusCounts' => RegistrasiAkun::query()
+                ->select('status')
+                ->selectRaw('count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status'),
             'kecamatanNames' => DB::table('ref_kecamatan')->pluck('nama', 'id'),
             'kelurahanNames' => DB::table('ref_kelurahan')->pluck('nama', 'id'),
+        ]);
+    }
+
+    public function verifikasiAkun(Request $request, RegistrasiAkun $registrasi): View
+    {
+        $registrasi->load(['pengguna.calonSiswa', 'periode']);
+
+        abort_unless($registrasi->pengguna?->isCalonMurid(), 404);
+
+        return view('admin.verifikasi-akun', [
+            'pengguna' => $request->attributes->get('pengguna'),
+            'registrasi' => $registrasi,
+            'calonSiswa' => $registrasi->pengguna->calonSiswa,
+            'kecamatan' => DB::table('ref_kecamatan')->where('id', $registrasi->kecamatan_id)->value('nama'),
+            'kelurahan' => DB::table('ref_kelurahan')->where('id', $registrasi->kelurahan_id)->value('nama'),
+            'riwayat' => DB::table('tb_riwayat_verifikasi_akun')
+                ->leftJoin('tb_pengguna as petugas', 'petugas.id_pengguna', '=', 'tb_riwayat_verifikasi_akun.diproses_oleh')
+                ->where('registrasi_akun_id', $registrasi->id)
+                ->orderByDesc('tb_riwayat_verifikasi_akun.id')
+                ->get([
+                    'tb_riwayat_verifikasi_akun.*',
+                    'petugas.nama_pengguna as nama_petugas',
+                ]),
         ]);
     }
 
@@ -67,6 +112,249 @@ class AdminController extends Controller
                 ->orderBy('nama')
                 ->get(),
         ]);
+    }
+
+    public function sekolahZonasi(Request $request): View
+    {
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+
+        return view('admin.sekolah-zonasi', [
+            'pengguna' => $request->attributes->get('pengguna'),
+            'sekolahs' => Sekolah::query()
+                ->withCount(['pengguna as admin_count'])
+                ->orderBy('nama')
+                ->get(),
+            'kecamatans' => DB::table('ref_kecamatan')->orderBy('urutan')->orderBy('nama')->get(['id', 'nama']),
+            'kelurahans' => DB::table('ref_kelurahan')
+                ->join('ref_kecamatan', 'ref_kecamatan.id', '=', 'ref_kelurahan.kecamatan_id')
+                ->orderBy('ref_kecamatan.urutan')
+                ->orderBy('ref_kecamatan.nama')
+                ->orderBy('ref_kelurahan.urutan')
+                ->orderBy('ref_kelurahan.nama')
+                ->get([
+                    'ref_kelurahan.id',
+                    'ref_kelurahan.kecamatan_id',
+                    'ref_kelurahan.nama',
+                    'ref_kecamatan.nama as nama_distrik',
+                ]),
+            'zonasiBySchool' => DB::table('tb_zonasi_sekolah')
+                ->where('periode_id', $periodeId)
+                ->get()
+                ->groupBy('sekolah_id')
+                ->map(fn ($items) => $items->pluck('kelurahan_id')->map(fn ($id) => (int) $id)->all()),
+        ]);
+    }
+
+    public function storeSekolah(Request $request): RedirectResponse
+    {
+        $request->merge(['username' => trim((string) $request->input('username'))]);
+        $data = $this->validatedSchool($request);
+        $account = $request->validate([
+            'username' => ['required', 'string', 'max:50', Rule::unique('tb_pengguna', 'username')],
+            'password' => ['required', 'string', 'min:12', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($data, $account): void {
+            $data['is_active'] = true;
+            $sekolah = Sekolah::create($data);
+            $roleId = DB::table('roles')->where('kode', 'admin_sekolah')->value('id');
+            abort_unless($roleId, 422, 'Role Admin Sekolah belum tersedia.');
+
+            do {
+                $penggunaId = substr('SCH'.strtoupper(Str::random(8)), 0, 11);
+            } while (Pengguna::whereKey($penggunaId)->exists());
+
+            $pengguna = Pengguna::create([
+                'id_pengguna' => $penggunaId,
+                'nama_pengguna' => 'Admin '.$sekolah->nama,
+                'alamat' => $sekolah->alamat,
+                'telpon' => $sekolah->telepon ?: '',
+                'email' => null,
+                'username' => $account['username'],
+                'password' => Hash::make($account['password']),
+                'level' => 'Administrator',
+                'is_verified' => true,
+                'is_active' => true,
+                'verified_at' => now(),
+            ]);
+
+            $pengguna->roles()->attach($roleId);
+            $pengguna->sekolah()->attach($sekolah->id);
+        });
+
+        return back()->with('success', 'Data sekolah dan akun login sekolah berhasil ditambahkan.');
+    }
+
+    public function updateSekolah(Request $request, Sekolah $sekolah): RedirectResponse
+    {
+        $data = $this->validatedSchool($request, $sekolah);
+        $data['is_active'] = $request->boolean('is_active');
+        $sekolah->update($data);
+
+        return back()->with('success', 'Data sekolah berhasil diperbarui.');
+    }
+
+    public function destroySekolah(Sekolah $sekolah): RedirectResponse
+    {
+        DB::transaction(function () use ($sekolah): void {
+            $adminSekolahRoleId = DB::table('roles')->where('kode', 'admin_sekolah')->value('id');
+            abort_unless($adminSekolahRoleId, 422, 'Role Admin Sekolah belum tersedia.');
+            $adminSekolah = $sekolah->pengguna()
+                ->whereHas('roles', fn ($query) => $query->where('kode', 'admin_sekolah'))
+                ->get();
+
+            Formulir::where('sekolah_id', $sekolah->id)->update(['sekolah_id' => null]);
+
+            foreach ($adminSekolah as $admin) {
+                $jumlahSekolahLain = $admin->sekolah()
+                    ->where('tb_sekolah.id', '!=', $sekolah->id)
+                    ->count();
+
+                if ($jumlahSekolahLain === 0) {
+                    $admin->roles()->detach($adminSekolahRoleId);
+
+                    if (! $admin->roles()->exists()) {
+                        $admin->delete();
+                    }
+                }
+            }
+
+            $sekolah->delete();
+        });
+
+        return back()->with('success', "Sekolah {$sekolah->nama} berhasil dihapus.");
+    }
+
+    public function syncZonasiSekolah(Request $request, Sekolah $sekolah): RedirectResponse
+    {
+        $data = $request->validate([
+            'kelurahan_ids' => ['nullable', 'array'],
+            'kelurahan_ids.*' => ['integer', 'exists:ref_kelurahan,id'],
+        ]);
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+        abort_unless($periodeId, 422, 'Periode SPMB aktif belum tersedia.');
+
+        DB::transaction(function () use ($periodeId, $sekolah, $data): void {
+            DB::table('tb_zonasi_sekolah')
+                ->where('periode_id', $periodeId)
+                ->where('sekolah_id', $sekolah->id)
+                ->delete();
+
+            foreach (array_values(array_unique($data['kelurahan_ids'] ?? [])) as $priority => $kelurahanId) {
+                DB::table('tb_zonasi_sekolah')->insert([
+                    'periode_id' => $periodeId,
+                    'sekolah_id' => $sekolah->id,
+                    'kelurahan_id' => $kelurahanId,
+                    'prioritas' => $priority + 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        });
+
+        return back()->with('success', "Zonasi {$sekolah->nama} berhasil diperbarui.");
+    }
+
+    public function importSekolahZonasi(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'file_import' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ], [
+            'file_import.mimes' => 'Import sekolah dan zonasi sementara menggunakan format CSV.',
+        ]);
+
+        $handle = fopen($data['file_import']->getRealPath(), 'r');
+        abort_unless($handle, 422, 'File import tidak dapat dibuka.');
+
+        $header = array_map(
+            fn ($value) => strtolower(trim(str_replace(' ', '_', (string) $value))),
+            fgetcsv($handle) ?: [],
+        );
+        $required = ['npsn', 'nama_sekolah', 'status', 'kecamatan', 'kelurahan_sekolah', 'zonasi_kelurahan'];
+
+        if (array_diff($required, $header)) {
+            fclose($handle);
+
+            return back()->with('warning', 'Kolom CSV wajib: '.implode(', ', $required).'.');
+        }
+
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+        $imported = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($handle, $header, $periodeId, &$imported, &$skipped): void {
+            while (($row = fgetcsv($handle)) !== false) {
+                $row = array_slice(array_pad($row, count($header), ''), 0, count($header));
+                $item = array_combine($header, $row);
+
+                if (! $item || trim((string) ($item['nama_sekolah'] ?? '')) === '') {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $kecamatan = DB::table('ref_kecamatan')
+                    ->whereRaw('lower(nama) = ?', [strtolower(trim($item['kecamatan']))])
+                    ->first();
+                $kelurahan = $kecamatan
+                    ? DB::table('ref_kelurahan')
+                        ->where('kecamatan_id', $kecamatan->id)
+                        ->whereRaw('lower(nama) = ?', [strtolower(trim($item['kelurahan_sekolah']))])
+                        ->first()
+                    : null;
+
+                if (! $kecamatan || ! $kelurahan) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $npsn = trim($item['npsn']);
+                $sekolah = Sekolah::updateOrCreate(
+                    $npsn !== '' ? ['npsn' => $npsn] : ['nama' => trim($item['nama_sekolah'])],
+                    [
+                        'npsn' => $npsn ?: null,
+                        'nama' => trim($item['nama_sekolah']),
+                        'status' => strtolower(trim($item['status'])) === 'swasta' ? 'swasta' : 'negeri',
+                        'kecamatan_id' => $kecamatan->id,
+                        'kelurahan_id' => $kelurahan->id,
+                        'alamat' => trim((string) ($item['alamat'] ?? '')),
+                        'telepon' => trim((string) ($item['telepon'] ?? '')),
+                        'email' => trim((string) ($item['email'] ?? '')) ?: null,
+                        'is_active' => true,
+                    ],
+                );
+
+                DB::table('tb_zonasi_sekolah')
+                    ->where('periode_id', $periodeId)
+                    ->where('sekolah_id', $sekolah->id)
+                    ->delete();
+
+                $zoneNames = array_filter(array_map('trim', explode(';', (string) $item['zonasi_kelurahan'])));
+                foreach ($zoneNames as $priority => $zoneName) {
+                    $zoneId = DB::table('ref_kelurahan')
+                        ->whereRaw('lower(nama) = ?', [strtolower($zoneName)])
+                        ->value('id');
+
+                    if ($zoneId) {
+                        DB::table('tb_zonasi_sekolah')->insert([
+                            'periode_id' => $periodeId,
+                            'sekolah_id' => $sekolah->id,
+                            'kelurahan_id' => $zoneId,
+                            'prioritas' => $priority + 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+
+                $imported++;
+            }
+        });
+
+        fclose($handle);
+
+        return back()->with('success', "Import selesai: {$imported} sekolah diproses, {$skipped} baris dilewati.");
     }
 
     public function updateIdentitas(Request $request): RedirectResponse
@@ -123,7 +411,6 @@ class AdminController extends Controller
     {
         return $this->signatureResponse();
     }
-
 
     public function importCalonSiswa(Request $request, CalonSiswaImportReader $reader): RedirectResponse
     {
@@ -307,6 +594,7 @@ class AdminController extends Controller
                 'is_verified' => true,
                 'is_active' => true,
                 'verified_at' => now(),
+                'verification_notice_seen_at' => null,
             ]);
 
             if ($registrasi = $pengguna->registrasiAkun) {
@@ -330,7 +618,9 @@ class AdminController extends Controller
             }
         });
 
-        return back()->with('success', 'Akun berhasil diverifikasi. Kirim pemberitahuan melalui tombol WhatsApp.');
+        return redirect()
+            ->route('admin.verifikasi-akun.show', $pengguna->registrasiAkun)
+            ->with('success', 'Akun berhasil disetujui dan calon murid sudah dapat masuk ke dashboard.');
     }
 
     public function togglePenggunaAktif(Pengguna $pengguna): RedirectResponse
@@ -385,7 +675,9 @@ class AdminController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Status verifikasi akun berhasil diperbarui. Gunakan tombol WhatsApp untuk menyampaikan hasil kepada pendaftar.');
+        return redirect()
+            ->route('admin.verifikasi-akun.show', $pengguna->registrasiAkun)
+            ->with('success', 'Status dan catatan verifikasi berhasil disimpan pada panel status calon murid.');
     }
 
     public function destroyPengguna(Pengguna $pengguna): RedirectResponse
@@ -472,5 +764,19 @@ class AdminController extends Controller
         }
 
         return $digits;
+    }
+
+    private function validatedSchool(Request $request, ?Sekolah $sekolah = null): array
+    {
+        return $request->validate([
+            'npsn' => ['nullable', 'string', 'max:20', Rule::unique('tb_sekolah', 'npsn')->ignore($sekolah?->id)],
+            'nama' => ['required', 'string', 'max:150'],
+            'status' => ['required', 'in:negeri,swasta'],
+            'kecamatan_id' => ['required', 'integer', 'exists:ref_kecamatan,id'],
+            'kelurahan_id' => ['required', 'integer', 'exists:ref_kelurahan,id'],
+            'alamat' => ['nullable', 'string', 'max:1000'],
+            'telepon' => ['nullable', 'string', 'max:20'],
+            'email' => ['nullable', 'email', 'max:100'],
+        ]);
     }
 }

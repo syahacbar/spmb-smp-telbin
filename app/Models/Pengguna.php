@@ -31,12 +31,14 @@ class Pengguna extends Model
         'is_verified',
         'is_active',
         'verified_at',
+        'verification_notice_seen_at',
     ];
 
     protected $casts = [
         'is_verified' => 'boolean',
         'is_active' => 'boolean',
         'verified_at' => 'datetime',
+        'verification_notice_seen_at' => 'datetime',
     ];
 
     public function calonSiswa(): BelongsTo

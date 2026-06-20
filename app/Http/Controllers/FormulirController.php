@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\CalonSiswa;
 use App\Models\Formulir;
+use App\Models\JalurPendaftaran;
 use App\Models\PengaturanSpmb;
 use App\Models\Pengguna;
+use App\Models\Sekolah;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
@@ -22,6 +25,7 @@ class FormulirController extends Controller
     public function create(Request $request): View|RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
+        abort_unless($pengguna->isCalonMurid(), 403);
         $formulir = Formulir::where('nisn', $pengguna->id_pengguna)->first();
 
         if ($formulir) {
@@ -40,13 +44,14 @@ class FormulirController extends Controller
                 ['nisn' => $pengguna->id_pengguna],
                 $this->calonSiswaFormulirData($pengguna->id_pengguna),
             )),
-            ...$this->formReferences(),
+            ...$this->formReferences($pengguna->id_pengguna),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
+        abort_unless($pengguna->isCalonMurid(), 403);
 
         if ($formulir = Formulir::where('nisn', $pengguna->id_pengguna)->first()) {
             return redirect()->route(
@@ -63,6 +68,7 @@ class FormulirController extends Controller
         $data['hp'] = $pengguna->telpon;
         $data['status'] = 'draft';
         $data['submitted_at'] = null;
+        $data['kartu_keluarga'] = $this->registrationFamilyCardPath($pengguna->id_pengguna);
         $data = array_merge($data, $this->calonSiswaFormulirData($pengguna->id_pengguna));
         $uploadedPaths = $this->storeUploads($request);
         $data = array_merge($data, $uploadedPaths);
@@ -88,6 +94,7 @@ class FormulirController extends Controller
     public function riwayat(Request $request): View
     {
         $pengguna = $request->attributes->get('pengguna');
+        abort_unless($pengguna->isCalonMurid(), 403);
 
         return view('formulir.riwayat', [
             'pengguna' => $pengguna,
@@ -112,7 +119,7 @@ class FormulirController extends Controller
             'formulir' => $formulir,
             'akunPendaftar' => $akunPendaftar,
             'calonSiswa' => CalonSiswa::find($formulir->nisn),
-            ...$this->formReferences(),
+            ...$this->formReferences($formulir->nisn),
         ]);
     }
 
@@ -139,7 +146,7 @@ class FormulirController extends Controller
                 $this->calonSiswaFormulirData($pengguna->id_pengguna),
             )),
             'formAction' => route('admin.pengguna.formulir.store', $pengguna),
-            ...$this->formReferences(),
+            ...$this->formReferences($pengguna->id_pengguna),
         ]);
     }
 
@@ -162,6 +169,7 @@ class FormulirController extends Controller
         $data['hp'] = $pengguna->telpon;
         $data['status'] = 'draft';
         $data['submitted_at'] = null;
+        $data['kartu_keluarga'] = $this->registrationFamilyCardPath($pengguna->id_pengguna);
         $data = array_merge($data, $this->calonSiswaFormulirData($pengguna->id_pengguna));
         $uploadedPaths = $this->storeUploads($request);
         $data = array_merge($data, $uploadedPaths);
@@ -299,10 +307,6 @@ class FormulirController extends Controller
             ],
             'jenis_kelamin' => ['required', 'in:Laki-laki,Perempuan'],
             'agama' => ['required', 'string', 'max:50'],
-            'alamat' => ['required', 'string'],
-            'alamat_kabupaten' => ['required', 'string', 'max:100'],
-            'alamat_kecamatan' => ['required', 'string', 'max:100'],
-            'alamat_kelurahan' => ['required', 'string', 'max:100'],
             'nama_ayah' => ['required', 'string', 'max:100'],
             'pekerjaan_ayah' => ['required', 'string', 'max:100'],
             'nama_ibu' => ['required', 'string', 'max:100'],
@@ -314,16 +318,87 @@ class FormulirController extends Controller
             'alamat_ortu_kabupaten' => [$parentAddressSame ? 'nullable' : 'required', 'string', 'max:100'],
             'alamat_ortu_kecamatan' => [$parentAddressSame ? 'nullable' : 'required', 'string', 'max:100'],
             'alamat_ortu_kelurahan' => [$parentAddressSame ? 'nullable' : 'required', 'string', 'max:100'],
-            'surat_keterangan_lulus' => [$requiredFileRule, 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:1024'],
-            'kartu_keluarga' => [$requiredFileRule, 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:1024'],
+            'jalur_id' => [
+                'nullable',
+                Rule::exists('tb_jalur_pendaftaran', 'id')->where('is_active', true),
+            ],
+            'sekolah_id' => [
+                'required',
+                Rule::exists('tb_sekolah', 'id')->where('is_active', true),
+            ],
+            'surat_keterangan_lulus' => ['prohibited'],
+            'kartu_keluarga' => ['prohibited'],
             'foto_selfie' => [$requiredFileRule, 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
+            'dokumen_pendukung' => [
+                Rule::requiredIf(function () use ($request, $requireFiles): bool {
+                    if (! $requireFiles) {
+                        return false;
+                    }
+
+                    $kode = DB::table('tb_jalur_pendaftaran')->where('id', $request->input('jalur_id'))->value('kode');
+
+                    return in_array($kode, ['afirmasi', 'mutasi'], true);
+                }),
+                'nullable',
+                'file',
+                'mimes:pdf,jpg,jpeg,png,webp',
+                'max:2048',
+            ],
         ]), [
             'nik.digits' => 'NIK harus terdiri dari tepat 16 digit angka.',
             'nik.unique' => 'NIK tersebut sudah digunakan oleh pendaftar lain.',
         ]);
 
-        unset($data['surat_keterangan_lulus'], $data['kartu_keluarga'], $data['foto_selfie']);
+        unset($data['surat_keterangan_lulus'], $data['kartu_keluarga'], $data['foto_selfie'], $data['dokumen_pendukung']);
         $data['alamat_ortu_sama_dengan_siswa'] = $parentAddressSame;
+        $data = array_merge($data, $this->domisiliFormulirData($nisn));
+
+        $kelurahanId = Pengguna::find($nisn)?->registrasiAkun?->kelurahan_id;
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+        $isZonedSchool = DB::table('tb_zonasi_sekolah')
+            ->where('periode_id', $periodeId)
+            ->where('kelurahan_id', $kelurahanId)
+            ->where('sekolah_id', $data['sekolah_id'])
+            ->exists();
+
+        if ($isZonedSchool) {
+            $data['jalur_id'] = DB::table('tb_jalur_pendaftaran')
+                ->where('kode', 'domisili')
+                ->where('is_active', true)
+                ->value('id');
+            abort_unless($data['jalur_id'], 422, 'Jalur Domisili belum tersedia.');
+        }
+
+        $jalurKode = DB::table('tb_jalur_pendaftaran')->where('id', $data['jalur_id'] ?? null)->value('kode');
+
+        if (! $isZonedSchool && ! in_array($jalurKode, ['prestasi', 'afirmasi', 'mutasi'], true)) {
+            throw ValidationException::withMessages([
+                'jalur_id' => 'Sekolah berada di luar zonasi. Pilih Jalur Prestasi, Afirmasi, atau Mutasi.',
+            ]);
+        }
+
+        if (
+            $jalurKode === 'prestasi'
+            && ! CalonSiswa::query()
+                ->whereKey($nisn)
+                ->whereNotNull('nilai_tka_matematika')
+                ->whereNotNull('nilai_tka_bahasa_indonesia')
+                ->exists()
+        ) {
+            throw ValidationException::withMessages([
+                'jalur_id' => 'Jalur Prestasi tidak dapat dipilih karena nilai TKA belum lengkap.',
+            ]);
+        }
+
+        if (
+            in_array($jalurKode, ['afirmasi', 'mutasi'], true)
+            && ! $request->hasFile('dokumen_pendukung')
+            && ! ($nisn ? Formulir::where('nisn', $nisn)->value('dokumen_pendukung') : null)
+        ) {
+            throw ValidationException::withMessages([
+                'dokumen_pendukung' => 'Dokumen pendukung wajib diunggah untuk jalur afirmasi atau mutasi orang tua/wali.',
+            ]);
+        }
 
         if ($parentAddressSame) {
             $data['alamat_ortu_provinsi'] = 'Papua Barat';
@@ -346,7 +421,7 @@ class FormulirController extends Controller
         $paths = [];
 
         try {
-            foreach (Formulir::DOCUMENT_FIELDS as $field) {
+            foreach (array_intersect(Formulir::DOCUMENT_FIELDS, ['foto_selfie', 'dokumen_pendukung']) as $field) {
                 if (! $request->hasFile($field)) {
                     continue;
                 }
@@ -423,23 +498,8 @@ class FormulirController extends Controller
         }
     }
 
-    private function formReferences(): array
+    private function formReferences(string $nisn): array
     {
-        $kecamatan = DB::table('ref_kecamatan')
-            ->orderBy('urutan')
-            ->orderBy('nama')
-            ->get(['id', 'nama']);
-
-        $kelurahan = DB::table('ref_kelurahan')
-            ->join('ref_kecamatan', 'ref_kecamatan.id', '=', 'ref_kelurahan.kecamatan_id')
-            ->orderBy('ref_kecamatan.urutan')
-            ->orderBy('ref_kelurahan.urutan')
-            ->orderBy('ref_kelurahan.nama')
-            ->get([
-                'ref_kelurahan.nama',
-                'ref_kecamatan.nama as kecamatan',
-            ]);
-
         $wilayah = DB::table('ref_wilayah_kelurahan')
             ->join('ref_wilayah_kecamatan', 'ref_wilayah_kecamatan.id', '=', 'ref_wilayah_kelurahan.kecamatan_id')
             ->join('ref_wilayah_kabupaten', 'ref_wilayah_kabupaten.id', '=', 'ref_wilayah_kecamatan.kabupaten_id')
@@ -455,12 +515,18 @@ class FormulirController extends Controller
                 'ref_wilayah_kelurahan.nama as kelurahan',
             ]);
 
+        $pengguna = Pengguna::with('registrasiAkun')->find($nisn);
+        $domisili = $this->domisiliFormulirData($nisn);
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+        $eligibleDomisiliIds = DB::table('tb_zonasi_sekolah')
+            ->where('periode_id', $periodeId)
+            ->where('kelurahan_id', $pengguna?->registrasiAkun?->kelurahan_id)
+            ->pluck('sekolah_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
         return [
-            'kecamatanOptions' => $kecamatan->pluck('nama')->all(),
-            'kelurahanOptionsByKecamatan' => $kelurahan
-                ->groupBy('kecamatan')
-                ->map(fn ($items) => $items->pluck('nama')->values()->all())
-                ->all(),
+            'domisili' => $domisili,
             'sekolahAsalOptions' => CalonSiswa::query()
                 ->where('is_active', true)
                 ->whereNotNull('asal_sekolah')
@@ -483,6 +549,65 @@ class FormulirController extends Controller
                         ->all())
                     ->all())
                 ->all(),
+            'jalurOptions' => JalurPendaftaran::query()->where('is_active', true)->orderBy('id')->get(),
+            'schoolOptions' => Sekolah::query()
+                ->where('is_active', true)
+                ->orderBy('nama')
+                ->get()
+                ->map(fn (Sekolah $sekolah) => [
+                    'id' => $sekolah->id,
+                    'nama' => $sekolah->nama,
+                    'status' => $sekolah->status,
+                    'eligible_domisili' => in_array($sekolah->id, $eligibleDomisiliIds, true),
+                ])
+                ->values(),
+            'nilaiTka' => $pengguna?->calonSiswa
+                ? [
+                    'matematika' => $pengguna->calonSiswa->nilai_tka_matematika,
+                    'bahasa_indonesia' => $pengguna->calonSiswa->nilai_tka_bahasa_indonesia,
+                ]
+                : null,
+            'registrasiAkun' => $pengguna?->registrasiAkun,
+        ];
+    }
+
+    private function registrationFamilyCardPath(string $nisn): string
+    {
+        $path = Pengguna::with('registrasiAkun')->find($nisn)?->registrasiAkun?->kartu_keluarga_path;
+
+        if (! $path || ! Storage::disk('local')->exists($path)) {
+            throw ValidationException::withMessages([
+                'kartu_keluarga' => 'Kartu Keluarga pada registrasi akun tidak tersedia. Silakan hubungi panitia.',
+            ]);
+        }
+
+        return $path;
+    }
+
+    private function domisiliFormulirData(?string $nisn): array
+    {
+        $registrasi = $nisn
+            ? Pengguna::with('registrasiAkun')->find($nisn)?->registrasiAkun
+            : null;
+
+        $kecamatan = $registrasi?->kecamatan_id
+            ? DB::table('ref_kecamatan')->where('id', $registrasi->kecamatan_id)->value('nama')
+            : null;
+        $kelurahan = $registrasi?->kelurahan_id
+            ? DB::table('ref_kelurahan')->where('id', $registrasi->kelurahan_id)->value('nama')
+            : null;
+
+        if (! $registrasi || ! $kecamatan || ! $kelurahan || ! $registrasi->detail_alamat) {
+            throw ValidationException::withMessages([
+                'domisili' => 'Data domisili akun belum lengkap. Silakan hubungi panitia untuk memperbarui data registrasi akun.',
+            ]);
+        }
+
+        return [
+            'alamat' => $registrasi->detail_alamat,
+            'alamat_kabupaten' => $registrasi->kabupaten ?: 'Teluk Bintuni',
+            'alamat_kecamatan' => $kecamatan,
+            'alamat_kelurahan' => $kelurahan,
         ];
     }
 

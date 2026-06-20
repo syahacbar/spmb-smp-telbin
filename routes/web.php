@@ -3,10 +3,12 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DomisiliSchoolController;
 use App\Http\Controllers\FormulirBerkasController;
 use App\Http\Controllers\FormulirController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PenggunaWhatsappController;
+use App\Http\Controllers\PrestasiSchoolController;
 use App\Http\Controllers\RegistrasiAkunBerkasController;
 use App\Http\Controllers\RegistrasiAkunController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +19,7 @@ Route::post('/cek-status', [LandingController::class, 'checkStatus'])
     ->name('status.check');
 Route::get('/cek-status', fn () => redirect('/#cek-status'));
 Route::get('/akun/status', [RegistrasiAkunController::class, 'show'])->name('akun.status');
+Route::post('/akun/status/lanjut', [RegistrasiAkunController::class, 'continueToDashboard'])->name('akun.status.continue');
 Route::put('/akun/perbaikan', [RegistrasiAkunController::class, 'update'])->name('akun.perbaikan');
 Route::post('/akun/logout', [AuthController::class, 'logout'])->name('akun.logout');
 
@@ -46,13 +49,23 @@ Route::middleware('spmb.auth')->group(function (): void {
     Route::get('/formulir/{formulir}/periksa', [FormulirController::class, 'periksa'])->name('formulir.periksa');
     Route::get('/formulir/{formulir}/berkas/{field}', [FormulirBerkasController::class, 'show'])->name('formulir.berkas.show');
     Route::get('/formulir/{formulir}/tanda-tangan', [FormulirBerkasController::class, 'signature'])->name('formulir.signature.show');
+    Route::get('/formulir/pilihan-domisili/{pengguna}', DomisiliSchoolController::class)->name('formulir.domisili-schools');
+    Route::get('/formulir/pilihan-prestasi/{pengguna}', PrestasiSchoolController::class)->name('formulir.prestasi-schools');
+    Route::get('/registrasi-akun/{registrasi}/kartu-keluarga', RegistrasiAkunBerkasController::class)->name('registrasi.kk');
     Route::post('/formulir/{formulir}/kirim', [FormulirController::class, 'kirim'])->name('formulir.kirim');
     Route::get('/formulir/{formulir}/cetak', [FormulirController::class, 'cetak'])->name('formulir.cetak');
 
     Route::middleware('spmb.admin')->prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/pendaftar', [AdminController::class, 'pendaftar'])->name('pendaftar');
         Route::get('/pengguna', [AdminController::class, 'pengguna'])->name('pengguna');
+        Route::get('/verifikasi-akun/{registrasi}', [AdminController::class, 'verifikasiAkun'])->name('verifikasi-akun.show');
         Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
+        Route::get('/sekolah-zonasi', [AdminController::class, 'sekolahZonasi'])->name('sekolah-zonasi');
+        Route::post('/sekolah-zonasi/sekolah', [AdminController::class, 'storeSekolah'])->name('sekolah.store');
+        Route::put('/sekolah-zonasi/sekolah/{sekolah}', [AdminController::class, 'updateSekolah'])->name('sekolah.update');
+        Route::delete('/sekolah-zonasi/sekolah/{sekolah}', [AdminController::class, 'destroySekolah'])->name('sekolah.destroy');
+        Route::post('/sekolah-zonasi/sekolah/{sekolah}/zonasi', [AdminController::class, 'syncZonasiSekolah'])->name('sekolah.zonasi');
+        Route::post('/sekolah-zonasi/import', [AdminController::class, 'importSekolahZonasi'])->name('sekolah-zonasi.import');
         Route::get('/pengaturan/tanda-tangan', [AdminController::class, 'showSignature'])->name('pengaturan.signature.show');
         Route::post('/pengaturan/identitas', [AdminController::class, 'updateIdentitas'])->name('pengaturan.identitas');
         Route::post('/pengaturan/whitelist-calon-siswa/import', [AdminController::class, 'importCalonSiswa'])->name('pengaturan.whitelist.import');

@@ -8,8 +8,6 @@
         $nomorHpAkun = $akunPendaftar->telpon ?? $formulir->hp ?? '';
         $emailAkun = $akunPendaftar->email ?? '';
         $hasMasterIdentity = isset($calonSiswa) && $calonSiswa;
-        $selectedKecamatan = old('alamat_kecamatan', $formulir->alamat_kecamatan);
-        $selectedKelurahan = old('alamat_kelurahan', $formulir->alamat_kelurahan);
         $parentAddressSame = $errors->any()
             ? (bool) old('alamat_ortu_sama_dengan_siswa')
             : (bool) $formulir->alamat_ortu_sama_dengan_siswa;
@@ -17,23 +15,14 @@
         $selectedKabupatenOrtu = old('alamat_ortu_kabupaten', $formulir->alamat_ortu_kabupaten);
         $selectedKecamatanOrtu = old('alamat_ortu_kecamatan', $formulir->alamat_ortu_kecamatan);
         $selectedKelurahanOrtu = old('alamat_ortu_kelurahan', $formulir->alamat_ortu_kelurahan);
-        $kelurahanOptionsByKecamatan = $kelurahanOptionsByKecamatan ?? [];
         $sekolahAsalOptions = $sekolahAsalOptions ?? [];
         $wilayahProvinsiOptions = $wilayahProvinsiOptions ?? [];
         $wilayahOptions = $wilayahOptions ?? [];
+        $jalurOptions = $jalurOptions ?? collect();
+        $schoolOptions = $schoolOptions ?? collect();
+        $selectedJalur = (string) old('jalur_id', $formulir->jalur_id);
+        $selectedSekolah = (string) old('sekolah_id', $formulir->sekolah_id);
         $documentGuides = [
-            'surat_keterangan_lulus' => [
-                'label' => 'Ijazah / SKL',
-                'description' => 'Ijazah SD/Sederajat atau Surat Keterangan Lulus.',
-                'hint' => 'Format PDF, JPG, JPEG, PNG, atau WEBP, maksimal 1 MB. Tulisan harus jelas dan terbaca.',
-                'accept' => '.pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp',
-            ],
-            'kartu_keluarga' => [
-                'label' => 'Kartu Keluarga',
-                'description' => 'Kartu Keluarga hasil pindai/scan.',
-                'hint' => 'Format PDF, JPG, JPEG, PNG, atau WEBP, maksimal 1 MB. Tulisan harus jelas dan terbaca.',
-                'accept' => '.pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp',
-            ],
             'foto_selfie' => [
                 'label' => 'Pas Foto',
                 'description' => 'Pas foto ukuran 3x4 dengan latar belakang biru.',
@@ -46,7 +35,7 @@
     <div class="page-title">
         <div>
             <h3 class="fw-bold">{{ $isEdit ? 'Edit Formulir Registrasi' : 'Formulir Registrasi' }}</h3>
-            <div class="text-muted">Lengkapi biodata dan berkas dasar. Pemilihan jalur serta sekolah dilakukan pada tahap berikutnya.</div>
+            <div class="text-muted">Lengkapi biodata, unggah pas foto, lalu pilih sekolah tujuan.</div>
         </div>
     </div>
 
@@ -69,32 +58,32 @@
         @endif
 
         <div class="registration-shell">
-            <aside class="registration-nav" aria-label="Navigasi bagian formulir">
-                <a href="#data-diri" class="registration-nav-link">
+            <aside class="registration-nav" aria-label="Tahapan formulir">
+                <button type="button" class="registration-nav-link active" data-step-target="1">
                     <span>1</span>
                     <div>
-                        <strong>Data Diri</strong>
-                        <small>Identitas calon peserta didik</small>
+                        <strong>Lengkapi Biodata</strong>
+                        <small>Siswa dan orang tua/wali</small>
                     </div>
-                </a>
-                <a href="#data-orang-tua" class="registration-nav-link">
+                </button>
+                <button type="button" class="registration-nav-link" data-step-target="2">
                     <span>2</span>
                     <div>
-                        <strong>Orang Tua / Wali</strong>
-                        <small>Kontak keluarga</small>
+                        <strong>Upload Pas Foto</strong>
+                        <small>Foto peserta 3x4</small>
                     </div>
-                </a>
-                <a href="#upload-dokumen" class="registration-nav-link">
+                </button>
+                <button type="button" class="registration-nav-link" data-step-target="3">
                     <span>3</span>
                     <div>
-                        <strong>Unggah Dokumen</strong>
-                        <small>Berkas persyaratan</small>
+                        <strong>Pilih Sekolah</strong>
+                        <small>Zonasi dan jalur masuk</small>
                     </div>
-                </a>
+                </button>
             </aside>
 
             <div class="registration-content">
-                <section id="data-diri" class="card shadow-sm mb-3 form-section">
+                <section id="data-diri" class="card shadow-sm mb-3 form-section form-step" data-form-step="1">
                     <div class="card-header">
                         <span class="section-number">1</span>
                         <div>
@@ -160,31 +149,29 @@
                         </div>
                         <div class="col-md-12">
                             <div class="address-group">
-                                <div class="fw-bold mb-2">Tempat Tinggal / Domisili</div>
+                                <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+                                    <div>
+                                        <div class="fw-bold">Tempat Tinggal / Domisili</div>
+                                        <div class="small text-muted">Data ini diambil otomatis dari registrasi akun dan tidak perlu diisi kembali.</div>
+                                    </div>
+                                    <span class="badge text-bg-success align-self-start">Terverifikasi saat registrasi akun</span>
+                                </div>
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <label class="form-label">Kabupaten</label>
-                                        <input class="form-control" value="Teluk Bintuni" disabled>
-                                        <input type="hidden" name="alamat_kabupaten" value="Teluk Bintuni">
+                                        <div class="small text-muted">Kabupaten</div>
+                                        <div class="fw-semibold">{{ $domisili['alamat_kabupaten'] }}</div>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Kecamatan/Distrik</label>
-                                        <select name="alamat_kecamatan" class="form-select" data-field-label="Kecamatan domisili" data-kecamatan-select required>
-                                            <option value="">--Pilih salah satu--</option>
-                                            @foreach($kecamatanOptions as $option)
-                                                <option value="{{ $option }}" @selected($selectedKecamatan === $option)>{{ $option }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="small text-muted">Kecamatan/Distrik</div>
+                                        <div class="fw-semibold">{{ $domisili['alamat_kecamatan'] }}</div>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label">Kelurahan/Desa</label>
-                                        <select name="alamat_kelurahan" class="form-select" data-field-label="Kelurahan/desa domisili" data-kelurahan-select data-selected-kelurahan="{{ $selectedKelurahan }}" required>
-                                            <option value="">--Pilih salah satu--</option>
-                                        </select>
+                                        <div class="small text-muted">Kelurahan/Desa</div>
+                                        <div class="fw-semibold">{{ $domisili['alamat_kelurahan'] }}</div>
                                     </div>
                                     <div class="col-12">
-                                        <label class="form-label">Alamat (Nama jalan, nomor rumah, RT/RW, kompleks, dll.)</label>
-                                        <textarea name="alamat" class="form-control" rows="2" data-field-label="Detail alamat domisili" placeholder="Contoh: Jl. ABC Nomor 123 RT 001 RW 002, Kompleks ABC, dan seterusnya" required>{{ old('alamat', $formulir->alamat) }}</textarea>
+                                        <div class="small text-muted">Detail Alamat</div>
+                                        <div class="fw-semibold">{{ $domisili['alamat'] }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -192,7 +179,7 @@
                     </div>
                 </section>
 
-                <section id="data-orang-tua" class="card shadow-sm mb-3 form-section">
+                <section id="data-orang-tua" class="card shadow-sm mb-3 form-section form-step" data-form-step="1">
                     <div class="card-header">
                         <span class="section-number">2</span>
                         <div>
@@ -278,29 +265,64 @@
                     </div>
                 </section>
 
-                <section id="upload-dokumen" class="card shadow-sm mb-3 form-section">
+                <section id="upload-dokumen" class="card shadow-sm mb-3 form-section form-step" data-form-step="2" hidden>
                     <div class="card-header">
-                        <span class="section-number">3</span>
+                        <span class="section-number">2</span>
                         <div>
-                            <div class="fw-bold">Unggah Dokumen</div>
-                            <div class="small text-muted">Siapkan file hasil scan sesuai ketentuan juknis.</div>
+                            <div class="fw-bold">Upload Pas Foto</div>
+                            <div class="small text-muted">Gunakan pas foto 3x4 berlatar biru dan terlihat jelas.</div>
                         </div>
                     </div>
                     <div class="card-body">
 
                         <div class="row g-3">
                             @foreach($documentGuides as $field => $document)
-                                <div class="col-xl-4 col-md-6">
+                                <div class="col-lg-7">
                                     <div class="upload-box upload-box-modern">
                                         <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                                             <div>
                                                 <label class="form-label fw-bold mb-1">{{ $document['label'] }}</label>
                                                 <div class="small text-muted">{{ $document['description'] }}</div>
                                             </div>
-                                            <span class="badge text-bg-primary">Max 1 MB</span>
+                                            <span class="badge text-bg-primary">
+                                                {{ ($document['from_registration'] ?? false) ? 'Dari akun' : 'Max 1 MB' }}
+                                            </span>
                                         </div>
 
-                                        @if($isEdit && $formulir->{$field})
+                                        @php
+                                            $isRegistrationDocument = $document['from_registration'] ?? false;
+                                            $registrationDocumentAvailable = $isRegistrationDocument
+                                                && isset($registrasiAkun)
+                                                && $registrasiAkun?->kartuKeluargaTersedia();
+                                            $legacyDocumentAvailable = $isRegistrationDocument
+                                                && $isEdit
+                                                && $formulir->{$field};
+                                        @endphp
+
+                                        @if($isRegistrationDocument)
+                                            <div class="uploaded-file mb-2">
+                                                <div class="fw-bold small">Berkas dari registrasi akun</div>
+                                                @if($registrationDocumentAvailable)
+                                                    <a href="{{ route('registrasi.kk', $registrasiAkun) }}"
+                                                       class="small text-decoration-none"
+                                                       data-document-preview
+                                                       data-document-title="{{ $document['label'] }}"
+                                                       data-document-type="{{ $registrasiAkun->kartuKeluargaIsImage() ? 'image' : 'pdf' }}"
+                                                       data-document-download="{{ route('registrasi.kk', ['registrasi' => $registrasiAkun, 'download' => 1]) }}">Lihat Berkas</a>
+                                                @elseif($legacyDocumentAvailable)
+                                                    <a href="{{ $formulir->berkasUrl($field) }}"
+                                                       class="small text-decoration-none"
+                                                       data-document-preview
+                                                       data-document-title="{{ $document['label'] }}"
+                                                       data-document-type="{{ $formulir->berkasIsImage($field) ? 'image' : 'pdf' }}"
+                                                       data-document-download="{{ $formulir->berkasDownloadUrl($field) }}">Lihat Berkas</a>
+                                                @else
+                                                    <span class="small text-danger">Berkas tidak tersedia</span>
+                                                @endif
+                                            </div>
+                                            <button type="button" class="btn btn-outline-secondary w-100" disabled>Upload KK dinonaktifkan</button>
+                                            <div class="document-hint mt-2">Kartu Keluarga sudah diunggah saat registrasi akun dan tidak perlu diunggah ulang.</div>
+                                        @elseif($isEdit && $formulir->{$field})
                                             <div class="uploaded-file mb-2">
                                                 <div class="fw-bold small">Berkas saat ini</div>
                                                 <a href="{{ $formulir->berkasUrl($field) }}"
@@ -313,15 +335,125 @@
                                             <div class="small text-muted mb-2">Kosongkan jika tidak ingin mengganti berkas.</div>
                                         @endif
 
-                                        <div class="input-group upload-file-control">
-                                            <label for="upload-{{ $field }}" class="btn btn-outline-primary">Pilih file</label>
-                                            <span class="form-control upload-file-name" id="upload-name-{{ $field }}" data-empty-file-text="Belum ada file dipilih">Belum ada file dipilih</span>
-                                            <input type="file" id="upload-{{ $field }}" name="{{ $field }}" class="visually-hidden" accept="{{ $document['accept'] }}" data-file-validation="{{ $field === 'foto_selfie' ? 'image' : 'document' }}" data-field-label="{{ $document['label'] }}" data-max-file-size="1048576" data-file-name-target="upload-name-{{ $field }}" @required(! $isEdit)>
-                                        </div>
-                                        <div class="document-hint mt-2">{{ $document['hint'] }}</div>
+                                        @if(! $isRegistrationDocument)
+                                            <div class="input-group upload-file-control">
+                                                <label for="upload-{{ $field }}" class="btn btn-outline-primary">Pilih file</label>
+                                                <span class="form-control upload-file-name" id="upload-name-{{ $field }}" data-empty-file-text="Belum ada file dipilih">Belum ada file dipilih</span>
+                                                <input type="file" id="upload-{{ $field }}" name="{{ $field }}" class="visually-hidden" accept="{{ $document['accept'] }}" data-file-validation="{{ $field === 'foto_selfie' ? 'image' : 'document' }}" data-field-label="{{ $document['label'] }}" data-max-file-size="1048576" data-file-name-target="upload-name-{{ $field }}" @required(! $isEdit)>
+                                            </div>
+                                            <div class="document-hint mt-2">{{ $document['hint'] }}</div>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
+                        </div>
+                    </div>
+                </section>
+
+                <section id="pilih-sekolah" class="card shadow-sm mb-3 form-section form-step" data-form-step="3" hidden>
+                    <div class="card-header">
+                        <span class="section-number">3</span>
+                        <div>
+                            <div class="fw-bold">Pilih Sekolah Tujuan</div>
+                            <div class="small text-muted">Pilih sekolah terlebih dahulu. Sistem akan menentukan jalur berdasarkan zonasi domisili.</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <select name="sekolah_id" class="visually-hidden" data-school-target data-selected="{{ $selectedSekolah }}" data-field-label="Sekolah tujuan" required>
+                            <option value="">Pilih sekolah tujuan</option>
+                            @foreach($schoolOptions as $school)
+                                <option value="{{ $school['id'] }}" @selected($selectedSekolah === (string) $school['id'])>{{ $school['nama'] }}</option>
+                            @endforeach
+                        </select>
+                        <select name="jalur_id" class="visually-hidden" data-jalur-select data-field-label="Jalur pendaftaran" required>
+                            <option value="">Pilih jalur</option>
+                            @foreach($jalurOptions as $jalur)
+                                <option value="{{ $jalur->id }}" data-code="{{ $jalur->kode }}" @selected($selectedJalur === (string) $jalur->id)>{{ $jalur->nama }}</option>
+                            @endforeach
+                        </select>
+
+                        <div class="school-choice-grid mb-3" data-school-choice-list>
+                            @foreach($schoolOptions as $school)
+                                <article class="school-choice-card" data-school-choice="{{ $school['id'] }}">
+                                    <div class="d-flex justify-content-between gap-2 mb-3">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">{{ $school['nama'] }}</h6>
+                                            <div class="small text-muted">{{ ucfirst($school['status']) }}</div>
+                                        </div>
+                                        @if($school['eligible_domisili'])
+                                            <span class="badge text-bg-success align-self-start">Dalam Zonasi</span>
+                                        @else
+                                            <span class="badge text-bg-light align-self-start">Luar Zonasi</span>
+                                        @endif
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary w-100" data-choose-school="{{ $school['id'] }}">Pilih Sekolah</button>
+                                </article>
+                            @endforeach
+                        </div>
+
+                        <div class="alert alert-success d-none" data-zone-notice>
+                            <div class="fw-bold">Sekolah berada dalam zonasi domisili Anda.</div>
+                            <div class="small">Jalur pendaftaran otomatis menggunakan <strong>Jalur Domisili</strong>.</div>
+                        </div>
+
+                        <div class="d-none" data-outside-zone-panel>
+                            <div class="alert alert-warning">
+                                Sekolah ini berada di luar zonasi domisili. Pilih jalur yang sesuai untuk melanjutkan.
+                            </div>
+                            <div class="row g-2 mb-3" data-outside-path-list>
+                                @foreach($jalurOptions->whereIn('kode', ['prestasi', 'afirmasi', 'mutasi']) as $jalur)
+                                    <div class="col-md-4">
+                                        <button type="button"
+                                                class="btn btn-outline-primary w-100 h-100 p-3"
+                                                data-choose-path="{{ $jalur->kode }}"
+                                                data-path-id="{{ $jalur->id }}"
+                                                @disabled(
+                                                    $jalur->kode === 'prestasi'
+                                                    && (
+                                                        ! $nilaiTka
+                                                        || $nilaiTka['matematika'] === null
+                                                        || $nilaiTka['bahasa_indonesia'] === null
+                                                    )
+                                                )>
+                                            <strong class="d-block">{{ $jalur->nama }}</strong>
+                                            <small>{{ $jalur->deskripsi }}</small>
+                                            @if(
+                                                $jalur->kode === 'prestasi'
+                                                && (
+                                                    ! $nilaiTka
+                                                    || $nilaiTka['matematika'] === null
+                                                    || $nilaiTka['bahasa_indonesia'] === null
+                                                )
+                                            )
+                                                <small class="d-block text-danger mt-1">Nilai TKA belum tersedia</small>
+                                            @endif
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="address-group d-none mb-3" data-tka-panel>
+                                <div class="fw-bold mb-2">Persyaratan Jalur Prestasi</div>
+                                <div class="d-flex flex-wrap gap-4">
+                                    <div><div class="small text-muted">TKA Matematika</div><strong>{{ $nilaiTka['matematika'] ?? '-' }}</strong></div>
+                                    <div><div class="small text-muted">TKA Bahasa Indonesia</div><strong>{{ $nilaiTka['bahasa_indonesia'] ?? '-' }}</strong></div>
+                                </div>
+                                <div class="small text-muted mt-2">Nilai TKA wajib tersedia dan pemeringkatan dilakukan berdasarkan data resmi Dinas.</div>
+                            </div>
+
+                            <div class="upload-box upload-box-modern d-none" data-support-panel>
+                                <label class="form-label fw-bold" data-support-title>Dokumen Pendukung Jalur</label>
+                                @if($isEdit && $formulir->dokumen_pendukung)
+                                    <div class="uploaded-file mb-2">
+                                        <a href="{{ $formulir->berkasUrl('dokumen_pendukung') }}" data-document-preview data-document-title="Dokumen Pendukung" data-document-type="{{ $formulir->berkasIsImage('dokumen_pendukung') ? 'image' : 'pdf' }}" data-document-download="{{ $formulir->berkasDownloadUrl('dokumen_pendukung') }}">Lihat berkas saat ini</a>
+                                    </div>
+                                @endif
+                                <input type="file" name="dokumen_pendukung" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp" data-support-file data-file-validation="document" data-field-label="Dokumen pendukung" data-max-file-size="2097152">
+                                <div class="small text-muted mt-2" data-support-description>Format PDF/gambar, maksimal 2 MB.</div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mb-0">
+                            Setelah disimpan, formulir akan masuk ke halaman pemeriksaan sebelum dikirim final.
                         </div>
                     </div>
                 </section>
@@ -329,10 +461,46 @@
         </div>
 
         <div class="sticky-actions d-flex flex-column flex-sm-row gap-2 mb-4">
-            <button class="btn btn-primary">{{ $isEdit ? 'Simpan Perubahan dan Periksa' : 'Simpan dan Periksa' }}</button>
-            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Kembali</a>
+            <button type="button" class="btn btn-outline-secondary d-none" data-step-previous>Kembali ke Tahap Sebelumnya</button>
+            <button type="button" class="btn btn-primary" data-step-next>Lanjutkan</button>
+            <button type="submit" class="btn btn-primary d-none" data-step-submit>{{ $isEdit ? 'Simpan Perubahan dan Periksa' : 'Simpan dan Periksa' }}</button>
+            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">Kembali ke Dashboard</a>
         </div>
     </form>
+
+    <div class="modal fade" id="prestasiSchoolModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <div class="small text-muted">Detail Jalur Prestasi</div>
+                        <h5 class="modal-title mb-0" data-prestasi-modal-name>Nama Sekolah</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="review-summary mb-3">
+                        <div class="review-summary-item"><div class="small text-muted">Nilai TKA Anda</div><strong data-prestasi-modal-score>-</strong></div>
+                        <div class="review-summary-item"><div class="small text-muted">Cut-off Sementara</div><strong data-prestasi-modal-cutoff>-</strong></div>
+                        <div class="review-summary-item"><div class="small text-muted">Kuota Prestasi</div><strong data-prestasi-modal-quota>-</strong></div>
+                        <div class="review-summary-item"><div class="small text-muted">Pendaftar</div><strong data-prestasi-modal-applicants>-</strong></div>
+                    </div>
+                    <div class="d-flex justify-content-between gap-2 mb-2">
+                        <strong>Estimasi Peluang</strong>
+                        <strong data-prestasi-modal-opportunity>-</strong>
+                    </div>
+                    <div class="opportunity-progress">
+                        <div class="opportunity-progress-bar" data-prestasi-modal-progress></div>
+                    </div>
+                    <div class="small text-muted mt-3">Simulasi bersifat informatif dan bukan keputusan kelulusan.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" data-prestasi-modal-select>Pilih Sekolah</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -342,52 +510,61 @@
                 return;
             }
 
-            const kelurahanByKecamatan = @json($kelurahanOptionsByKecamatan);
             const wilayahOptions = @json($wilayahOptions);
+            const schoolOptions = @json($schoolOptions);
             const schoolInput = form.querySelector('[data-school-input]');
+            const pathSelect = form.querySelector('[data-jalur-select]');
+            const targetSchool = form.querySelector('[data-school-target]');
+            const schoolChoiceList = form.querySelector('[data-school-choice-list]');
+            const zoneNotice = form.querySelector('[data-zone-notice]');
+            const outsideZonePanel = form.querySelector('[data-outside-zone-panel]');
+            const outsidePathList = form.querySelector('[data-outside-path-list]');
+            const supportTitle = form.querySelector('[data-support-title]');
+            const supportDescription = form.querySelector('[data-support-description]');
+            const standardSchoolPanel = form.querySelector('[data-standard-school-panel]');
+            const domicileSchoolPanel = form.querySelector('[data-domicile-school-panel]');
+            const domicileMapElement = form.querySelector('[data-domicile-map]');
+            const domicileSchoolList = form.querySelector('[data-domicile-school-list]');
+            const domicileLoading = form.querySelector('[data-domicile-loading]');
+            const domicileError = form.querySelector('[data-domicile-error]');
+            const prestasiSchoolPanel = form.querySelector('[data-prestasi-school-panel]');
+            const prestasiLoading = form.querySelector('[data-prestasi-loading]');
+            const prestasiError = form.querySelector('[data-prestasi-error]');
+            const prestasiSummary = form.querySelector('[data-prestasi-summary]');
+            const prestasiDisclaimer = form.querySelector('[data-prestasi-disclaimer]');
+            const prestasiSchoolList = form.querySelector('[data-prestasi-school-list]');
+            const prestasiModalElement = document.getElementById('prestasiSchoolModal');
+            const prestasiModalName = document.querySelector('[data-prestasi-modal-name]');
+            const prestasiModalScore = document.querySelector('[data-prestasi-modal-score]');
+            const prestasiModalCutoff = document.querySelector('[data-prestasi-modal-cutoff]');
+            const prestasiModalQuota = document.querySelector('[data-prestasi-modal-quota]');
+            const prestasiModalApplicants = document.querySelector('[data-prestasi-modal-applicants]');
+            const prestasiModalOpportunity = document.querySelector('[data-prestasi-modal-opportunity]');
+            const prestasiModalProgress = document.querySelector('[data-prestasi-modal-progress]');
+            const prestasiModalSelect = document.querySelector('[data-prestasi-modal-select]');
+            const reviewPath = form.querySelector('[data-review-path]');
+            const reviewSchool = form.querySelector('[data-review-school]');
+            const pathDescription = form.querySelector('[data-path-description]');
+            const tkaPanel = form.querySelector('[data-tka-panel]');
+            const supportPanel = form.querySelector('[data-support-panel]');
+            const supportFile = form.querySelector('[data-support-file]');
             const parentSameAddress = form.querySelector('[data-parent-same-address]');
             const parentProvinsi = form.querySelector('[data-parent-provinsi]');
             const parentKabupaten = form.querySelector('[data-parent-kabupaten]');
             const parentKecamatan = form.querySelector('[data-parent-kecamatan]');
             const parentKelurahan = form.querySelector('[data-parent-kelurahan]');
             const parentDetailAddress = form.querySelector('[data-parent-detail-address]');
-            const domisiliKecamatan = form.querySelector('[name="alamat_kecamatan"]');
-            const domisiliKelurahan = form.querySelector('[name="alamat_kelurahan"]');
-            const domisiliDetailAddress = form.querySelector('[name="alamat"]');
-
-            form.querySelectorAll('[data-kecamatan-select]').forEach(function (kecamatanSelect) {
-                const addressGroup = kecamatanSelect.closest('.address-group');
-                const kelurahanSelect = addressGroup ? addressGroup.querySelector('[data-kelurahan-select]') : null;
-
-                if (! kelurahanSelect) {
-                    return;
-                }
-
-                const fillKelurahan = function () {
-                    const selectedKecamatan = kecamatanSelect.value;
-                    const selectedKelurahan = kelurahanSelect.dataset.selectedKelurahan || kelurahanSelect.value;
-                    const kelurahanList = kelurahanByKecamatan[selectedKecamatan] || [];
-
-                    kelurahanSelect.innerHTML = '<option value="">--Pilih salah satu--</option>';
-
-                    kelurahanList.forEach(function (kelurahan) {
-                        const option = document.createElement('option');
-                        option.value = kelurahan;
-                        option.textContent = kelurahan;
-                        option.selected = selectedKelurahan === kelurahan;
-                        kelurahanSelect.appendChild(option);
-                    });
-
-                    kelurahanSelect.dataset.selectedKelurahan = '';
-                };
-
-                kecamatanSelect.addEventListener('change', function () {
-                    kelurahanSelect.dataset.selectedKelurahan = '';
-                    fillKelurahan();
-                });
-
-                fillKelurahan();
-            });
+            const domisili = @json($domisili);
+            let domicileMap = null;
+            let domicileSchoolsLoaded = false;
+            let domicilePayload = null;
+            let domicileSchoolData = [];
+            let schoolMarkers = new Map();
+            let prestasiLoaded = false;
+            let prestasiPayload = null;
+            let prestasiSchoolData = [];
+            let activePrestasiSchool = null;
+            const prestasiModal = prestasiModalElement ? new bootstrap.Modal(prestasiModalElement) : null;
 
             const fillDatalist = function (input, options) {
                 if (! input || ! input.list) {
@@ -464,12 +641,12 @@
                     parentProvinsi.value = 'Papua Barat';
                 }
 
-                fillParentKabupaten('Teluk Bintuni');
-                fillParentKecamatan(domisiliKecamatan?.value || '');
-                fillParentKelurahan(domisiliKelurahan?.value || '');
+                fillParentKabupaten(domisili.alamat_kabupaten || 'Teluk Bintuni');
+                fillParentKecamatan(domisili.alamat_kecamatan || '');
+                fillParentKelurahan(domisili.alamat_kelurahan || '');
 
                 if (parentDetailAddress) {
-                    parentDetailAddress.value = domisiliDetailAddress?.value || '';
+                    parentDetailAddress.value = domisili.alamat || '';
                 }
             };
 
@@ -500,11 +677,6 @@
 
                 parentSameAddress.addEventListener('change', toggleParentSameAddress);
 
-                [domisiliKecamatan, domisiliKelurahan, domisiliDetailAddress].forEach(function (control) {
-                    control?.addEventListener('change', syncParentAddressFromStudent);
-                    control?.addEventListener('input', syncParentAddressFromStudent);
-                });
-
                 toggleParentSameAddress();
             }
 
@@ -519,6 +691,488 @@
                     }
                 });
             }
+
+            const escapeHtml = function (value) {
+                const element = document.createElement('div');
+                element.textContent = String(value ?? '');
+                return element.innerHTML;
+            };
+
+            const selectedSchoolName = function () {
+                const selectedId = String(targetSchool?.value || '');
+                const domicileSchool = domicileSchoolData.find(function (school) {
+                    return String(school.id) === selectedId;
+                });
+                const prestasiSchool = prestasiSchoolData.find(function (school) {
+                    return String(school.id) === selectedId;
+                });
+
+                return domicileSchool?.nama
+                    || prestasiSchool?.nama
+                    || targetSchool?.selectedOptions[0]?.textContent
+                    || 'Belum dipilih';
+            };
+
+            const updateReview = function () {
+                if (reviewPath) {
+                    reviewPath.textContent = pathSelect?.selectedOptions[0]?.textContent || 'Belum dipilih';
+                }
+
+                if (reviewSchool) {
+                    reviewSchool.textContent = selectedSchoolName();
+                }
+            };
+
+            const selectDomicileSchool = function (schoolId) {
+                if (! targetSchool) {
+                    return;
+                }
+
+                targetSchool.value = String(schoolId);
+                targetSchool.dataset.selected = String(schoolId);
+                targetSchool.setCustomValidity('');
+                targetSchool.classList.remove('is-invalid');
+                domicileError?.classList.add('d-none');
+                targetSchool.dispatchEvent(new Event('change', { bubbles: true }));
+
+                domicileSchoolList?.querySelectorAll('[data-school-card]').forEach(function (card) {
+                    const selected = String(card.dataset.schoolCard) === String(schoolId);
+                    card.classList.toggle('selected', selected);
+                    const button = card.querySelector('[data-select-school]');
+                    if (button) {
+                        button.textContent = selected ? 'Sekolah Dipilih' : 'Pilih Sekolah';
+                        button.classList.toggle('btn-success', selected);
+                        button.classList.toggle('btn-outline-primary', ! selected);
+                    }
+                });
+
+                const marker = schoolMarkers.get(String(schoolId));
+                if (marker && domicileMap) {
+                    domicileMap.setView(marker.getLatLng(), Math.max(domicileMap.getZoom(), 13));
+                    marker.openPopup();
+                }
+
+                updateReview();
+            };
+
+            const renderDomicileSchools = function (payload) {
+                domicileSchoolData = payload.schools || [];
+                schoolMarkers = new Map();
+
+                targetSchool.innerHTML = '<option value="">Pilih sekolah dari peta atau daftar</option>';
+                domicileSchoolData.forEach(function (school) {
+                    const option = document.createElement('option');
+                    option.value = school.id;
+                    option.textContent = school.nama;
+                    targetSchool.appendChild(option);
+                });
+
+                const preservedSelection = targetSchool.dataset.selected;
+                if (preservedSelection && domicileSchoolData.some(school => String(school.id) === String(preservedSelection))) {
+                    targetSchool.value = String(preservedSelection);
+                }
+
+                if (domicileSchoolList) {
+                    domicileSchoolList.innerHTML = '';
+
+                    domicileSchoolData.forEach(function (school) {
+                        const card = document.createElement('article');
+                        card.className = 'school-choice-card';
+                        card.dataset.schoolCard = school.id;
+                        card.innerHTML = `
+                            <div class="d-flex justify-content-between gap-2 mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1">${escapeHtml(school.nama)}</h6>
+                                    <div class="small text-muted">${escapeHtml(school.alamat || 'Alamat sekolah belum tersedia')}</div>
+                                </div>
+                                <span class="badge text-bg-light align-self-start">Domisili</span>
+                            </div>
+                            <div class="school-quota-grid mb-3">
+                                <div class="school-quota-item"><strong>${school.kuota}</strong><span>Kuota</span></div>
+                                <div class="school-quota-item"><strong>${school.pendaftar}</strong><span>Pendaftar</span></div>
+                                <div class="school-quota-item"><strong>${school.sisa_kuota}</strong><span>Sisa</span></div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary w-100" data-select-school="${school.id}">Pilih Sekolah</button>
+                        `;
+                        domicileSchoolList.appendChild(card);
+                    });
+                }
+
+                if (domicileMapElement && window.L) {
+                    if (domicileMap) {
+                        domicileMap.remove();
+                    }
+
+                    domicileMap = L.map(domicileMapElement, { scrollWheelZoom: false });
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 18,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(domicileMap);
+
+                    const bounds = [];
+                    if (payload.domisili?.latitude && payload.domisili?.longitude) {
+                        const center = [payload.domisili.latitude, payload.domisili.longitude];
+                        L.circle(center, {
+                            radius: payload.domisili.radius_meters || 1800,
+                            color: '#0788a8',
+                            fillColor: '#38bdf8',
+                            fillOpacity: .18,
+                            weight: 2
+                        }).bindPopup('Area perkiraan domisili: ' + escapeHtml(payload.domisili.label)).addTo(domicileMap);
+                        bounds.push(center);
+                    }
+
+                    domicileSchoolData.forEach(function (school) {
+                        if (! school.latitude || ! school.longitude) {
+                            return;
+                        }
+
+                        const marker = L.marker([school.latitude, school.longitude]).addTo(domicileMap);
+                        marker.bindPopup(`
+                            <strong>${escapeHtml(school.nama)}</strong><br>
+                            <span>${escapeHtml(school.alamat || '-')}</span><hr class="my-2">
+                            Kuota: ${school.kuota}<br>
+                            Pendaftar: ${school.pendaftar}<br>
+                            Sisa kuota: ${school.sisa_kuota}
+                        `);
+                        marker.on('click', function () {
+                            selectDomicileSchool(school.id);
+                        });
+                        schoolMarkers.set(String(school.id), marker);
+                        bounds.push([school.latitude, school.longitude]);
+                    });
+
+                    if (bounds.length > 1) {
+                        domicileMap.fitBounds(bounds, { padding: [35, 35], maxZoom: 13 });
+                    } else if (bounds.length === 1) {
+                        domicileMap.setView(bounds[0], 12);
+                    } else {
+                        domicileMap.setView([-2.5, 133.5], 8);
+                    }
+
+                    setTimeout(function () {
+                        domicileMap?.invalidateSize();
+                    }, 100);
+                }
+
+                if (targetSchool.value) {
+                    selectDomicileSchool(targetSchool.value);
+                }
+
+                if (! domicileSchoolData.length && domicileError) {
+                    domicileError.textContent = 'Belum ada sekolah yang ditetapkan untuk zonasi domisili Anda.';
+                    domicileError.classList.remove('d-none');
+                }
+            };
+
+            const loadDomicileSchools = async function () {
+                if (domicileSchoolsLoaded || ! domicileSchoolPanel) {
+                    if (domicilePayload) {
+                        renderDomicileSchools(domicilePayload);
+                    }
+                    setTimeout(function () {
+                        domicileMap?.invalidateSize();
+                    }, 100);
+                    return;
+                }
+
+                domicileLoading?.classList.remove('d-none');
+                domicileError?.classList.add('d-none');
+
+                try {
+                    const response = await fetch(domicileSchoolPanel.dataset.endpoint, {
+                        headers: { Accept: 'application/json' }
+                    });
+                    const payload = await response.json();
+
+                    if (! response.ok) {
+                        throw new Error(payload.message || 'Data sekolah domisili tidak dapat dimuat.');
+                    }
+
+                    domicileSchoolsLoaded = true;
+                    domicilePayload = payload;
+                    renderDomicileSchools(payload);
+                } catch (error) {
+                    if (domicileError) {
+                        domicileError.textContent = error.message || 'Data sekolah domisili tidak dapat dimuat.';
+                        domicileError.classList.remove('d-none');
+                    }
+                } finally {
+                    domicileLoading?.classList.add('d-none');
+                }
+            };
+
+            domicileSchoolList?.addEventListener('click', function (event) {
+                const button = event.target.closest('[data-select-school]');
+                if (button) {
+                    selectDomicileSchool(button.dataset.selectSchool);
+                }
+            });
+
+            const opportunityClass = function (level) {
+                return level === 'high'
+                    ? 'opportunity-high'
+                    : (level === 'medium' ? 'opportunity-medium' : 'opportunity-low');
+            };
+
+            const opportunityTextClass = function (level) {
+                return level === 'high'
+                    ? 'opportunity-text-high'
+                    : (level === 'medium' ? 'opportunity-text-medium' : 'opportunity-text-low');
+            };
+
+            const selectPrestasiSchool = function (schoolId) {
+                targetSchool.value = String(schoolId);
+                targetSchool.dataset.selected = String(schoolId);
+                targetSchool.setCustomValidity('');
+                targetSchool.classList.remove('is-invalid');
+                prestasiError?.classList.add('d-none');
+                targetSchool.dispatchEvent(new Event('change', { bubbles: true }));
+
+                prestasiSchoolList?.querySelectorAll('[data-prestasi-card]').forEach(function (card) {
+                    card.classList.toggle(
+                        'selected',
+                        String(card.dataset.prestasiCard) === String(schoolId)
+                    );
+                });
+                updateReview();
+            };
+
+            const openPrestasiSchool = function (schoolId) {
+                const school = prestasiSchoolData.find(item => String(item.id) === String(schoolId));
+                if (! school || ! prestasiPayload?.student) {
+                    return;
+                }
+
+                activePrestasiSchool = school;
+                const level = school.peluang.level;
+                prestasiModalName.textContent = school.nama;
+                prestasiModalScore.textContent = Number(prestasiPayload.student.rata_rata).toFixed(2);
+                prestasiModalCutoff.textContent = school.cutoff === null
+                    ? 'Belum terbentuk'
+                    : Number(school.cutoff).toFixed(2);
+                prestasiModalQuota.textContent = school.kuota + ' kursi (' + school.kuota_persen + '%)';
+                prestasiModalApplicants.textContent = school.pendaftar + ' siswa';
+                prestasiModalOpportunity.textContent = school.peluang.percentage + '% · ' + school.peluang.label;
+                prestasiModalOpportunity.className = opportunityTextClass(level);
+                prestasiModalProgress.className = 'opportunity-progress-bar ' + opportunityClass(level);
+                prestasiModalProgress.style.width = school.peluang.percentage + '%';
+                prestasiModalSelect.textContent = String(targetSchool.value) === String(school.id)
+                    ? 'Sekolah Dipilih'
+                    : 'Pilih Sekolah';
+                prestasiModalSelect.classList.toggle(
+                    'btn-success',
+                    String(targetSchool.value) === String(school.id)
+                );
+                prestasiModalSelect.classList.toggle(
+                    'btn-primary',
+                    String(targetSchool.value) !== String(school.id)
+                );
+                prestasiModal?.show();
+            };
+
+            const renderPrestasiSchools = function (payload) {
+                prestasiPayload = payload;
+                prestasiSchoolData = payload.schools || [];
+                const student = payload.student;
+
+                if (prestasiSummary) {
+                    prestasiSummary.innerHTML = `
+                        <div class="achievement-stat"><span>TKA Matematika</span><strong>${Number(student.matematika).toFixed(2)}</strong></div>
+                        <div class="achievement-stat"><span>TKA Bahasa Indonesia</span><strong>${Number(student.bahasa_indonesia).toFixed(2)}</strong></div>
+                        <div class="achievement-stat"><span>Rata-rata TKA</span><strong>${Number(student.rata_rata).toFixed(2)}</strong></div>
+                        <div class="achievement-stat"><span>Peringkat Sementara</span><strong>#${student.peringkat} <small class="fs-6 text-muted">/ ${student.total_peserta}</small></strong></div>
+                    `;
+                }
+
+                if (prestasiDisclaimer) {
+                    prestasiDisclaimer.textContent = payload.disclaimer || '';
+                }
+
+                targetSchool.innerHTML = '<option value="">Pilih sekolah dari daftar perbandingan</option>';
+                prestasiSchoolData.forEach(function (school) {
+                    const option = document.createElement('option');
+                    option.value = school.id;
+                    option.textContent = school.nama;
+                    targetSchool.appendChild(option);
+                });
+
+                const preservedSelection = targetSchool.dataset.selected;
+                if (prestasiSchoolData.some(school => String(school.id) === String(preservedSelection))) {
+                    targetSchool.value = String(preservedSelection);
+                }
+
+                if (prestasiSchoolList) {
+                    prestasiSchoolList.innerHTML = '';
+                    prestasiSchoolData.forEach(function (school) {
+                        const level = school.peluang.level;
+                        const card = document.createElement('article');
+                        card.className = 'school-choice-card prestasi-school-card';
+                        card.dataset.prestasiCard = school.id;
+                        card.innerHTML = `
+                            <div class="d-flex justify-content-between gap-2 mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1">${escapeHtml(school.nama)}</h6>
+                                    <div class="small text-muted">${escapeHtml(school.alamat)}</div>
+                                </div>
+                                <span class="fw-bold ${opportunityTextClass(level)}">${school.peluang.label}</span>
+                            </div>
+                            <div class="school-quota-grid mb-3">
+                                <div class="school-quota-item"><strong>${school.kuota}</strong><span>Kuota (${school.kuota_persen}%)</span></div>
+                                <div class="school-quota-item"><strong>${school.pendaftar}</strong><span>Pendaftar</span></div>
+                                <div class="school-quota-item"><strong>${school.cutoff === null ? '-' : Number(school.cutoff).toFixed(2)}</strong><span>Cut-off</span></div>
+                            </div>
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>Estimasi peluang</span><strong class="${opportunityTextClass(level)}">${school.peluang.percentage}%</strong>
+                            </div>
+                            <div class="opportunity-progress">
+                                <div class="opportunity-progress-bar ${opportunityClass(level)}" style="width:${school.peluang.percentage}%"></div>
+                            </div>
+                            <div class="small text-primary fw-bold mt-3">Klik untuk melihat detail</div>
+                        `;
+                        prestasiSchoolList.appendChild(card);
+                    });
+                }
+
+                if (targetSchool.value) {
+                    selectPrestasiSchool(targetSchool.value);
+                }
+            };
+
+            const loadPrestasiSchools = async function () {
+                if (prestasiLoaded || ! prestasiSchoolPanel) {
+                    if (prestasiPayload) {
+                        renderPrestasiSchools(prestasiPayload);
+                    }
+                    return;
+                }
+
+                prestasiLoading?.classList.remove('d-none');
+                prestasiError?.classList.add('d-none');
+
+                try {
+                    const response = await fetch(prestasiSchoolPanel.dataset.endpoint, {
+                        headers: { Accept: 'application/json' }
+                    });
+                    const payload = await response.json();
+
+                    if (! response.ok) {
+                        throw new Error(payload.message || 'Data Jalur Prestasi tidak dapat dimuat.');
+                    }
+
+                    prestasiLoaded = true;
+                    renderPrestasiSchools(payload);
+                } catch (error) {
+                    if (prestasiError) {
+                        prestasiError.textContent = error.message || 'Data Jalur Prestasi tidak dapat dimuat.';
+                        prestasiError.classList.remove('d-none');
+                    }
+                } finally {
+                    prestasiLoading?.classList.add('d-none');
+                }
+            };
+
+            prestasiSchoolList?.addEventListener('click', function (event) {
+                const card = event.target.closest('[data-prestasi-card]');
+                if (card) {
+                    openPrestasiSchool(card.dataset.prestasiCard);
+                }
+            });
+
+            prestasiModalSelect?.addEventListener('click', function () {
+                if (activePrestasiSchool) {
+                    selectPrestasiSchool(activePrestasiSchool.id);
+                    prestasiModal?.hide();
+                }
+            });
+
+            const refreshSchoolOptions = function () {
+                if (! pathSelect || ! targetSchool) {
+                    return;
+                }
+
+                const code = pathSelect.selectedOptions[0]?.dataset.code || '';
+                tkaPanel?.classList.toggle('d-none', code !== 'prestasi');
+                supportPanel?.classList.toggle('d-none', ! ['afirmasi', 'mutasi'].includes(code));
+                if (supportFile) {
+                    supportFile.required = ['afirmasi', 'mutasi'].includes(code) && ! @json((bool) $formulir->dokumen_pendukung);
+                }
+                if (supportTitle) {
+                    supportTitle.textContent = code === 'afirmasi'
+                        ? 'Dokumen Pendukung Afirmasi'
+                        : 'Dokumen Pendukung Mutasi';
+                }
+                if (supportDescription) {
+                    supportDescription.textContent = code === 'afirmasi'
+                        ? 'Unggah dokumen yang membuktikan persyaratan afirmasi. Format PDF/gambar, maksimal 2 MB.'
+                        : 'Unggah surat mutasi atau dokumen perpindahan tugas orang tua/wali. Format PDF/gambar, maksimal 2 MB.';
+                }
+
+                outsidePathList?.querySelectorAll('[data-choose-path]').forEach(function (button) {
+                    const selected = button.dataset.choosePath === code;
+                    button.classList.toggle('btn-primary', selected);
+                    button.classList.toggle('btn-outline-primary', ! selected);
+                });
+            };
+
+            const selectSchool = function (schoolId) {
+                const school = schoolOptions.find(item => String(item.id) === String(schoolId));
+                if (! school) {
+                    return;
+                }
+
+                targetSchool.value = String(school.id);
+                targetSchool.dataset.selected = String(school.id);
+                targetSchool.setCustomValidity('');
+
+                schoolChoiceList?.querySelectorAll('[data-school-choice]').forEach(function (card) {
+                    const selected = String(card.dataset.schoolChoice) === String(school.id);
+                    card.classList.toggle('selected', selected);
+                    const button = card.querySelector('[data-choose-school]');
+                    if (button) {
+                        button.textContent = selected ? 'Sekolah Dipilih' : 'Pilih Sekolah';
+                        button.classList.toggle('btn-success', selected);
+                        button.classList.toggle('btn-outline-primary', ! selected);
+                    }
+                });
+
+                zoneNotice?.classList.toggle('d-none', ! school.eligible_domisili);
+                outsideZonePanel?.classList.toggle('d-none', school.eligible_domisili);
+
+                if (school.eligible_domisili) {
+                    const domisiliOption = Array.from(pathSelect.options).find(
+                        option => option.dataset.code === 'domisili'
+                    );
+                    pathSelect.value = domisiliOption?.value || '';
+                } else if (pathSelect.selectedOptions[0]?.dataset.code === 'domisili') {
+                    pathSelect.value = '';
+                }
+
+                refreshSchoolOptions();
+            };
+
+            schoolChoiceList?.addEventListener('click', function (event) {
+                const button = event.target.closest('[data-choose-school]');
+                if (button) {
+                    selectSchool(button.dataset.chooseSchool);
+                }
+            });
+
+            outsidePathList?.addEventListener('click', function (event) {
+                const button = event.target.closest('[data-choose-path]');
+                if (! button) {
+                    return;
+                }
+
+                pathSelect.value = button.dataset.pathId;
+                pathSelect.setCustomValidity('');
+                refreshSchoolOptions();
+            });
+
+            if (targetSchool.value) {
+                selectSchool(targetSchool.value);
+            }
+            refreshSchoolOptions();
 
             form.querySelectorAll('input[type="file"][data-file-name-target]').forEach(function (input) {
                 const target = document.getElementById(input.dataset.fileNameTarget);
@@ -548,6 +1202,14 @@
             };
 
             const feedbackAnchor = function (control) {
+                if (control === targetSchool && schoolChoiceList) {
+                    return schoolChoiceList;
+                }
+
+                if (control === pathSelect && outsidePathList) {
+                    return outsidePathList;
+                }
+
                 if (control.type === 'radio') {
                     return control.closest('.col-md-6') || control;
                 }
@@ -622,7 +1284,7 @@
                 }
 
                 if (file.size > maxSize) {
-                    setError(control, label + ' maksimal berukuran 1 MB.');
+                    setError(control, label + ' maksimal berukuran ' + Math.round(maxSize / 1048576) + ' MB.');
                     return false;
                 }
 
@@ -653,6 +1315,22 @@
 
                 if (control.required && (String(control.value).trim() === '' || control.validity.valueMissing)) {
                     setError(control, label + ' wajib diisi.');
+                    if (
+                        control === targetSchool
+                        && pathSelect?.selectedOptions[0]?.dataset.code === 'domisili'
+                        && domicileError
+                    ) {
+                        domicileError.textContent = 'Pilih salah satu sekolah dari marker peta atau daftar sekolah.';
+                        domicileError.classList.remove('d-none');
+                    }
+                    if (
+                        control === targetSchool
+                        && pathSelect?.selectedOptions[0]?.dataset.code === 'prestasi'
+                        && prestasiError
+                    ) {
+                        prestasiError.textContent = 'Pilih salah satu sekolah dari card perbandingan Jalur Prestasi.';
+                        prestasiError.classList.remove('d-none');
+                    }
                     return false;
                 }
 
@@ -669,6 +1347,87 @@
                 clearError(control);
                 return true;
             };
+
+            const stepSections = Array.from(form.querySelectorAll('[data-form-step]'));
+            const stepLinks = Array.from(form.querySelectorAll('[data-step-target]'));
+            const previousStepButton = form.querySelector('[data-step-previous]');
+            const nextStepButton = form.querySelector('[data-step-next]');
+            const submitStepButton = form.querySelector('[data-step-submit]');
+            let currentStep = 1;
+            let highestStep = 1;
+
+            const controlsForStep = function (step) {
+                const section = form.querySelector('[data-form-step="' + step + '"]');
+                if (! section) {
+                    return [];
+                }
+
+                return Array.from(section.querySelectorAll('input, select, textarea')).filter(function (control) {
+                    return ! control.disabled && ! control.readOnly && control.type !== 'hidden';
+                });
+            };
+
+            const validateStep = function (step) {
+                let valid = true;
+                controlsForStep(step).forEach(function (control) {
+                    if (! validateControl(control)) {
+                        valid = false;
+                    }
+                });
+
+                if (! valid) {
+                    const firstInvalid = form.querySelector('[data-form-step="' + step + '"] .is-invalid');
+                    firstInvalid?.focus({ preventScroll: false });
+                }
+
+                return valid;
+            };
+
+            const showStep = function (step) {
+                currentStep = Math.min(3, Math.max(1, step));
+                highestStep = Math.max(highestStep, currentStep);
+
+                stepSections.forEach(function (section) {
+                    section.hidden = Number(section.dataset.formStep) !== currentStep;
+                });
+                stepLinks.forEach(function (link) {
+                    const target = Number(link.dataset.stepTarget);
+                    link.classList.toggle('active', target === currentStep);
+                    link.classList.toggle('completed', target < currentStep);
+                    link.disabled = target > highestStep;
+                });
+
+                previousStepButton?.classList.toggle('d-none', currentStep === 1);
+                nextStepButton?.classList.toggle('d-none', currentStep === 3);
+                submitStepButton?.classList.toggle('d-none', currentStep !== 3);
+
+                form.querySelector('[data-form-step="' + currentStep + '"]')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            };
+
+            previousStepButton?.addEventListener('click', function () {
+                showStep(currentStep - 1);
+            });
+
+            nextStepButton?.addEventListener('click', function () {
+                if (validateStep(currentStep)) {
+                    showStep(currentStep + 1);
+                }
+            });
+
+            stepLinks.forEach(function (link) {
+                link.addEventListener('click', function () {
+                    const target = Number(link.dataset.stepTarget);
+
+                    if (target <= highestStep && (target < currentStep || validateStep(currentStep))) {
+                        showStep(target);
+                    }
+                });
+            });
+
+            showStep(1);
 
             getControls().forEach(function (control) {
                 control.addEventListener(control.type === 'file' ? 'change' : 'input', function () {
@@ -713,7 +1472,8 @@
                     const firstInvalid = form.querySelector('.is-invalid');
 
                     if (firstInvalid) {
-                        firstInvalid.closest('section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        const invalidStep = Number(firstInvalid.closest('[data-form-step]')?.dataset.formStep || 1);
+                        showStep(invalidStep);
                         setTimeout(function () {
                             firstInvalid.focus({ preventScroll: true });
                         }, 250);

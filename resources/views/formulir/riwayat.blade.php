@@ -78,6 +78,20 @@
                         </section>
 
                         <section class="history-section">
+                            <div class="history-section-title">Jalur dan Sekolah Tujuan</div>
+                            <div class="history-grid">
+                                <div>
+                                    <span>Jalur Pendaftaran</span>
+                                    <strong>{{ $formulir->jalur?->nama ?? '-' }}</strong>
+                                </div>
+                                <div>
+                                    <span>Sekolah Tujuan</span>
+                                    <strong>{{ $formulir->sekolah?->nama ?? '-' }}</strong>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="history-section">
                             <div class="history-section-title">Data Orang Tua / Wali</div>
                             <div class="history-grid">
                                 <div>
@@ -109,9 +123,9 @@
                             <div class="history-section-title">Berkas</div>
                             <div class="document-list">
                                 @foreach([
-                                    'surat_keterangan_lulus' => 'Ijazah / SKL',
                                     'kartu_keluarga' => 'Kartu Keluarga',
                                     'foto_selfie' => 'Pas Foto',
+                                    'dokumen_pendukung' => 'Dokumen Pendukung Jalur',
                                 ] as $field => $label)
                                     @if($formulir->berkasTersedia($field))
                                         <a href="{{ $formulir->berkasUrl($field) }}" data-document-preview data-document-title="{{ $label }}" data-document-type="{{ $formulir->berkasIsImage($field) ? 'image' : 'pdf' }}" data-document-download="{{ $formulir->berkasDownloadUrl($field) }}">{{ $label }}</a>

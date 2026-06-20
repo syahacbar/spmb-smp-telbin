@@ -33,7 +33,7 @@
         .account-status-page .status-panel {
             border: 0;
             background: rgba(255, 255, 255, .97);
-            box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+            box-shadow: 0 28px 80px rgba(3, 45, 38, .3);
             backdrop-filter: blur(12px);
         }
         .account-status-page .status-page-shell {
@@ -55,11 +55,31 @@
             margin-bottom: 1rem;
         }
         .status-badge-card {
-            border: 1px solid var(--bs-{{ $statusMeta[0] }}-border-subtle);
+            border: 1px solid var(--status-border, var(--telbin-line));
             border-radius: .85rem;
-            background: var(--bs-{{ $statusMeta[0] }}-bg-subtle);
-            color: var(--bs-{{ $statusMeta[0] }}-text-emphasis);
+            background: var(--status-bg, var(--telbin-soft));
+            color: var(--status-color, var(--telbin-forest-dark));
             padding: 1rem;
+        }
+        .status-badge-card.status-menunggu_verifikasi {
+            --status-border: #9bd4df;
+            --status-bg: #e9f7fa;
+            --status-color: #075e70;
+        }
+        .status-badge-card.status-terverifikasi {
+            --status-border: #9bcbb9;
+            --status-bg: #e4f3ed;
+            --status-color: var(--telbin-forest-dark);
+        }
+        .status-badge-card.status-perlu_perbaikan {
+            --status-border: #e8c978;
+            --status-bg: #fff7df;
+            --status-color: #77520a;
+        }
+        .status-badge-card.status-ditolak {
+            --status-border: #efb3ad;
+            --status-bg: #fff0ee;
+            --status-color: #8b2920;
         }
         .status-badge-icon {
             display: inline-flex;
@@ -95,7 +115,7 @@
             overflow-wrap: anywhere;
         }
         .status-section {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--telbin-line);
             border-radius: .8rem;
             background: #fff;
             padding: 1rem;
@@ -112,7 +132,7 @@
             gap: .45rem;
             border: 1px solid rgba(255, 255, 255, .25);
             border-radius: 999px;
-            background: rgba(15, 23, 42, .22);
+            background: rgba(6, 63, 53, .42);
             color: #fff;
             padding: .5rem .8rem;
             font-size: .85rem;
@@ -123,6 +143,15 @@
             flex-wrap: wrap;
             gap: .65rem;
             margin-top: 1rem;
+        }
+        .account-status-page .btn-success {
+            background: var(--telbin-forest);
+            border-color: var(--telbin-forest);
+        }
+        .account-status-page .btn-success:hover,
+        .account-status-page .btn-success:focus {
+            background: var(--telbin-forest-dark);
+            border-color: var(--telbin-forest-dark);
         }
         @media (min-width: 992px) {
             .account-status-page {
@@ -212,7 +241,7 @@
                                 </form>
                             </div>
 
-                            <div class="status-badge-card mb-3">
+                            <div class="status-badge-card status-{{ $status }} mb-3">
                                 <div class="d-flex align-items-start gap-3">
                                     <span class="status-badge-icon">
                                         {{ $status === 'terverifikasi' ? '✓' : ($status === 'ditolak' ? '!' : '…') }}
@@ -261,7 +290,10 @@
 
                             @if($status === 'terverifikasi')
                                 <div class="status-actions">
-                                    <a href="{{ route('login') }}" class="btn btn-success btn-lg flex-fill">Login dan Lanjutkan Pendaftaran</a>
+                                    <form method="post" action="{{ route('akun.status.continue') }}" class="w-100">
+                                        @csrf
+                                        <button class="btn btn-success btn-lg w-100">Masuk ke Dashboard dan Lanjutkan Pendaftaran</button>
+                                    </form>
                                 </div>
                             @elseif($status === 'perlu_perbaikan')
                                 <section class="status-section mt-3">

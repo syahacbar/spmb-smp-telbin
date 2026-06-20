@@ -12,13 +12,19 @@ class RegistrasiAkunBerkasController extends Controller
     public function __invoke(Request $request, RegistrasiAkun $registrasi): StreamedResponse
     {
         $pengguna = $request->attributes->get('pengguna');
-        abort_unless($pengguna?->isAdminDinas(), 403);
+        abort_unless(
+            $pengguna?->isAdminDinas() || $pengguna?->id_pengguna === $registrasi->nisn,
+            403,
+        );
         abort_unless($registrasi->kartuKeluargaTersedia(), 404);
 
         return Storage::disk('local')->response(
             $registrasi->kartu_keluarga_path,
             basename($registrasi->kartu_keluarga_path),
-            ['Content-Disposition' => 'inline; filename="'.basename($registrasi->kartu_keluarga_path).'"'],
+            [
+                'Content-Disposition' => ($request->boolean('download') ? 'attachment' : 'inline')
+                    .'; filename="'.basename($registrasi->kartu_keluarga_path).'"',
+            ],
         );
     }
 }
