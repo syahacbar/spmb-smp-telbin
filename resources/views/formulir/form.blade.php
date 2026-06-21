@@ -32,6 +32,258 @@
         ];
     @endphp
 
+    <style>
+        /* ── Formulir Registrasi – Tema Hijau Teluk Bintuni ────────────────── */
+
+        /* Variabel lokal */
+        .registration-shell,
+        .sticky-actions,
+        [data-registration-form] {
+            --reg-green:       #0b5d4b;
+            --reg-green-dark:  #063f35;
+            --reg-lagoon:      #0788a8;
+            --reg-gold:        #f2b84b;
+            --reg-soft:        #eef7f3;
+            --reg-line:        #cfe4dc;
+        }
+
+        /* ── Input & Select – fokus hijau ───────────────────────────────────── */
+        [data-registration-form] .form-control:focus,
+        [data-registration-form] .form-select:focus {
+            border-color: var(--reg-green);
+            box-shadow: 0 0 0 .2rem rgba(11, 93, 75, .16);
+        }
+
+        /* ── Navigasi Tahapan (aside kiri) ──────────────────────────────────── */
+        .registration-nav-link {
+            color: #475467;
+            border-color: transparent;
+        }
+        .registration-nav-link:hover {
+            background: var(--reg-soft);
+            border-color: var(--reg-line);
+            color: var(--reg-green-dark);
+        }
+        .registration-nav-link.active {
+            border-color: rgba(11, 93, 75, .3);
+            background: var(--reg-soft);
+            color: var(--reg-green-dark);
+        }
+        .registration-nav-link.active span {
+            background: var(--reg-green);
+            color: #fff;
+        }
+        .registration-nav-link.completed span {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .registration-nav-link span {
+            background: #e5e7eb;
+            color: #475467;
+        }
+
+        /* ── Section number badge ───────────────────────────────────────────── */
+        .section-number {
+            background: #e4f3ed;
+            color: var(--reg-green);
+        }
+
+        /* ── Card header sekolah & upload ───────────────────────────────────── */
+        [data-registration-form] .form-section .card-header {
+            border-left: 3px solid var(--reg-green);
+        }
+
+        /* ── Tombol "btn-primary" di dalam form ──────────────────────────────── */
+        [data-registration-form] .btn-primary,
+        .sticky-actions .btn-primary {
+            background: var(--reg-green);
+            border-color: var(--reg-green);
+            color: #fff;
+        }
+        [data-registration-form] .btn-primary:hover,
+        [data-registration-form] .btn-primary:focus,
+        .sticky-actions .btn-primary:hover,
+        .sticky-actions .btn-primary:focus {
+            background: var(--reg-green-dark);
+            border-color: var(--reg-green-dark);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(11, 93, 75, .28);
+        }
+
+        /* ── "btn-outline-primary" di dalam form ─────────────────────────────── */
+        [data-registration-form] .btn-outline-primary {
+            color: var(--reg-green);
+            border-color: var(--reg-green);
+            background: transparent;
+        }
+        [data-registration-form] .btn-outline-primary:hover,
+        [data-registration-form] .btn-outline-primary:focus {
+            background: var(--reg-green);
+            border-color: var(--reg-green);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(11, 93, 75, .22);
+        }
+
+        /* ── Tombol "Kembali ke Dashboard" (outline-secondary) ───────────────── */
+        .sticky-actions .btn-outline-secondary,
+        [data-registration-form] .btn-outline-secondary {
+            color: #475467;
+            border-color: #b0bec5;
+        }
+        .sticky-actions .btn-outline-secondary:hover,
+        [data-registration-form] .btn-outline-secondary:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #334155;
+        }
+
+        /* ── Sticky action bar ──────────────────────────────────────────────── */
+        .sticky-actions {
+            position: sticky;
+            bottom: 0;
+            z-index: 40;
+            padding: .9rem 1rem;
+            background: rgba(255, 255, 255, .96);
+            border: 1px solid var(--reg-line);
+            border-radius: .75rem;
+            box-shadow: 0 -4px 24px rgba(11, 93, 75, .1);
+            backdrop-filter: blur(8px);
+        }
+
+        /* ── Kartu Pilih Sekolah ─────────────────────────────────────────────── */
+        .school-choice-card {
+            border-color: var(--reg-line);
+            transition: border-color .18s, box-shadow .18s, transform .18s;
+        }
+        .school-choice-card:hover {
+            border-color: var(--reg-green);
+            box-shadow: 0 6px 18px rgba(11, 93, 75, .12);
+            transform: translateY(-2px);
+        }
+        .school-choice-card.selected {
+            border-color: var(--reg-green);
+            box-shadow: 0 0 0 3px rgba(11, 93, 75, .14);
+            transform: translateY(-1px);
+        }
+
+        /* ── Tombol pilih jalur (pathway buttons) ───────────────────────────── */
+        [data-choose-path] {
+            border-color: var(--reg-line) !important;
+            background: #fff !important;
+            color: #334155 !important;
+            transition: border-color .15s, background .15s, box-shadow .15s, transform .15s;
+        }
+        [data-choose-path]:not(:disabled):hover {
+            border-color: var(--reg-green) !important;
+            background: var(--reg-soft) !important;
+            color: var(--reg-green-dark) !important;
+            box-shadow: 0 4px 14px rgba(11, 93, 75, .14) !important;
+            transform: translateY(-2px);
+        }
+        [data-choose-path].active,
+        [data-choose-path][aria-pressed="true"] {
+            border-color: var(--reg-green) !important;
+            background: var(--reg-green) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 20px rgba(11, 93, 75, .25) !important;
+            transform: translateY(-1px);
+        }
+        [data-choose-path].active .text-primary,
+        [data-choose-path][aria-pressed="true"] .text-primary {
+            color: #fff !important;
+        }
+        [data-choose-path]:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+        /* Nama jalur dalam tombol */
+        [data-choose-path] .text-primary {
+            color: var(--reg-green) !important;
+        }
+
+        /* ── Badge "Max 1 MB" di upload ─────────────────────────────────────── */
+        [data-registration-form] .badge.text-bg-primary {
+            background-color: var(--reg-green) !important;
+        }
+
+        /* ── Upload file button ─────────────────────────────────────────────── */
+        [data-registration-form] label.btn-outline-primary {
+            color: var(--reg-green);
+            border-color: var(--reg-green);
+        }
+        [data-registration-form] label.btn-outline-primary:hover {
+            background: var(--reg-green);
+            border-color: var(--reg-green);
+            color: #fff;
+        }
+
+        /* ── Upload box hover ───────────────────────────────────────────────── */
+        .upload-box-modern {
+            border-color: var(--reg-line);
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .upload-box-modern:focus-within {
+            border-color: var(--reg-green);
+            box-shadow: 0 0 0 .2rem rgba(11, 93, 75, .1);
+        }
+
+        /* ── Alert kustom ───────────────────────────────────────────────────── */
+        [data-registration-form] .alert-info {
+            border-color: #bae6fd;
+            background: #f0f9ff;
+            color: #0369a1;
+        }
+        [data-registration-form] .alert-success {
+            border-color: var(--reg-line);
+            background: var(--reg-soft);
+            color: var(--reg-green-dark);
+        }
+
+        /* ── Tanda zonasi ───────────────────────────────────────────────────── */
+        [data-zone-notice-inside].alert-success {
+            border-color: var(--reg-line);
+            background: var(--reg-soft);
+            color: var(--reg-green-dark);
+        }
+
+        /* ── Checkbox alamat orang tua sama ─────────────────────────────────── */
+        .same-address-callout .form-check-input {
+            border-color: var(--reg-green);
+        }
+        .same-address-callout .form-check-input:checked {
+            background-color: var(--reg-green);
+            border-color: var(--reg-green);
+        }
+        .same-address-callout {
+            border-color: var(--reg-line);
+            background: var(--reg-soft);
+        }
+        .same-address-callout .form-check-label {
+            color: var(--reg-green-dark);
+        }
+
+        /* ── Modal footer tombol pilih ──────────────────────────────────────── */
+        #prestasiSchoolModal .btn-primary {
+            background: var(--reg-green);
+            border-color: var(--reg-green);
+        }
+        #prestasiSchoolModal .btn-primary:hover {
+            background: var(--reg-green-dark);
+            border-color: var(--reg-green-dark);
+        }
+
+        /* ── Responsive ─────────────────────────────────────────────────────── */
+        @media (max-width: 767.98px) {
+            .sticky-actions {
+                border-radius: 0;
+                border-left: 0;
+                border-right: 0;
+                margin-left: -1rem;
+                margin-right: -1rem;
+            }
+        }
+    </style>
+
     <div class="page-title">
         <div>
             <h3 class="fw-bold">{{ $isEdit ? 'Edit Formulir Registrasi' : 'Formulir Registrasi' }}</h3>

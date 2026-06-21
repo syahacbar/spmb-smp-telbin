@@ -127,7 +127,7 @@
         }
         .sidebar-link { color: #cbd5e1; display: flex; align-items: center; gap: .65rem; padding: .72rem .85rem; text-decoration: none; border-radius: .5rem; font-weight: 600; }
         .sidebar-link:hover, .sidebar-link.active { background: #243044; color: #fff; }
-        .sidebar-link.active { box-shadow: inset 3px 0 0 #ef4444; }
+        .sidebar-link.active { box-shadow: inset 3px 0 0 var(--telbin-gold); }
         .document-preview-frame {
             width: 100%;
             height: min(72vh, 760px);
@@ -481,8 +481,8 @@
             justify-content: center;
             flex: 0 0 auto;
             border-radius: 50%;
-            background: #fee2e2;
-            color: var(--spmb-red);
+            background: #e4f3ed;
+            color: var(--telbin-forest);
             font-weight: 800;
         }
         .form-control,
@@ -492,8 +492,8 @@
         }
         .form-control:focus,
         .form-select:focus {
-            border-color: #ef4444;
-            box-shadow: 0 0 0 .2rem rgba(239, 68, 68, .16);
+            border-color: var(--telbin-forest);
+            box-shadow: 0 0 0 .2rem rgba(11, 93, 75, .16);
         }
         .upload-box {
             min-height: 100%;
@@ -533,12 +533,13 @@
             text-align: left;
         }
         .registration-nav-link:hover {
-            background: #f8fafc;
-            border-color: #dbe4f0;
+            background: var(--telbin-soft);
+            border-color: var(--telbin-line);
         }
         .registration-nav-link.active {
-            border-color: #fecaca;
-            background: #fff1f2;
+            border-color: rgba(11, 93, 75, .3);
+            background: var(--telbin-soft);
+            color: var(--telbin-forest-dark);
         }
         .registration-nav-link.completed span {
             background: #dcfce7;
@@ -552,9 +553,13 @@
             justify-content: center;
             flex: 0 0 auto;
             border-radius: 50%;
-            background: #e0f2fe;
-            color: #0369a1;
+            background: #e5e7eb;
+            color: #475467;
             font-weight: 800;
+        }
+        .registration-nav-link.active span {
+            background: var(--telbin-forest);
+            color: #fff;
         }
         .registration-nav-link strong {
             display: block;
@@ -583,11 +588,16 @@
             gap: .85rem;
         }
         .school-choice-card {
-            border: 1px solid #dbe4f0;
+            border: 1px solid var(--telbin-line);
             border-radius: .8rem;
             background: #fff;
             padding: 1rem;
             transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        }
+        .school-choice-card:hover {
+            border-color: var(--telbin-forest);
+            box-shadow: 0 6px 18px rgba(11, 93, 75, .12);
+            transform: translateY(-2px);
         }
         .school-choice-card.selected {
             border-color: var(--telbin-forest);
@@ -670,9 +680,9 @@
             box-shadow: 0 10px 24px rgba(16, 24, 40, .05);
         }
         .uploaded-file {
-            border: 1px dashed #bfdbfe;
+            border: 1px dashed var(--telbin-line);
             border-radius: .5rem;
-            background: #eff6ff;
+            background: var(--telbin-soft);
             padding: .75rem;
         }
         .document-hint {
@@ -702,21 +712,21 @@
         .same-address-callout {
             margin: 0;
             padding: .9rem 1rem;
-            border: 1px solid #bfdbfe;
+            border: 1px solid var(--telbin-line);
             border-radius: .65rem;
-            background: #eff6ff;
+            background: var(--telbin-soft);
         }
         .same-address-callout .form-check-input {
             width: 1.15rem;
             height: 1.15rem;
-            border-color: #2563eb;
+            border-color: var(--telbin-forest);
         }
         .same-address-callout .form-check-input:checked {
-            background-color: #2563eb;
-            border-color: #2563eb;
+            background-color: var(--telbin-forest);
+            border-color: var(--telbin-forest);
         }
         .same-address-callout .form-check-label {
-            color: #1e3a8a;
+            color: var(--telbin-forest-dark);
         }
         .history-card {
             overflow: hidden;
@@ -782,8 +792,8 @@
             justify-content: center;
             flex: 0 0 auto;
             border-radius: 50%;
-            background: #fee2e2;
-            color: var(--spmb-red);
+            background: var(--telbin-soft);
+            color: var(--telbin-forest);
             font-weight: 800;
         }
         .history-name {
@@ -883,12 +893,12 @@
             position: sticky;
             bottom: 0;
             z-index: 5;
-            border: 1px solid var(--spmb-line);
-            border-radius: .5rem;
-            background: rgba(255, 255, 255, .96);
+            border: 1px solid var(--telbin-line);
+            border-radius: .65rem;
+            background: rgba(255, 255, 255, .97);
             backdrop-filter: blur(8px);
-            padding: .85rem;
-            box-shadow: 0 -8px 24px rgba(16, 24, 40, .08);
+            padding: .9rem 1rem;
+            box-shadow: 0 -6px 24px rgba(11, 93, 75, .1);
         }
         .auth-page {
             min-height: calc(100vh - 56px);
