@@ -391,20 +391,22 @@
                             @endforeach
                         </div>
 
-                        <div class="alert alert-success d-none" data-zone-notice>
-                            <div class="fw-bold">Sekolah berada dalam zonasi domisili Anda.</div>
-                            <div class="small">Jalur pendaftaran otomatis menggunakan <strong>Jalur Domisili</strong>.</div>
-                        </div>
-
-                        <div class="d-none" data-outside-zone-panel>
-                            <div class="alert alert-warning">
-                                Sekolah ini berada di luar zonasi domisili. Pilih jalur yang sesuai untuk melanjutkan.
+                        <div class="d-none" data-pathway-selection-panel>
+                            <div class="alert alert-success d-none" data-zone-notice-inside>
+                                <div class="fw-bold"><span class="badge text-bg-success me-2">Dalam Zonasi</span> Sekolah berada dalam zonasi domisili Anda.</div>
+                                <div class="small mt-1">Anda dapat memilih salah satu dari 4 jalur masuk di bawah (Sistem merekomendasikan <strong>Jalur Domisili</strong>).</div>
                             </div>
-                            <div class="row g-2 mb-3" data-outside-path-list>
-                                @foreach($jalurOptions->whereIn('kode', ['prestasi', 'afirmasi', 'mutasi']) as $jalur)
-                                    <div class="col-md-4">
+
+                            <div class="alert alert-warning d-none" data-zone-notice-outside>
+                                <div class="fw-bold"><span class="badge text-bg-warning me-2">Luar Zonasi</span> Sekolah berada di luar zonasi domisili Anda.</div>
+                                <div class="small mt-1">Anda hanya dapat memilih dari 3 jalur masuk di bawah (Jalur Domisili tidak tersedia).</div>
+                            </div>
+
+                            <div class="row g-2 mb-3" data-path-list-container>
+                                @foreach($jalurOptions as $jalur)
+                                    <div class="col-md-3 d-none" data-pathway-button-wrapper="{{ $jalur->kode }}">
                                         <button type="button"
-                                                class="btn btn-outline-primary w-100 h-100 p-3"
+                                                class="btn btn-outline-primary w-100 h-100 p-3 d-flex flex-column align-items-center justify-content-center text-center"
                                                 data-choose-path="{{ $jalur->kode }}"
                                                 data-path-id="{{ $jalur->id }}"
                                                 @disabled(
@@ -415,8 +417,13 @@
                                                         || $nilaiTka['bahasa_indonesia'] === null
                                                     )
                                                 )>
-                                            <strong class="d-block">{{ $jalur->nama }}</strong>
-                                            <small>{{ $jalur->deskripsi }}</small>
+                                            <strong class="d-block text-primary" style="font-size: 0.95rem; font-weight: 800;">
+                                                {{ $jalur->nama }}
+                                            </strong>
+                                            @if($jalur->kode === 'domisili')
+                                                <span class="badge text-bg-success mt-1 small" style="font-size: 0.7rem; font-weight: 700;">Rekomendasi</span>
+                                            @endif
+                                            <span class="text-muted mt-2 d-block" style="font-size: 0.72rem; line-height: 1.2;">{{ $jalur->deskripsi }}</span>
                                             @if(
                                                 $jalur->kode === 'prestasi'
                                                 && (
@@ -425,7 +432,7 @@
                                                     || $nilaiTka['bahasa_indonesia'] === null
                                                 )
                                             )
-                                                <small class="d-block text-danger mt-1">Nilai TKA belum tersedia</small>
+                                                <span class="d-block text-danger mt-2 fw-bold" style="font-size: 0.7rem;">Nilai TKA belum tersedia</span>
                                             @endif
                                         </button>
                                     </div>
@@ -516,9 +523,10 @@
             const pathSelect = form.querySelector('[data-jalur-select]');
             const targetSchool = form.querySelector('[data-school-target]');
             const schoolChoiceList = form.querySelector('[data-school-choice-list]');
-            const zoneNotice = form.querySelector('[data-zone-notice]');
-            const outsideZonePanel = form.querySelector('[data-outside-zone-panel]');
-            const outsidePathList = form.querySelector('[data-outside-path-list]');
+            const pathwaySelectionPanel = form.querySelector('[data-pathway-selection-panel]');
+            const zoneNoticeInside = form.querySelector('[data-zone-notice-inside]');
+            const zoneNoticeOutside = form.querySelector('[data-zone-notice-outside]');
+            const pathListContainer = form.querySelector('[data-path-list-container]');
             const supportTitle = form.querySelector('[data-support-title]');
             const supportDescription = form.querySelector('[data-support-description]');
             const standardSchoolPanel = form.querySelector('[data-standard-school-panel]');
@@ -1108,7 +1116,7 @@
                         : 'Unggah surat mutasi atau dokumen perpindahan tugas orang tua/wali. Format PDF/gambar, maksimal 2 MB.';
                 }
 
-                outsidePathList?.querySelectorAll('[data-choose-path]').forEach(function (button) {
+                pathListContainer?.querySelectorAll('[data-choose-path]').forEach(function (button) {
                     const selected = button.dataset.choosePath === code;
                     button.classList.toggle('btn-primary', selected);
                     button.classList.toggle('btn-outline-primary', ! selected);
@@ -1136,16 +1144,43 @@
                     }
                 });
 
-                zoneNotice?.classList.toggle('d-none', ! school.eligible_domisili);
-                outsideZonePanel?.classList.toggle('d-none', school.eligible_domisili);
+                // Show the main pathway selection container
+                pathwaySelectionPanel?.classList.remove('d-none');
 
                 if (school.eligible_domisili) {
-                    const domisiliOption = Array.from(pathSelect.options).find(
-                        option => option.dataset.code === 'domisili'
-                    );
-                    pathSelect.value = domisiliOption?.value || '';
-                } else if (pathSelect.selectedOptions[0]?.dataset.code === 'domisili') {
-                    pathSelect.value = '';
+                    // Inside zonasi: show inside notice, hide outside notice
+                    zoneNoticeInside?.classList.remove('d-none');
+                    zoneNoticeOutside?.classList.add('d-none');
+
+                    // Show all 4 pathways
+                    pathListContainer?.querySelectorAll('[data-pathway-button-wrapper]').forEach(function (wrapper) {
+                        wrapper.classList.remove('d-none');
+                    });
+
+                    // Set default to domisili if not already set or invalid
+                    const currentCode = pathSelect.selectedOptions[0]?.dataset.code || '';
+                    if (currentCode === '') {
+                        const domisiliOption = Array.from(pathSelect.options).find(
+                            option => option.dataset.code === 'domisili'
+                        );
+                        pathSelect.value = domisiliOption?.value || '';
+                    }
+                } else {
+                    // Outside zonasi: hide inside notice, show outside notice
+                    zoneNoticeInside?.classList.add('d-none');
+                    zoneNoticeOutside?.classList.remove('d-none');
+
+                    // Show only 3 pathways (excluding domisili)
+                    pathListContainer?.querySelectorAll('[data-pathway-button-wrapper]').forEach(function (wrapper) {
+                        const isDomisili = wrapper.dataset.pathwayButtonWrapper === 'domisili';
+                        wrapper.classList.toggle('d-none', isDomisili);
+                    });
+
+                    // Clear if current selected was domisili
+                    const currentCode = pathSelect.selectedOptions[0]?.dataset.code || '';
+                    if (currentCode === 'domisili') {
+                        pathSelect.value = '';
+                    }
                 }
 
                 refreshSchoolOptions();
@@ -1158,7 +1193,7 @@
                 }
             });
 
-            outsidePathList?.addEventListener('click', function (event) {
+            pathListContainer?.addEventListener('click', function (event) {
                 const button = event.target.closest('[data-choose-path]');
                 if (! button) {
                     return;

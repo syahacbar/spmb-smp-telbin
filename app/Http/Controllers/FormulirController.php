@@ -361,20 +361,20 @@ class FormulirController extends Controller
             ->where('sekolah_id', $data['sekolah_id'])
             ->exists();
 
-        if ($isZonedSchool) {
-            $data['jalur_id'] = DB::table('tb_jalur_pendaftaran')
-                ->where('kode', 'domisili')
-                ->where('is_active', true)
-                ->value('id');
-            abort_unless($data['jalur_id'], 422, 'Jalur Domisili belum tersedia.');
-        }
-
         $jalurKode = DB::table('tb_jalur_pendaftaran')->where('id', $data['jalur_id'] ?? null)->value('kode');
 
-        if (! $isZonedSchool && ! in_array($jalurKode, ['prestasi', 'afirmasi', 'mutasi'], true)) {
-            throw ValidationException::withMessages([
-                'jalur_id' => 'Sekolah berada di luar zonasi. Pilih Jalur Prestasi, Afirmasi, atau Mutasi.',
-            ]);
+        if ($isZonedSchool) {
+            if (! in_array($jalurKode, ['domisili', 'prestasi', 'afirmasi', 'mutasi'], true)) {
+                throw ValidationException::withMessages([
+                    'jalur_id' => 'Pilih salah satu jalur pendaftaran yang valid (Domisili, Prestasi, Afirmasi, atau Mutasi).',
+                ]);
+            }
+        } else {
+            if (! in_array($jalurKode, ['prestasi', 'afirmasi', 'mutasi'], true)) {
+                throw ValidationException::withMessages([
+                    'jalur_id' => 'Sekolah berada di luar zonasi. Pilih Jalur Prestasi, Afirmasi, atau Mutasi.',
+                ]);
+            }
         }
 
         if (

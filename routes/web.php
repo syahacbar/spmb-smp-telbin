@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminSekolahController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomisiliSchoolController;
@@ -83,5 +84,15 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::delete('/pengguna/{pengguna}', [AdminController::class, 'destroyPengguna'])->name('pengguna.destroy');
         Route::get('/pengguna/{pengguna}/formulir', [FormulirController::class, 'adminCreate'])->name('pengguna.formulir.create');
         Route::post('/pengguna/{pengguna}/formulir', [FormulirController::class, 'adminStore'])->name('pengguna.formulir.store');
+    });
+
+    // Admin Sekolah – only for users with role admin_sekolah
+    Route::middleware('spmb.auth')->prefix('sekolah-admin')->name('sekolah.admin.')->group(function (): void {
+        Route::get('/profil', [AdminSekolahController::class, 'profil'])->name('profil');
+        Route::put('/profil', [AdminSekolahController::class, 'updateProfil'])->name('profil.update');
+        Route::delete('/profil/foto', [AdminSekolahController::class, 'destroyFoto'])->name('profil.foto.destroy');
+        Route::get('/kuota', [AdminSekolahController::class, 'kuota'])->name('kuota');
+        Route::put('/kuota', [AdminSekolahController::class, 'updateKuota'])->name('kuota.update');
+        Route::get('/pendaftar', [AdminSekolahController::class, 'pendaftar'])->name('pendaftar');
     });
 });

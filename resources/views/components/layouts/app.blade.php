@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'SPMB SMP Kabupaten Teluk Bintuni' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
+    @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'sekolah.admin.pendaftar'))
         <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
     @endif
     @if(request()->routeIs('admin.sekolah-zonasi'))
@@ -1248,7 +1248,10 @@
                     <a class="sidebar-link {{ request()->routeIs('admin.sekolah-zonasi') ? 'active' : '' }}" href="{{ route('admin.sekolah-zonasi') }}">Sekolah & Zonasi</a>
                     <a class="sidebar-link {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}" href="{{ route('admin.pengaturan') }}">Pengaturan SPMB</a>
                 @elseif($pengguna->isAdminSekolah())
-                    <span class="sidebar-link active">Pendaftar Sekolah</span>
+                    <a class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dasbor</a>
+                    <a class="sidebar-link {{ request()->routeIs('sekolah.admin.pendaftar') ? 'active' : '' }}" href="{{ route('sekolah.admin.pendaftar') }}">Data Pendaftar</a>
+                    <a class="sidebar-link {{ request()->routeIs('sekolah.admin.kuota') ? 'active' : '' }}" href="{{ route('sekolah.admin.kuota') }}">Kuota Penerimaan</a>
+                    <a class="sidebar-link {{ request()->routeIs('sekolah.admin.profil') ? 'active' : '' }}" href="{{ route('sekolah.admin.profil') }}">Profil Sekolah</a>
                 @else
                     <span class="sidebar-link active">Dashboard Calon Murid</span>
                 @endif
