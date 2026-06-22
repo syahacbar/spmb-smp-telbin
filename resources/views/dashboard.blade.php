@@ -68,6 +68,11 @@
             border-bottom-color: #dcece6;
             padding: 1.1rem 1.25rem;
         }
+        .queue-card .table th,
+        .queue-card .table td {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
         .queue-row {
             display: grid;
             grid-template-columns: minmax(190px, 1.2fr) minmax(150px, .9fr) minmax(140px, .8fr) auto;
@@ -128,98 +133,117 @@
             </div>
         </section>
 
-        <div class="row g-3 mb-4">
-            <div class="col-sm-6 col-xl-3">
-                <div class="card dashboard-stat waiting h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start justify-content-between mb-4">
-                            <div>
-                                <div class="small text-muted fw-bold">MENUNGGU</div>
-                                <div class="dashboard-stat-value mt-1">{{ $totalMenungguVerifikasi }}</div>
+
+
+        <div class="mb-4">
+            <h5 class="fw-bold mb-3 text-dark">Status Verifikasi Akun Calon Murid</h5>
+            <div class="row g-3">
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat waiting h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between mb-4">
+                                <div>
+                                    <div class="small text-muted fw-bold">MENUNGGU</div>
+                                    <div class="dashboard-stat-value mt-1">{{ $totalMenungguVerifikasi }}</div>
+                                </div>
+                                <div class="dashboard-stat-icon">!</div>
                             </div>
-                            <div class="dashboard-stat-icon">!</div>
+                            <a href="{{ route('admin.pengguna', ['status' => 'menunggu_verifikasi']) }}" class="small fw-bold text-decoration-none">Periksa antrean &rarr;</a>
                         </div>
-                        <a href="{{ route('admin.pengguna', ['status' => 'menunggu_verifikasi']) }}" class="small fw-bold text-decoration-none">Periksa antrean &rarr;</a>
                     </div>
                 </div>
-            </div>
-            <div class="col-sm-6 col-xl-3">
-                <div class="card dashboard-stat revision h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start justify-content-between mb-4">
-                            <div>
-                                <div class="small text-muted fw-bold">PERLU PERBAIKAN</div>
-                                <div class="dashboard-stat-value mt-1">{{ (int) ($statusCounts['perlu_perbaikan'] ?? 0) }}</div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat revision h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between mb-4">
+                                <div>
+                                    <div class="small text-muted fw-bold">PERLU PERBAIKAN</div>
+                                    <div class="dashboard-stat-value mt-1">{{ (int) ($statusCounts['perlu_perbaikan'] ?? 0) }}</div>
+                                </div>
+                                <div class="dashboard-stat-icon">i</div>
                             </div>
-                            <div class="dashboard-stat-icon">i</div>
+                            <a href="{{ route('admin.pengguna', ['status' => 'perlu_perbaikan']) }}" class="small fw-bold text-decoration-none">Lihat data &rarr;</a>
                         </div>
-                        <a href="{{ route('admin.pengguna', ['status' => 'perlu_perbaikan']) }}" class="small fw-bold text-decoration-none">Lihat data &rarr;</a>
                     </div>
                 </div>
-            </div>
-            <div class="col-sm-6 col-xl-3">
-                <div class="card dashboard-stat approved h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start justify-content-between mb-4">
-                            <div>
-                                <div class="small text-muted fw-bold">DISETUJUI</div>
-                                <div class="dashboard-stat-value mt-1">{{ (int) ($statusCounts['terverifikasi'] ?? 0) }}</div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat approved h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between mb-4">
+                                <div>
+                                    <div class="small text-muted fw-bold">DISETUJUI</div>
+                                    <div class="dashboard-stat-value mt-1">{{ (int) ($statusCounts['terverifikasi'] ?? 0) }}</div>
+                                </div>
+                                <div class="dashboard-stat-icon">&#10003;</div>
                             </div>
-                            <div class="dashboard-stat-icon">&#10003;</div>
+                            <a href="{{ route('admin.pengguna', ['status' => 'terverifikasi']) }}" class="small fw-bold text-decoration-none">Lihat akun aktif &rarr;</a>
                         </div>
-                        <a href="{{ route('admin.pengguna', ['status' => 'terverifikasi']) }}" class="small fw-bold text-decoration-none">Lihat akun aktif &rarr;</a>
                     </div>
                 </div>
-            </div>
-            <div class="col-sm-6 col-xl-3">
-                <div class="card dashboard-stat rejected h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start justify-content-between mb-4">
-                            <div>
-                                <div class="small text-muted fw-bold">DITOLAK</div>
-                                <div class="dashboard-stat-value mt-1">{{ (int) ($statusCounts['ditolak'] ?? 0) }}</div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat rejected h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between mb-4">
+                                <div>
+                                    <div class="small text-muted fw-bold">DITOLAK</div>
+                                    <div class="dashboard-stat-value mt-1">{{ (int) ($statusCounts['ditolak'] ?? 0) }}</div>
+                                </div>
+                                <div class="dashboard-stat-icon">&times;</div>
                             </div>
-                            <div class="dashboard-stat-icon">&times;</div>
+                            <a href="{{ route('admin.pengguna', ['status' => 'ditolak']) }}" class="small fw-bold text-decoration-none">Lihat data &rarr;</a>
                         </div>
-                        <a href="{{ route('admin.pengguna', ['status' => 'ditolak']) }}" class="small fw-bold text-decoration-none">Lihat data &rarr;</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <section class="card queue-card">
-            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <div>
-                    <h5 class="fw-bold mb-1">Antrean Pemeriksaan Terlama</h5>
-                    <div class="small text-muted">Prioritaskan registrasi yang lebih dahulu diajukan.</div>
-                </div>
-                <span class="badge rounded-pill text-bg-warning">{{ $totalMenungguVerifikasi }} menunggu</span>
+
+
+        <section class="card queue-card mt-4">
+            <div class="card-header">
+                <h5 class="fw-bold mb-1">Statistik Pendaftar di Semua Sekolah Berdasarkan Jalur</h5>
+                <div class="small text-muted">Jumlah pendaftar (formulir final) yang masuk di setiap sekolah tujuan.</div>
             </div>
-            <div class="card-body p-0">
-                @forelse($antreanVerifikasi as $registrasi)
-                    <div class="queue-row">
-                        <div>
-                            <div class="queue-name">{{ $registrasi->pengguna?->calonSiswa?->nama ?? $registrasi->pengguna?->nama_pengguna ?? '-' }}</div>
-                            <div class="queue-meta">NISN {{ $registrasi->nisn }}</div>
-                        </div>
-                        <div>
-                            <div class="fw-semibold">{{ $registrasi->pengguna?->calonSiswa?->asal_sekolah ?? '-' }}</div>
-                            <div class="queue-meta">Asal sekolah</div>
-                        </div>
-                        <div>
-                            <div class="fw-semibold">{{ $registrasi->submitted_at?->translatedFormat('d F Y, H:i') ?? '-' }}</div>
-                            <div class="queue-meta">Waktu pengajuan (WIT)</div>
-                        </div>
-                        <div class="queue-action">
-                            <a href="{{ route('admin.verifikasi-akun.show', $registrasi) }}" class="btn btn-primary btn-sm px-3">Periksa</a>
-                        </div>
-                    </div>
-                @empty
-                    <div class="p-5 text-center">
-                        <div class="fw-bold text-success mb-1">Tidak ada antrean verifikasi</div>
-                        <div class="text-muted">Semua registrasi akun telah ditangani.</div>
-                    </div>
-                @endforelse
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>NPSN</th>
+                            <th>Nama Sekolah</th>
+                            @foreach($jalurs as $jalur)
+                                <th class="text-center">{{ $jalur->nama }}</th>
+                            @endforeach
+                            <th class="text-center fw-bold">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($sekolahStats as $stat)
+                            <tr>
+                                <td>{{ $stat['npsn'] }}</td>
+                                <td><strong>{{ $stat['nama'] }}</strong></td>
+                                @foreach($jalurs as $jalur)
+                                    <td class="text-center">{{ $stat['pendaftar_per_jalur'][$jalur->id] ?? 0 }}</td>
+                                @endforeach
+                                <td class="text-center fw-bold text-primary">{{ $stat['total_pendaftar'] }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ 3 + $jalurs->count() }}" class="text-center text-muted p-4">Belum ada data pendaftar.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    @if($sekolahStats->isNotEmpty())
+                        <tfoot>
+                            <tr class="table-light fw-bold">
+                                <td colspan="2" class="text-end">Total Keseluruhan</td>
+                                @foreach($jalurs as $jalur)
+                                    <td class="text-center text-primary">{{ $totalPerJalur[$jalur->id] ?? 0 }}</td>
+                                @endforeach
+                                <td class="text-center text-success" style="font-size: 1.1rem;">{{ $grandTotal }}</td>
+                            </tr>
+                        </tfoot>
+                    @endif
+                </table>
             </div>
         </section>
     @elseif($pengguna->isAdminSekolah())
@@ -241,44 +265,120 @@
             <div class="hero-copy">Daftar calon murid yang memilih sekolah ini akan tampil setelah formulir mereka disimpan.</div>
         </section>
 
-        <section class="card queue-card">
-            <div class="card-header">
-                <h5 class="fw-bold mb-1">Pendaftar Sekolah</h5>
-                <div class="small text-muted">{{ $pendaftarSekolah->count() }} calon murid</div>
+        <h5 class="fw-bold mb-3 text-dark mt-4">Kuota & Keterisian Jalur</h5>
+        <div class="row g-3 mb-4">
+            @forelse($jalurStats as $stat)
+                @php
+                    $iconData = match($stat['kode']) {
+                        'domisili' => [
+                            'class' => 'bi bi-geo-alt-fill',
+                            'color' => '#0d6efd',
+                            'bg' => '#e7f1ff',
+                        ],
+                        'prestasi' => [
+                            'class' => 'bi bi-trophy-fill',
+                            'color' => '#ffc107',
+                            'bg' => '#fff9e6',
+                        ],
+                        'afirmasi' => [
+                            'class' => 'bi bi-heart-fill',
+                            'color' => '#dc3545',
+                            'bg' => '#ffeef0',
+                        ],
+                        'mutasi' => [
+                            'class' => 'bi bi-arrow-left-right',
+                            'color' => '#198754',
+                            'bg' => '#e8f5e9',
+                        ],
+                        default => [
+                            'class' => 'bi bi-file-earmark-text-fill',
+                            'color' => '#6c757d',
+                            'bg' => '#f8f9fa',
+                        ],
+                    };
+                @endphp
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 1rem; background: linear-gradient(145deg, #fff, #f8fafc); border: 1px solid #e2e8f0;">
+                        <div class="card-body d-flex flex-column justify-content-between p-3">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 30px; height: 30px; flex-shrink: 0; background-color: {{ $iconData['bg'] }};">
+                                            <i class="{{ $iconData['class'] }}" style="color: {{ $iconData['color'] }}; font-size: 0.9rem;"></i>
+                                        </div>
+                                        <span class="badge bg-light text-primary fw-bold px-2 py-1" style="border-radius: 0.5rem; font-size: 0.75rem;">
+                                            Jalur {{ $stat['nama'] }}
+                                        </span>
+                                    </div>
+                                    <span class="text-muted small fw-semibold">
+                                        Kuota: {{ $stat['kuota'] }}
+                                    </span>
+                                </div>
+                                <h3 class="fw-black mb-1 mt-2 text-dark" style="font-size: 1.8rem;">
+                                    {{ $stat['pendaftar'] }} <span class="text-muted fs-6 fw-normal">pendaftar</span>
+                                </h3>
+                            </div>
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted fw-semibold">Keterisian</span>
+                                    <span class="small fw-bold {{ $stat['keterisian'] > 100 ? 'text-danger' : 'text-success' }}">
+                                        {{ $stat['keterisian'] }}%
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 6px; border-radius: 3px; background-color: #e2e8f0;">
+                                    <div class="progress-bar {{ $stat['keterisian'] > 100 ? 'bg-danger' : 'bg-success' }}" 
+                                         role="progressbar" 
+                                         style="width: {{ min(100, $stat['keterisian']) }}%; border-radius: 3px;" 
+                                         aria-valuenow="{{ $stat['keterisian'] }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12">
+                    <div class="card p-4 text-center text-muted">Belum ada jalur pendaftaran yang dikonfigurasi.</div>
+                </div>
+            @endforelse
+        </div>
+
+
+
+        <section class="card queue-card mt-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="fw-bold mb-1">Statistik Asal Sekolah Calon Murid</h5>
+                    <div class="small text-muted">Statistik sebaran sekolah asal pendaftar yang memilih sekolah ini.</div>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead><tr><th>NISN</th><th>Nama</th><th>Jalur</th><th>Nilai TKA / Peringkat</th><th>Status</th><th>Berkas</th></tr></thead>
-                    <tbody>
-                    @forelse($pendaftarSekolah as $item)
-                        @php
-                            $tka = $item->pengguna?->calonSiswa;
-                            $rataTka = $tka && $tka->nilai_tka_matematika !== null && $tka->nilai_tka_bahasa_indonesia !== null
-                                ? number_format(((float) $tka->nilai_tka_matematika + (float) $tka->nilai_tka_bahasa_indonesia) / 2, 2)
-                                : '-';
-                        @endphp
+                    <thead>
                         <tr>
-                            <td>{{ $item->nisn }}</td>
-                            <td><strong>{{ $item->nama }}</strong><div class="small text-muted">{{ $item->asal_sekolah }}</div></td>
-                            <td>{{ $item->jalur?->nama ?? '-' }}</td>
-                            <td data-order="{{ $rataTka === '-' ? -1 : $rataTka }}">
-                                {{ $rataTka }}
-                                @if($item->jalur?->kode === 'prestasi')
-                                    <div class="small fw-bold text-primary">Peringkat #{{ $prestasiRanks[$item->id] ?? '-' }}</div>
-                                @endif
-                            </td>
-                            <td><span class="badge {{ $item->isSubmitted() ? 'text-bg-success' : 'text-bg-warning' }}">{{ $item->isSubmitted() ? 'Final' : 'Draft' }}</span></td>
-                            <td>
-                                @if($item->dokumen_pendukung)
-                                    <a href="{{ $item->berkasUrl('dokumen_pendukung') }}" target="_blank" class="btn btn-sm btn-outline-primary">Pendukung</a>
-                                @else
-                                    <span class="text-muted small">Tidak wajib</span>
-                                @endif
-                            </td>
+                            <th class="text-center" style="width: 80px;">No.</th>
+                            <th>Nama Sekolah Asal</th>
+                            <th class="text-center">Formulir Draft</th>
+                            <th class="text-center">Formulir Final (Terkirim)</th>
+                            <th class="text-center fw-bold">Total Pendaftar</th>
                         </tr>
-                    @empty
-                        <tr><td colspan="6" class="text-center text-muted p-5">Belum ada calon murid yang memilih sekolah ini.</td></tr>
-                    @endforelse
+                    </thead>
+                    <tbody>
+                        @forelse($asalSekolahStats as $stat)
+                            <tr>
+                                <td class="text-center text-muted fw-semibold">{{ $loop->iteration }}</td>
+                                <td><strong>{{ $stat->asal_sekolah ?: 'Tidak Diketahui' }}</strong></td>
+                                <td class="text-center text-warning fw-semibold">{{ $stat->total_draft }}</td>
+                                <td class="text-center text-success fw-semibold">{{ $stat->total_final }}</td>
+                                <td class="text-center fw-bold text-primary">{{ $stat->total }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted p-4">Belum ada data pendaftar berdasarkan sekolah asal.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

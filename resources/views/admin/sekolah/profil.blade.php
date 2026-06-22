@@ -59,7 +59,18 @@
             border-radius: 1rem 1rem 0 0;
             background: linear-gradient(90deg, #eef7f3, #fff);
             border-bottom: 1px solid #d8e8e2;
-            padding: 1rem 1.25rem;
+            padding: 1.25rem 1.5rem;
+        }
+        .profil-form-card .card-body {
+            padding: 2rem 1.75rem;
+        }
+        @media (max-width: 575.98px) {
+            .profil-form-card .card-header {
+                padding: 1rem;
+            }
+            .profil-form-card .card-body {
+                padding: 1.25rem 1rem;
+            }
         }
         .section-badge {
             display: inline-flex;
@@ -232,7 +243,7 @@
                             </div>
                         </div>
 
-                        <div class="row g-3">
+                        <div class="row g-4">
                             <div class="col-md-6">
                                 <label for="kepala_sekolah" class="form-label fw-bold">Kepala Sekolah</label>
                                 <input type="text" id="kepala_sekolah" name="kepala_sekolah" class="form-control @error('kepala_sekolah') is-invalid @enderror"
