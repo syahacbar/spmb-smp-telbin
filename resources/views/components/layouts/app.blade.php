@@ -1324,10 +1324,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'admin.sekolah-zonasi'))
+@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'admin.sekolah-zonasi', 'sekolah.admin.pendaftar'))
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 @endif
-@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan'))
+@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'sekolah.admin.pendaftar'))
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
 @endif

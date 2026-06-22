@@ -38,7 +38,7 @@ class DashboardController extends Controller
             $activeJalurs = JalurPendaftaran::where('is_active', true)->orderBy('id')->get();
 
             $pendaftarJalur = Formulir::whereIn('sekolah_id', $schoolIds)
-                ->where('status', 'submitted')
+                ->whereIn('status', ['submitted', 'diterima', 'ditolak'])
                 ->select('jalur_id')
                 ->selectRaw('count(*) as total')
                 ->groupBy('jalur_id')
@@ -67,7 +67,7 @@ class DashboardController extends Controller
 
             $asalSekolahStats = Formulir::whereIn('sekolah_id', $schoolIds)
                 ->select('asal_sekolah')
-                ->selectRaw("count(case when status = 'submitted' then 1 end) as total_final")
+                ->selectRaw("count(case when status in ('submitted', 'diterima', 'ditolak') then 1 end) as total_final")
                 ->selectRaw("count(case when status = 'draft' then 1 end) as total_draft")
                 ->selectRaw("count(*) as total")
                 ->groupBy('asal_sekolah')
@@ -80,7 +80,7 @@ class DashboardController extends Controller
             $jalurs = JalurPendaftaran::where('is_active', true)->orderBy('id')->get();
             $sekolahs = Sekolah::where('is_active', true)->orderBy('nama')->get();
 
-            $pendaftarSekolahJalur = Formulir::where('status', 'submitted')
+            $pendaftarSekolahJalur = Formulir::whereIn('status', ['submitted', 'diterima', 'ditolak'])
                 ->select('sekolah_id', 'jalur_id')
                 ->selectRaw('count(*) as total')
                 ->groupBy('sekolah_id', 'jalur_id')
@@ -117,7 +117,7 @@ class DashboardController extends Controller
             'totalPengguna' => Pengguna::whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))->count(),
             'totalMenungguVerifikasi' => (int) ($statusCounts['menunggu_verifikasi'] ?? 0),
             'totalTerverifikasi' => Pengguna::whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))->where('is_verified', true)->count(),
-            'totalFormulir' => Formulir::where('status', 'submitted')->count(),
+            'totalFormulir' => Formulir::whereIn('status', ['submitted', 'diterima', 'ditolak'])->count(),
             'totalDraft' => Formulir::where('status', 'draft')->count(),
             'statusCounts' => $statusCounts,
             'antreanVerifikasi' => $pengguna->isAdminDinas()

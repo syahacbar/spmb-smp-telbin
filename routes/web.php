@@ -94,5 +94,8 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::get('/kuota', [AdminSekolahController::class, 'kuota'])->name('kuota');
         Route::put('/kuota', [AdminSekolahController::class, 'updateKuota'])->name('kuota.update');
         Route::get('/pendaftar', [AdminSekolahController::class, 'pendaftar'])->name('pendaftar');
+        Route::put('/pendaftar/{formulir}/terima', [AdminSekolahController::class, 'terimaPendaftar'])->name('pendaftar.terima');
+        Route::put('/pendaftar/{formulir}/tolak', [AdminSekolahController::class, 'tolakPendaftar'])->name('pendaftar.tolak');
+        Route::put('/pendaftar/{formulir}/reset', [AdminSekolahController::class, 'resetPendaftar'])->name('pendaftar.reset');
     });
 });

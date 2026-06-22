@@ -28,7 +28,7 @@ class AdminController extends Controller
     {
         return view('admin.pendaftar', [
             'pengguna' => $request->attributes->get('pengguna'),
-            'formulirs' => Formulir::with(['jalur', 'sekolah'])->where('status', 'submitted')->latest('id')->get(),
+            'formulirs' => Formulir::with(['jalur', 'sekolah'])->whereIn('status', ['submitted', 'diterima', 'ditolak'])->latest('id')->get(),
         ]);
     }
 

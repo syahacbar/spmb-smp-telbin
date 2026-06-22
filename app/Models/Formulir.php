@@ -78,7 +78,7 @@ class Formulir extends Model
 
     public function isSubmitted(): bool
     {
-        return $this->status === 'submitted';
+        return in_array($this->status, ['submitted', 'diterima', 'ditolak'], true);
     }
 
     public function berkasUrl(string $field): string

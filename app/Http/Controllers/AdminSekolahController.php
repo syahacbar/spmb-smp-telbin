@@ -178,13 +178,18 @@ class AdminSekolahController extends Controller
     {
         $sekolah = $this->getSekolah($request);
         $jalurFilter = (string) $request->query('jalur', '');
+        $statusFilter = (string) $request->query('status', '');
 
         $query = Formulir::with(['jalur', 'pengguna.calonSiswa'])
             ->where('sekolah_id', $sekolah->id)
-            ->where('status', 'submitted');
+            ->whereIn('status', ['submitted', 'diterima', 'ditolak']);
 
         if ($jalurFilter) {
             $query->whereHas('jalur', fn ($q) => $q->where('kode', $jalurFilter));
+        }
+
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
         }
 
         $formulirs = $query->latest('submitted_at')->get();
@@ -193,7 +198,7 @@ class AdminSekolahController extends Controller
 
         // Per-jalur counts for the summary bar
         $countPerJalur = Formulir::where('sekolah_id', $sekolah->id)
-            ->where('status', 'submitted')
+            ->whereIn('status', ['submitted', 'diterima', 'ditolak'])
             ->select('jalur_id')
             ->selectRaw('count(*) as total')
             ->groupBy('jalur_id')
@@ -217,8 +222,39 @@ class AdminSekolahController extends Controller
             'formulirs'     => $formulirs,
             'jalurs'        => $jalurs,
             'jalurFilter'   => $jalurFilter,
+            'statusFilter'  => $statusFilter,
             'countPerJalur' => $countPerJalur,
             'prestasiRanks' => $prestasiRanks,
         ]);
+    }
+
+    public function terimaPendaftar(Request $request, Formulir $formulir): RedirectResponse
+    {
+        $sekolah = $this->getSekolah($request);
+        abort_unless($formulir->sekolah_id === $sekolah->id, 403, 'Akses ditolak.');
+
+        $formulir->update(['status' => 'diterima']);
+
+        return back()->with('success', "Pendaftar atas nama {$formulir->nama} berhasil DITERIMA.");
+    }
+
+    public function tolakPendaftar(Request $request, Formulir $formulir): RedirectResponse
+    {
+        $sekolah = $this->getSekolah($request);
+        abort_unless($formulir->sekolah_id === $sekolah->id, 403, 'Akses ditolak.');
+
+        $formulir->update(['status' => 'ditolak']);
+
+        return back()->with('success', "Pendaftar atas nama {$formulir->nama} berhasil DITOLAK.");
+    }
+
+    public function resetPendaftar(Request $request, Formulir $formulir): RedirectResponse
+    {
+        $sekolah = $this->getSekolah($request);
+        abort_unless($formulir->sekolah_id === $sekolah->id, 403, 'Akses ditolak.');
+
+        $formulir->update(['status' => 'submitted']);
+
+        return back()->with('success', "Status pendaftaran atas nama {$formulir->nama} berhasil direset.");
     }
 }

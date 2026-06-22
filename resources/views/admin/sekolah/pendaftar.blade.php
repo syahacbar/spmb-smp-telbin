@@ -155,14 +155,14 @@
         <h2 class="fw-bold mt-1 mb-1">{{ $sekolah->nama }}</h2>
 
         <div class="summary-pill-group">
-            <a href="{{ route('sekolah.admin.pendaftar') }}"
+            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['status' => $statusFilter])) }}"
                class="summary-pill {{ $jalurFilter === '' ? 'active' : '' }}">
                 Semua Jalur
                 <span class="pill-count">{{ $formulirs->count() }}</span>
             </a>
             @foreach($jalurs as $jalur)
                 @php $count = (int)($countPerJalur[$jalur->id] ?? 0); @endphp
-                <a href="{{ route('sekolah.admin.pendaftar', ['jalur' => $jalur->kode]) }}"
+                <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalur->kode, 'status' => $statusFilter])) }}"
                    class="summary-pill {{ $jalurFilter === $jalur->kode ? 'active' : '' }}">
                     {{ $jalur->nama }}
                     <span class="pill-count">{{ $count }}</span>
@@ -174,13 +174,15 @@
     {{-- Table --}}
     <div class="pendaftar-table-wrap">
         <div class="filter-bar">
-            <span class="fw-bold text-muted small">Filter jalur:</span>
-            <a href="{{ route('sekolah.admin.pendaftar') }}"
-               class="filter-btn {{ $jalurFilter === '' ? 'active' : '' }}">Semua</a>
-            @foreach($jalurs as $jalur)
-                <a href="{{ route('sekolah.admin.pendaftar', ['jalur' => $jalur->kode]) }}"
-                   class="filter-btn {{ $jalurFilter === $jalur->kode ? 'active' : '' }}">{{ $jalur->nama }}</a>
-            @endforeach
+            <span class="fw-bold text-muted small">Filter status:</span>
+            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter])) }}"
+               class="filter-btn {{ $statusFilter === '' ? 'active' : '' }}">Semua</a>
+            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'submitted'])) }}"
+               class="filter-btn {{ $statusFilter === 'submitted' ? 'active' : '' }}">Belum Diproses</a>
+            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'diterima'])) }}"
+               class="filter-btn {{ $statusFilter === 'diterima' ? 'active' : '' }}">Diterima</a>
+            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'ditolak'])) }}"
+               class="filter-btn {{ $statusFilter === 'ditolak' ? 'active' : '' }}">Ditolak</a>
         </div>
 
         <div class="table-responsive p-3">
@@ -197,6 +199,7 @@
                         <th>Status</th>
                         <th>Tanggal Dikirim</th>
                         <th>Berkas</th>
+                        <th class="text-center" style="width:160px">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -251,9 +254,15 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="badge {{ $formulir->isSubmitted() ? 'text-bg-success' : 'text-bg-warning' }}">
-                                    {{ $formulir->isSubmitted() ? 'Final' : 'Draft' }}
-                                </span>
+                                @if($formulir->status === 'diterima')
+                                    <span class="badge text-bg-success">Diterima</span>
+                                @elseif($formulir->status === 'ditolak')
+                                    <span class="badge text-bg-danger">Ditolak</span>
+                                @elseif($formulir->status === 'submitted')
+                                    <span class="badge text-bg-info">Belum Diproses</span>
+                                @else
+                                    <span class="badge text-bg-warning">Draft</span>
+                                @endif
                             </td>
                             <td data-order="{{ $formulir->submitted_at?->timestamp ?? 0 }}">
                                 {{ $formulir->submitted_at?->translatedFormat('d M Y, H:i') ?? '-' }}
@@ -268,10 +277,46 @@
                                        class="btn btn-sm btn-outline-primary ms-1">Berkas</a>
                                 @endif
                             </td>
+                            <td class="text-center">
+                                @if($formulir->status === 'submitted')
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <form action="{{ route('sekolah.admin.pendaftar.terima', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin MENERIMA pendaftar ini?')">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1 py-1 px-2" title="Terima Pendaftar" style="font-size: 0.8rem;">
+                                                <i class="bi bi-check-circle-fill"></i> Terima
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('sekolah.admin.pendaftar.tolak', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin MENOLAK pendaftar ini?')">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold d-inline-flex align-items-center gap-1 py-1 px-2" title="Tolak Pendaftar" style="font-size: 0.8rem;">
+                                                <i class="bi bi-x-circle-fill"></i> Tolak
+                                            </button>
+                                        </form>
+                                    </div>
+                                @elseif($formulir->status === 'diterima' || $formulir->status === 'ditolak')
+                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                        <span class="{{ $formulir->status === 'diterima' ? 'text-success' : 'text-danger' }} fw-bold small">
+                                            <i class="bi {{ $formulir->status === 'diterima' ? 'bi-check-lg' : 'bi-x-lg' }}"></i> 
+                                            {{ $formulir->status === 'diterima' ? 'Diterima' : 'Ditolak' }}
+                                        </span>
+                                        <form action="{{ route('sekolah.admin.pendaftar.reset', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan keputusan status pendaftar ini?')">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 small fw-semibold" style="font-size: 0.72rem; padding: 1px 6px; border-radius: 4px;">
+                                                Batalkan
+                                            </button>
+                                        </form>
+                                    </div>
+                                @else
+                                    <span class="text-muted small">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted p-5">
+                            <td colspan="11" class="text-center text-muted p-5">
                                 @if($jalurFilter)
                                     Belum ada pendaftar untuk jalur <strong>{{ $jalurs->firstWhere('kode', $jalurFilter)?->nama ?? $jalurFilter }}</strong>.
                                 @else
@@ -295,7 +340,7 @@
                 lengthMenu: [10, 25, 50, 100],
                 order: [[8, 'desc']],
                 columnDefs: [
-                    { orderable: false, searchable: false, targets: [0, 1, 9] },
+                    { orderable: false, searchable: false, targets: [0, 1, 9, 10] },
                 ],
                 language: {
                     search: 'Cari:',
