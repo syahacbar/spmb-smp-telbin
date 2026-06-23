@@ -14,7 +14,7 @@ use App\Http\Controllers\RegistrasiAkunBerkasController;
 use App\Http\Controllers\RegistrasiAkunController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/', fn () => redirect()->route('login'))->name('landing');
 Route::post('/cek-status', [LandingController::class, 'checkStatus'])
     ->middleware('throttle:spmb-status')
     ->name('status.check');

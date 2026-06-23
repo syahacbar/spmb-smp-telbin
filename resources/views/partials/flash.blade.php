@@ -60,29 +60,27 @@
 </style>
 
 @if(session('success'))
-    <div class="flash-alert flash-alert-success alert-dismissible fade show" role="alert">
+    <div class="flash-alert flash-alert-success" role="alert">
         <span class="flash-alert-icon" aria-hidden="true">✓</span>
         <div class="flex-grow-1">
             <div class="flash-alert-title">Berhasil disimpan</div>
             <div class="flash-alert-message">{{ session('success') }}</div>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
     </div>
 @endif
 
 @if(session('warning'))
-    <div class="flash-alert flash-alert-warning alert-dismissible fade show" role="alert">
+    <div class="flash-alert flash-alert-warning" role="alert">
         <span class="flash-alert-icon" aria-hidden="true">!</span>
         <div class="flex-grow-1">
             <div class="flash-alert-title">Perlu perhatian</div>
             <div class="flash-alert-message">{{ session('warning') }}</div>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
     </div>
 @endif
 
 @if($errors->any())
-    <div class="flash-alert flash-alert-danger alert-dismissible fade show" role="alert">
+    <div class="flash-alert flash-alert-danger" role="alert">
         <span class="flash-alert-icon" aria-hidden="true">!</span>
         <div class="flex-grow-1">
             <div class="flash-alert-title">Periksa kembali data berikut</div>
@@ -92,6 +90,5 @@
                 @endforeach
             </ul>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
     </div>
 @endif

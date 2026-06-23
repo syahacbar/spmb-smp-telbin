@@ -36,6 +36,9 @@
             border-bottom: 1px solid var(--spmb-line);
             box-shadow: 0 10px 30px rgba(16, 24, 40, .06);
             backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
         }
         .topbar-brand {
             display: inline-flex;
@@ -1258,7 +1261,7 @@
                         <li>
                             <form action="{{ route('logout') }}" method="post" class="mb-0" id="logoutFormNavbar">
                                 @csrf
-                                <button type="button" class="dropdown-item text-danger d-flex align-items-center gap-2 py-2 px-3 fw-semibold" onclick="if(confirm('Apakah anda yakin akan keluar?')) document.getElementById('logoutFormNavbar').submit();">
+                                <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2 py-2 px-3 fw-semibold" data-confirm="Apakah anda yakin akan keluar?">
                                     <i class="bi bi-box-arrow-right fs-6"></i> Logout
                                 </button>
                             </form>
@@ -1425,7 +1428,13 @@
 
             confirmedTarget.dataset.confirmed = 'true';
             confirmModal.hide();
-            confirmedTarget.click();
+
+            // Jika tombol adalah submit button dalam form, submit form-nya langsung
+            if (confirmedTarget.type === 'submit' && confirmedTarget.form) {
+                confirmedTarget.form.submit();
+            } else {
+                confirmedTarget.click();
+            }
         });
 
         const documentModalElement = document.getElementById('documentPreviewModal');
