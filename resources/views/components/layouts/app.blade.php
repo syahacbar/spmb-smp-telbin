@@ -6,7 +6,7 @@
     <title>{{ $title ?? 'SPMB SMP Kabupaten Teluk Bintuni' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'sekolah.admin.pendaftar'))
+    @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'sekolah.admin.pendaftar', 'admin.sekolah-zonasi'))
         <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
     @endif
     @if(request()->routeIs('admin.sekolah-zonasi'))
@@ -76,6 +76,9 @@
             border-radius: 999px;
             background: #fff;
             box-shadow: 0 8px 22px rgba(16, 24, 40, .05);
+        }
+        .topbar-user.dropdown-toggle::after {
+            display: none !important;
         }
         .topbar-avatar {
             width: 38px;
@@ -1226,22 +1229,41 @@
                     $formulirPengguna = $pengguna->formulirTerbaru;
                     $fotoPengguna = $formulirPengguna?->foto_selfie;
                 @endphp
-                <div class="topbar-user">
-                    <span class="topbar-avatar">
-                        @if($fotoPengguna)
-                            <img src="{{ $formulirPengguna->berkasUrl('foto_selfie') }}" class="topbar-avatar-photo" alt="Foto {{ $namaPengguna }}">
-                        @else
-                            <span class="topbar-avatar-icon" aria-hidden="true"></span>
-                        @endif
-                    </span>
-                    <div class="d-none d-sm-block">
-                        <div class="topbar-user-name">{{ $namaPengguna }}</div>
-                        <div class="topbar-role">{{ $pengguna->roleLabel() }}</div>
+                <div class="dropdown">
+                    <div class="topbar-user dropdown-toggle" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer; user-select: none;">
+                        <span class="topbar-avatar">
+                            @if($fotoPengguna)
+                                <img src="{{ $formulirPengguna->berkasUrl('foto_selfie') }}" class="topbar-avatar-photo" alt="Foto {{ $namaPengguna }}">
+                            @else
+                                <span class="topbar-avatar-icon" aria-hidden="true"></span>
+                            @endif
+                        </span>
+                        <div class="d-none d-sm-block text-start">
+                            <div class="topbar-user-name">{{ $namaPengguna }}</div>
+                            <div class="topbar-role">{{ $pengguna->roleLabel() }}</div>
+                        </div>
                     </div>
-                    <form action="{{ route('logout') }}" method="post" class="mb-0">
-                        @csrf
-                        <button class="btn btn-outline-danger btn-sm topbar-logout" data-confirm="Apakah anda yakin akan keluar?">Logout</button>
-                    </form>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border border-light-subtle py-2" aria-labelledby="userMenuDropdown" style="border-radius: 0.75rem; min-width: 200px;">
+                        <li class="px-3 py-2 d-sm-none">
+                            <div class="fw-bold text-dark text-truncate">{{ $namaPengguna }}</div>
+                            <div class="small text-muted text-truncate" style="font-size: 0.75rem;">{{ $pengguna->roleLabel() }}</div>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 fw-semibold text-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                <i class="bi bi-key-fill text-muted fs-6"></i> Ubah Password
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="post" class="mb-0" id="logoutFormNavbar">
+                                @csrf
+                                <button type="button" class="dropdown-item text-danger d-flex align-items-center gap-2 py-2 px-3 fw-semibold" onclick="if(confirm('Apakah anda yakin akan keluar?')) document.getElementById('logoutFormNavbar').submit();">
+                                    <i class="bi bi-box-arrow-right fs-6"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
                 </div>
             @endisset
         </div>
@@ -1300,6 +1322,41 @@
     </div>
 </div>
 
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 1rem; border: none; box-shadow: 0 20px 50px rgba(16, 24, 40, 0.15);">
+            <div class="modal-header border-bottom-0 pt-4 px-4 pb-0">
+                <h5 class="modal-title fw-bold" id="changePasswordModalLabel">Ubah Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <form action="{{ route('akun.password.update') }}" method="POST" id="changePasswordForm">
+                @csrf
+                @method('PUT')
+                <div class="modal-body px-4 py-3">
+                    <div id="changePasswordAlert" class="alert d-none small py-2 px-3 mb-3" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label for="password_sekarang" class="form-label fw-bold small text-muted">Password Sekarang</label>
+                        <input type="password" class="form-control" id="password_sekarang" name="password_sekarang" required placeholder="Masukkan password saat ini">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password_baru" class="form-label fw-bold small text-muted">Password Baru</label>
+                        <input type="password" class="form-control" id="password_baru" name="password_baru" required placeholder="Masukkan password baru (min. 8 karakter)">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password_baru_confirmation" class="form-label fw-bold small text-muted">Konfirmasi Password Baru</label>
+                        <input type="password" class="form-control" id="password_baru_confirmation" name="password_baru_confirmation" required placeholder="Konfirmasi password baru">
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 px-4 pb-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 0.5rem;">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4" id="btnSubmitChangePassword" style="border-radius: 0.5rem;">Simpan Sandi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="documentPreviewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -1327,7 +1384,7 @@
 @if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'admin.sekolah-zonasi', 'sekolah.admin.pendaftar'))
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 @endif
-@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'sekolah.admin.pendaftar'))
+@if(request()->routeIs('admin.pengguna', 'admin.pendaftar', 'admin.pengaturan', 'sekolah.admin.pendaftar', 'admin.sekolah-zonasi'))
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
 @endif
@@ -1427,6 +1484,59 @@
                 input.type = shouldShow ? 'text' : 'password';
                 button.setAttribute('aria-label', shouldShow ? 'Sembunyikan password' : 'Lihat password');
                 button.setAttribute('aria-pressed', shouldShow ? 'true' : 'false');
+            });
+        });
+
+        document.getElementById('changePasswordForm')?.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const form = this;
+            const alertDiv = document.getElementById('changePasswordAlert');
+            const submitBtn = document.getElementById('btnSubmitChangePassword');
+            
+            alertDiv.className = 'alert d-none small py-2 px-3 mb-3';
+            alertDiv.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Menyimpan...';
+
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(async response => {
+                const data = await response.json();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Simpan Sandi';
+
+                if (response.ok) {
+                    alertDiv.className = 'alert alert-success small py-2 px-3 mb-3';
+                    alertDiv.textContent = data.message || 'Password berhasil diubah.';
+                    form.reset();
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                        modal?.hide();
+                        location.reload();
+                    }, 1500);
+                } else {
+                    alertDiv.className = 'alert alert-danger small py-2 px-3 mb-3';
+                    if (data.errors) {
+                        alertDiv.innerHTML = Object.values(data.errors).map(errs => errs.join('<br>')).join('<br>');
+                    } else {
+                        alertDiv.textContent = data.message || 'Terjadi kesalahan. Silakan coba lagi.';
+                    }
+                }
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Simpan Sandi';
+                alertDiv.className = 'alert alert-danger small py-2 px-3 mb-3';
+                alertDiv.textContent = 'Terjadi kesalahan koneksi. Silakan coba lagi.';
+                console.error(error);
             });
         });
     });

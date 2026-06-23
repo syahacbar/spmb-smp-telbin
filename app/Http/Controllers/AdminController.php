@@ -152,9 +152,14 @@ class AdminController extends Controller
         $account = $request->validate([
             'username' => ['required', 'string', 'max:50', Rule::unique('tb_pengguna', 'username')],
             'password' => ['required', 'string', 'min:12', 'max:255'],
+            'kelurahan_ids' => ['nullable', 'array'],
+            'kelurahan_ids.*' => ['integer', 'exists:ref_kelurahan,id'],
         ]);
 
-        DB::transaction(function () use ($data, $account): void {
+        $kelurahanIds = (array) $request->input('kelurahan_ids', []);
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+
+        DB::transaction(function () use ($data, $account, $periodeId, $kelurahanIds): void {
             $data['is_active'] = true;
             $sekolah = Sekolah::create($data);
             $roleId = DB::table('roles')->where('kode', 'admin_sekolah')->value('id');
@@ -180,18 +185,68 @@ class AdminController extends Controller
 
             $pengguna->roles()->attach($roleId);
             $pengguna->sekolah()->attach($sekolah->id);
+
+            if ($periodeId && count($kelurahanIds) > 0) {
+                foreach ($kelurahanIds as $kelurahanId) {
+                    DB::table('tb_zonasi_sekolah')->insert([
+                        'periode_id' => $periodeId,
+                        'sekolah_id' => $sekolah->id,
+                        'kelurahan_id' => (int) $kelurahanId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
         });
 
-        return back()->with('success', 'Data sekolah dan akun login sekolah berhasil ditambahkan.');
+        return back()->with('success', 'Data sekolah, akun login, dan zonasi berhasil ditambahkan.');
     }
 
     public function updateSekolah(Request $request, Sekolah $sekolah): RedirectResponse
     {
         $data = $this->validatedSchool($request, $sekolah);
-        $data['is_active'] = $request->boolean('is_active');
+        $request->validate([
+            'kelurahan_ids' => ['nullable', 'array'],
+            'kelurahan_ids.*' => ['integer', 'exists:ref_kelurahan,id'],
+        ]);
+        $data['is_active'] = $request->boolean('is_active', $sekolah->is_active);
         $sekolah->update($data);
 
-        return back()->with('success', 'Data sekolah berhasil diperbarui.');
+        // Sync zonasi
+        $kelurahanIds = (array) $request->input('kelurahan_ids', []);
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+
+        if ($periodeId) {
+            DB::transaction(function () use ($periodeId, $sekolah, $kelurahanIds): void {
+                DB::table('tb_zonasi_sekolah')
+                    ->where('periode_id', $periodeId)
+                    ->where('sekolah_id', $sekolah->id)
+                    ->delete();
+
+                foreach ($kelurahanIds as $kelurahanId) {
+                    DB::table('tb_zonasi_sekolah')->insert([
+                        'periode_id' => $periodeId,
+                        'sekolah_id' => $sekolah->id,
+                        'kelurahan_id' => (int) $kelurahanId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+        }
+
+        return back()->with('success', 'Data sekolah dan zonasi berhasil diperbarui.');
+    }
+
+    public function toggleSekolahAktif(Sekolah $sekolah): RedirectResponse
+    {
+        $sekolah->update([
+            'is_active' => ! $sekolah->is_active,
+        ]);
+
+        $status = $sekolah->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        return back()->with('success', "Sekolah {$sekolah->nama} berhasil {$status}.");
     }
 
     public function destroySekolah(Sekolah $sekolah): RedirectResponse

@@ -190,7 +190,6 @@
                 <thead>
                     <tr>
                         <th style="width:46px">No</th>
-                        <th style="width:46px">Foto</th>
                         <th>Nama / NISN</th>
                         <th>Asal Sekolah</th>
                         <th>Jalur</th>
@@ -198,7 +197,6 @@
                         <th>Peringkat Prestasi</th>
                         <th>Status</th>
                         <th>Tanggal Dikirim</th>
-                        <th>Berkas</th>
                         <th class="text-center" style="width:160px">Aksi</th>
                     </tr>
                 </thead>
@@ -224,15 +222,25 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td>
-                                @if($formulir->foto_selfie)
-                                    <img src="{{ $formulir->berkasUrl('foto_selfie') }}" class="avatar-sm" alt="Foto {{ $formulir->nama }}">
-                                @else
-                                    <div class="avatar-placeholder-sm">{{ strtoupper(substr($formulir->nama, 0, 1)) }}</div>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="fw-bold">{{ $formulir->nama }}</div>
-                                <div class="small text-muted">{{ $formulir->nisn }}</div>
+                                <div class="d-flex align-items-center gap-3">
+                                    @if($formulir->foto_selfie)
+                                        <a href="{{ $formulir->berkasUrl('foto_selfie') }}" target="_blank" title="Lihat foto penuh">
+                                            <img src="{{ $formulir->berkasUrl('foto_selfie') }}" class="avatar-sm" alt="Foto {{ $formulir->nama }}">
+                                        </a>
+                                    @else
+                                        <div class="avatar-placeholder-sm">{{ strtoupper(substr($formulir->nama, 0, 1)) }}</div>
+                                    @endif
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ $formulir->nama }}</div>
+                                        <div class="small text-muted mb-1">{{ $formulir->nisn }}</div>
+                                        @if($formulir->dokumen_pendukung)
+                                            <a href="{{ $formulir->berkasUrl('dokumen_pendukung') }}" target="_blank"
+                                               class="badge bg-light text-primary text-decoration-none border" style="font-size: 0.72rem;">
+                                                <i class="bi bi-file-earmark-pdf"></i> Lihat Berkas
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
                             </td>
                             <td>{{ $formulir->asal_sekolah ?: '-' }}</td>
                             <td>
@@ -266,16 +274,6 @@
                             </td>
                             <td data-order="{{ $formulir->submitted_at?->timestamp ?? 0 }}">
                                 {{ $formulir->submitted_at?->translatedFormat('d M Y, H:i') ?? '-' }}
-                            </td>
-                            <td class="text-nowrap">
-                                @if($formulir->foto_selfie)
-                                    <a href="{{ $formulir->berkasUrl('foto_selfie') }}" target="_blank"
-                                       class="btn btn-sm btn-outline-secondary" title="Lihat foto">📷</a>
-                                @endif
-                                @if($formulir->dokumen_pendukung)
-                                    <a href="{{ $formulir->berkasUrl('dokumen_pendukung') }}" target="_blank"
-                                       class="btn btn-sm btn-outline-primary ms-1">Berkas</a>
-                                @endif
                             </td>
                             <td class="text-center">
                                 @if($formulir->status === 'submitted')
@@ -316,7 +314,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center text-muted p-5">
+                            <td colspan="9" class="text-center text-muted p-5">
                                 @if($jalurFilter)
                                     Belum ada pendaftar untuk jalur <strong>{{ $jalurs->firstWhere('kode', $jalurFilter)?->nama ?? $jalurFilter }}</strong>.
                                 @else
@@ -338,9 +336,9 @@
             new DataTable(tableEl, {
                 pageLength: 25,
                 lengthMenu: [10, 25, 50, 100],
-                order: [[8, 'desc']],
+                order: [[7, 'desc']],
                 columnDefs: [
-                    { orderable: false, searchable: false, targets: [0, 1, 9, 10] },
+                    { orderable: false, searchable: false, targets: [0, 8] },
                 ],
                 language: {
                     search: 'Cari:',

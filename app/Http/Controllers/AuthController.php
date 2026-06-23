@@ -318,6 +318,58 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
+    public function updatePassword(Request $request): JsonResponse|RedirectResponse
+    {
+        $penggunaId = $request->session()->get('pengguna_id');
+        $pengguna = Pengguna::find($penggunaId);
+
+        abort_unless($pengguna, 403);
+
+        $rules = [
+            'password_sekarang' => ['required', 'string'],
+            'password_baru' => ['required', 'string', 'min:8', 'confirmed'],
+        ];
+
+        $messages = [
+            'password_sekarang.required' => 'Password sekarang wajib diisi.',
+            'password_baru.required' => 'Password baru wajib diisi.',
+            'password_baru.min' => 'Password baru minimal harus 8 karakter.',
+            'password_baru.confirmed' => 'Konfirmasi password baru tidak cocok.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        $validator->after(function ($validator) use ($pengguna, $request): void {
+            if (! $this->passwordMatches($request->input('password_sekarang'), $pengguna->password)) {
+                $validator->errors()->add('password_sekarang', 'Password sekarang salah.');
+            }
+        });
+
+        if ($validator->fails()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            return back()->withErrors($validator);
+        }
+
+        $pengguna->update([
+            'password' => Hash::make($request->input('password_baru')),
+        ]);
+
+        if ($request->expectsJson()) {
+            $request->session()->flash('success', 'Password berhasil diperbarui.');
+            return response()->json([
+                'ok' => true,
+                'message' => 'Password berhasil diperbarui.'
+            ]);
+        }
+
+        return back()->with('success', 'Password berhasil diperbarui.');
+    }
+
     private function passwordMatches(string $plain, string $stored): bool
     {
         if (str_starts_with($stored, '$2y$') || str_starts_with($stored, '$argon')) {

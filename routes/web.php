@@ -41,6 +41,7 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('spmb.auth')->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::put('/akun/password', [AuthController::class, 'updatePassword'])->name('akun.password.update');
 
     Route::get('/formulir', [FormulirController::class, 'create'])->name('formulir.create');
     Route::post('/formulir', [FormulirController::class, 'store'])->name('formulir.store');
@@ -65,6 +66,7 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::post('/sekolah-zonasi/sekolah', [AdminController::class, 'storeSekolah'])->name('sekolah.store');
         Route::put('/sekolah-zonasi/sekolah/{sekolah}', [AdminController::class, 'updateSekolah'])->name('sekolah.update');
         Route::delete('/sekolah-zonasi/sekolah/{sekolah}', [AdminController::class, 'destroySekolah'])->name('sekolah.destroy');
+        Route::post('/sekolah-zonasi/sekolah/{sekolah}/toggle-active', [AdminController::class, 'toggleSekolahAktif'])->name('sekolah.toggle-active');
         Route::post('/sekolah-zonasi/sekolah/{sekolah}/zonasi', [AdminController::class, 'syncZonasiSekolah'])->name('sekolah.zonasi');
         Route::post('/sekolah-zonasi/import', [AdminController::class, 'importSekolahZonasi'])->name('sekolah-zonasi.import');
         Route::get('/pengaturan/tanda-tangan', [AdminController::class, 'showSignature'])->name('pengaturan.signature.show');
