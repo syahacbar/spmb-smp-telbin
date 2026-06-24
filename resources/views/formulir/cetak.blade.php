@@ -128,6 +128,61 @@
         .schedule-table th {
             width: 28%;
         }
+        .jalur-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 14px;
+            padding: 6px 0 4px;
+            list-style: none;
+            margin: 0;
+        }
+        .jalur-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .jalur-check {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #172033;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #fff;
+            font-size: 11px;
+            font-weight: 900;
+            color: #16a34a;
+        }
+        .jalur-check.active {
+            background: #172033;
+            border-color: #172033;
+            color: #fff;
+        }
+        .timeline {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px 10px;
+            padding: 6px 0 4px;
+        }
+        .timeline-item {
+            border-left: 3px solid #172033;
+            padding: 4px 7px;
+            background: #f8fafc;
+        }
+        .timeline-date {
+            font-weight: 800;
+            font-size: 10px;
+            color: #172033;
+        }
+        .timeline-event {
+            font-size: 10px;
+            line-height: 1.3;
+            margin-top: 1px;
+        }
         .signature-area {
             display: grid;
             grid-template-columns: 1fr 62mm;
@@ -212,7 +267,7 @@
     $tahunPendaftaran = $settings['tahun_pendaftaran'] ?? '2026';
     $tahunPelajaran = $settings['tahun_pelajaran'] ?? '2026/2027';
     $nomorUrutPendaftaran = (int) $formulir->id;
-    $nomorPendaftaran = 'SPMB-'.$tahunPendaftaran.'-'.str_pad((string) $nomorUrutPendaftaran, 3, '0', STR_PAD_LEFT);
+    $nomorPendaftaran = 'SPMB-SMP-'.$tahunPendaftaran.'-'.str_pad((string) $nomorUrutPendaftaran, 3, '0', STR_PAD_LEFT);
     $nomorRuang = max(1, (int) ceil($nomorUrutPendaftaran / 25));
     $ruangTes = 'Ruang-'.$nomorRuang;
     $formatTanggalIndonesia = function ($date): string {
@@ -278,7 +333,7 @@
     </div>
 
     <div class="card-title">
-        <div class="fw-bold fs-6">KARTU TANDA PENDAFTARAN <br> SISTEM PENERIMAAN MURID BARU TAHUN PELAJARAN {{ $tahunPelajaran }}</div>
+        <div class="fw-bold fs-6">KARTU TANDA PENDAFTARAN <br> SISTEM PENERIMAAN MURID BARU (SPMB) SEKOLAH MENENGAH PERTAMA <br> TAHUN PELAJARAN {{ $tahunPelajaran }}</div>
     </div>
 
     <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
@@ -296,19 +351,19 @@
                 </tr>
                 <tr>
                     <th>Nama Lengkap</th>
-                    <td>{{ $formulir->nama }}</td>
+                    <td>{{ strtoupper($formulir->nama) }}</td>
                 </tr>
                 <tr>
                     <th>Tempat, Tanggal Lahir</th>
-                    <td>{{ $formulir->tempat_lahir }}, {{ $formatTanggalIndonesia($formulir->tanggal_lahir) }}</td>
+                    <td>{{ strtoupper($formulir->tempat_lahir) }}, {{ strtoupper($formatTanggalIndonesia($formulir->tanggal_lahir)) }}</td>
                 </tr>
                 <tr>
                     <th>Jenis Kelamin</th>
-                    <td>{{ $formulir->jenis_kelamin }}</td>
+                    <td>{{ strtoupper($formulir->jenis_kelamin) }}</td>
                 </tr>
                 <tr>
                     <th>Asal Sekolah</th>
-                    <td>{{ $formulir->asal_sekolah }}</td>
+                    <td>{{ strtoupper($formulir->asal_sekolah) }}</td>
                 </tr>
                 <tr>
                     <th>No HP / WA</th>
@@ -323,27 +378,56 @@
         </div>
     </div>
 
-    <div class="section-label">Informasi Tahap Berikutnya</div>
-    <table class="table table-bordered info-table schedule-table">
+    <div class="section-label">Pilihan Sekolah dan Jalur Penerimaan</div>
+    @php
+        $jalurAktif = strtolower($formulir->jalur?->kode ?? $formulir->jalur?->nama ?? '');
+        $jalurOptions = [
+            'domisili'  => 'Domisili',
+            'prestasi'  => 'Prestasi',
+            'afirmasi'  => 'Afirmasi',
+            'mutasi'    => 'Mutasi',
+        ];
+    @endphp
+    <table class="table table-bordered info-table">
         <tbody>
         <tr>
-            <th>Tanggal</th>
-            <td>{{ $tanggalTes }}</td>
+            <th style="width:36%">Pilihan Sekolah</th>
+            <td><strong>{{ strtoupper($formulir->sekolah?->nama ?? '-') }}</strong></td>
         </tr>
         <tr>
-            <th>Waktu</th>
-            <td>{{ $waktuTes }}</td>
-        </tr>
-        <tr>
-            <th>Tempat</th>
-            <td>{{ $tempatTes }}</td>
-        </tr>
-        <tr>
-            <th>Ruang</th>
-            <td>{{ $ruangTes }}</td>
+            <th>Jalur Penerimaan</th>
+            <td>
+                <ul class="jalur-list">
+                    @foreach($jalurOptions as $key => $label)
+                        @php $isActive = str_contains($jalurAktif, $key); @endphp
+                        <li class="jalur-item">
+                            <span class="jalur-check {{ $isActive ? 'active' : '' }}">
+                                {{ $isActive ? '✓' : '' }}
+                            </span>
+                            {{ $label }}
+                        </li>
+                    @endforeach
+                </ul>
+            </td>
         </tr>
         </tbody>
     </table>
+
+    <div class="section-label">Jadwal Tahapan SPMB SMP</div>
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="timeline-date">11 Juli 2026</div>
+            <div class="timeline-event">Pengumuman Hasil Seleksi</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-date">13 Juli 2026</div>
+            <div class="timeline-event">Pendaftaran Ulang</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-date">15 – 17 Juli 2026</div>
+            <div class="timeline-event">Masa Pengenalan Lingkungan Sekolah (MPLS)</div>
+        </div>
+    </div>
 
     <div class="signature-area">
         <div class="system-note">
