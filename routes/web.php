@@ -78,6 +78,7 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::put('/pengaturan/kontak-panitia/{kontak}', [AdminController::class, 'updateKontakPanitia'])->name('pengaturan.kontak.update');
         Route::post('/pengaturan/kontak-panitia/{kontak}/utama', [AdminController::class, 'setKontakPanitiaUtama'])->name('pengaturan.kontak.primary');
         Route::delete('/pengaturan/kontak-panitia/{kontak}', [AdminController::class, 'destroyKontakPanitia'])->name('pengaturan.kontak.destroy');
+        Route::post('/pengaturan/akses-sekolah', [AdminController::class, 'updateAksesSekolah'])->name('pengaturan.akses-sekolah');
         Route::post('/pengguna/{pengguna}/verifikasi', [AdminController::class, 'verifikasiPengguna'])->name('pengguna.verifikasi');
         Route::post('/pengguna/{pengguna}/status-verifikasi', [AdminController::class, 'updateStatusVerifikasiPengguna'])->name('pengguna.status-verifikasi');
         Route::get('/registrasi-akun/{registrasi}/kartu-keluarga', RegistrasiAkunBerkasController::class)->name('registrasi.kk');
@@ -96,6 +97,8 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::get('/kuota', [AdminSekolahController::class, 'kuota'])->name('kuota');
         Route::put('/kuota', [AdminSekolahController::class, 'updateKuota'])->name('kuota.update');
         Route::get('/pendaftar', [AdminSekolahController::class, 'pendaftar'])->name('pendaftar');
+        Route::get('/pendaftar/ekspor', [AdminSekolahController::class, 'eksporPendaftar'])->name('pendaftar.ekspor');
+        Route::get('/pendaftar/pdf', [AdminSekolahController::class, 'pdfPendaftar'])->name('pendaftar.pdf');
         Route::put('/pendaftar/{formulir}/terima', [AdminSekolahController::class, 'terimaPendaftar'])->name('pendaftar.terima');
         Route::put('/pendaftar/{formulir}/tolak', [AdminSekolahController::class, 'tolakPendaftar'])->name('pendaftar.tolak');
         Route::put('/pendaftar/{formulir}/reset', [AdminSekolahController::class, 'resetPendaftar'])->name('pendaftar.reset');

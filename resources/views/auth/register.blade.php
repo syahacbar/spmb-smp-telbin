@@ -395,7 +395,7 @@
                                             <div class="col-md-5">
                                                 <label class="form-label">Upload Kartu Keluarga</label>
                                                 <input type="file" name="kartu_keluarga" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp" @if($showAccountFields) required @endif>
-                                                <div class="form-text">PDF/gambar maksimal 2 MB untuk verifikasi domisili.</div>
+                                                <div class="form-text">PDF/gambar maksimal 4 MB untuk verifikasi domisili.</div>
                                             </div>
                                         </div>
                                     </section>

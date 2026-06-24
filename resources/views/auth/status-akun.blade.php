@@ -335,6 +335,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Ganti Kartu Keluarga</label>
                                             <input type="file" name="kartu_keluarga" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp">
+                                            <div class="form-text">PDF/gambar maksimal 4 MB.</div>
                                         </div>
                                         <div class="col-12 d-grid">
                                             <button class="btn btn-primary">Kirim Ulang untuk Verifikasi</button>

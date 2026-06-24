@@ -26,7 +26,7 @@
             'foto_selfie' => [
                 'label' => 'Pas Foto',
                 'description' => 'Pas foto ukuran 3x4 dengan latar belakang biru.',
-                'hint' => 'Format *.jpg, *.jpeg, atau *.png, maksimal 1 MB. Wajah harus terlihat jelas.',
+                'hint' => 'Format *.jpg, *.jpeg, atau *.png, maksimal 4 MB. Wajah harus terlihat jelas.',
                 'accept' => '.jpg,.jpeg,.png,image/jpeg,image/png',
             ],
         ];
@@ -537,7 +537,7 @@
                                                 <div class="small text-muted">{{ $document['description'] }}</div>
                                             </div>
                                             <span class="badge text-bg-primary">
-                                                {{ ($document['from_registration'] ?? false) ? 'Dari akun' : 'Max 1 MB' }}
+                                                {{ ($document['from_registration'] ?? false) ? 'Dari akun' : 'Max 4 MB' }}
                                             </span>
                                         </div>
 
@@ -591,7 +591,7 @@
                                             <div class="input-group upload-file-control">
                                                 <label for="upload-{{ $field }}" class="btn btn-outline-primary">Pilih file</label>
                                                 <span class="form-control upload-file-name" id="upload-name-{{ $field }}" data-empty-file-text="Belum ada file dipilih">Belum ada file dipilih</span>
-                                                <input type="file" id="upload-{{ $field }}" name="{{ $field }}" class="visually-hidden" accept="{{ $document['accept'] }}" data-file-validation="{{ $field === 'foto_selfie' ? 'image' : 'document' }}" data-field-label="{{ $document['label'] }}" data-max-file-size="1048576" data-file-name-target="upload-name-{{ $field }}" @required(! $isEdit)>
+                                                <input type="file" id="upload-{{ $field }}" name="{{ $field }}" class="visually-hidden" accept="{{ $document['accept'] }}" data-file-validation="{{ $field === 'foto_selfie' ? 'image' : 'document' }}" data-field-label="{{ $document['label'] }}" data-max-file-size="4194304" data-file-name-target="upload-name-{{ $field }}" @required(! $isEdit)>
                                             </div>
                                             <div class="document-hint mt-2">{{ $document['hint'] }}</div>
                                         @endif

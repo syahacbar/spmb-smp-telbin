@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Formulir;
 use App\Models\JalurPendaftaran;
+use App\Models\PengaturanSpmb;
 use App\Models\Sekolah;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -225,6 +226,7 @@ class AdminSekolahController extends Controller
             'statusFilter'  => $statusFilter,
             'countPerJalur' => $countPerJalur,
             'prestasiRanks' => $prestasiRanks,
+            'tombolAktif'   => (bool) (int) PengaturanSpmb::getValue('tombol_terima_tolak_aktif', '0'),
         ]);
     }
 
@@ -232,6 +234,11 @@ class AdminSekolahController extends Controller
     {
         $sekolah = $this->getSekolah($request);
         abort_unless($formulir->sekolah_id === $sekolah->id, 403, 'Akses ditolak.');
+        abort_unless(
+            (bool) (int) PengaturanSpmb::getValue('tombol_terima_tolak_aktif', '0'),
+            403,
+            'Fitur terima/tolak pendaftar saat ini tidak aktif. Hubungi Admin Dinas Pendidikan.',
+        );
 
         $formulir->update(['status' => 'diterima']);
 
@@ -242,6 +249,11 @@ class AdminSekolahController extends Controller
     {
         $sekolah = $this->getSekolah($request);
         abort_unless($formulir->sekolah_id === $sekolah->id, 403, 'Akses ditolak.');
+        abort_unless(
+            (bool) (int) PengaturanSpmb::getValue('tombol_terima_tolak_aktif', '0'),
+            403,
+            'Fitur terima/tolak pendaftar saat ini tidak aktif. Hubungi Admin Dinas Pendidikan.',
+        );
 
         $formulir->update(['status' => 'ditolak']);
 
@@ -256,5 +268,129 @@ class AdminSekolahController extends Controller
         $formulir->update(['status' => 'submitted']);
 
         return back()->with('success', "Status pendaftaran atas nama {$formulir->nama} berhasil direset.");
+    }
+
+    // ─────────────────────────────────────────────
+    // EKSPOR EXCEL
+    // ─────────────────────────────────────────────
+
+    public function eksporPendaftar(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $sekolah = $this->getSekolah($request);
+        $jalurFilter = (string) $request->query('jalur', '');
+        $statusFilter = (string) $request->query('status', '');
+
+        $query = Formulir::with(['jalur', 'pengguna.calonSiswa'])
+            ->where('sekolah_id', $sekolah->id)
+            ->whereIn('status', ['submitted', 'diterima', 'ditolak']);
+
+        if ($jalurFilter) {
+            $query->whereHas('jalur', fn ($q) => $q->where('kode', $jalurFilter));
+        }
+
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $formulirs = $query->latest('submitted_at')->get();
+
+        $filename = 'pendaftar-'.\Illuminate\Support\Str::slug($sekolah->nama).'-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($formulirs): void {
+            $handle = fopen('php://output', 'w');
+            // BOM for Excel UTF-8
+            fwrite($handle, "\xEF\xBB\xBF");
+            fputcsv($handle, [
+                'No', 'NISN', 'NIK', 'Nama Lengkap', 'Tempat Lahir', 'Tanggal Lahir',
+                'Jenis Kelamin', 'Agama', 'Email', 'No. HP (Siswa)', 'Asal Sekolah',
+                'Alamat Domisili', 'Kabupaten Domisili', 'Kecamatan Domisili', 'Kelurahan Domisili',
+                'Nama Ayah', 'Pekerjaan Ayah', 'Nama Ibu', 'Pekerjaan Ibu', 'No. HP Orang Tua',
+                'Alamat Orang Tua', 'Provinsi Orang Tua', 'Kabupaten Orang Tua', 'Kecamatan Orang Tua', 'Kelurahan Orang Tua',
+                'Jalur Pendaftaran', 'Sekolah Pilihan', 'Nilai TKA Matematika', 'Nilai TKA Bahasa Indonesia', 'Rata-rata TKA',
+                'Status Pendaftaran', 'Tanggal Pendaftaran'
+            ]);
+
+            foreach ($formulirs as $i => $f) {
+                $user = $f->pengguna;
+                $calonSiswa = $user?->calonSiswa;
+                $mat = $calonSiswa?->nilai_tka_matematika;
+                $bind = $calonSiswa?->nilai_tka_bahasa_indonesia;
+                $avg = ($mat !== null && $bind !== null)
+                    ? number_format(((float) $mat + (float) $bind) / 2, 2)
+                    : '-';
+                fputcsv($handle, [
+                    $i + 1,
+                    $f->nisn,
+                    $f->nik,
+                    $f->nama,
+                    $f->tempat_lahir,
+                    $f->tanggal_lahir?->format('d/m/Y') ?? '-',
+                    $f->jenis_kelamin,
+                    $f->agama,
+                    $user?->email ?? '-',
+                    preg_replace('/^62/', '0', $user?->telpon ?? ''),
+                    $f->asal_sekolah,
+                    $f->alamat,
+                    $f->alamat_kabupaten,
+                    $f->alamat_kecamatan,
+                    $f->alamat_kelurahan,
+                    $f->nama_ayah,
+                    $f->pekerjaan_ayah,
+                    $f->nama_ibu,
+                    $f->pekerjaan_ibu,
+                    $f->hp_ortu,
+                    $f->alamat_ortu,
+                    $f->alamat_ortu_provinsi,
+                    $f->alamat_ortu_kabupaten,
+                    $f->alamat_ortu_kecamatan,
+                    $f->alamat_ortu_kelurahan,
+                    $f->jalur?->nama ?? '-',
+                    $f->sekolah?->nama ?? '-',
+                    $mat ?? '-',
+                    $bind ?? '-',
+                    $avg,
+                    match ($f->status) {
+                        'diterima' => 'Diterima',
+                        'ditolak'  => 'Ditolak',
+                        'submitted'=> 'Belum Diproses',
+                        default    => $f->status,
+                    },
+                    $f->submitted_at?->format('d/m/Y H:i') ?? '-',
+                ]);
+            }
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function pdfPendaftar(Request $request): View
+    {
+        $sekolah = $this->getSekolah($request);
+        $jalurFilter = (string) $request->query('jalur', '');
+        $statusFilter = (string) $request->query('status', '');
+
+        $query = Formulir::with(['jalur', 'pengguna.calonSiswa'])
+            ->where('sekolah_id', $sekolah->id)
+            ->whereIn('status', ['submitted', 'diterima', 'ditolak']);
+
+        if ($jalurFilter) {
+            $query->whereHas('jalur', fn ($q) => $q->where('kode', $jalurFilter));
+        }
+
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $formulirs = $query->latest('submitted_at')->get();
+
+        return view('admin.sekolah.pendaftar-pdf', [
+            'pengguna' => $request->attributes->get('pengguna'),
+            'sekolah' => $sekolah,
+            'formulirs' => $formulirs,
+            'jalurFilter' => $jalurFilter,
+            'statusFilter' => $statusFilter,
+            'settings' => PengaturanSpmb::allSettings(),
+        ]);
     }
 }

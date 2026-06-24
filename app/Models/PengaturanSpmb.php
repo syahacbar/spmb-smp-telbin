@@ -29,7 +29,8 @@ class PengaturanSpmb extends Model
             'tanggal_tes' => '06 Juli 2026',
             'waktu_tes' => '08.00 WIT s.d. selesai',
             'tempat_tes' => 'Dinas Pendidikan Kabupaten Teluk Bintuni',
-            'catatan_kartu' => "Peserta wajib mengikuti tahapan SPMB sesuai jadwal resmi.\nPeserta wajib mencetak dan membawa kartu pendaftaran sebagai bukti keikutsertaan.\nPeserta wajib memantau pengumuman melalui portal SPMB.",
+            'catatan_kartu'       => "Peserta wajib mengikuti tahapan SPMB sesuai jadwal resmi.\nPeserta wajib mencetak dan membawa kartu pendaftaran sebagai bukti keikutsertaan.\nPeserta wajib memantau pengumuman melalui portal SPMB.",
+            'tombol_terima_tolak_aktif' => '0',
         ];
     }
 

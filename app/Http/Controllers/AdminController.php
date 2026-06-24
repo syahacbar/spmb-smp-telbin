@@ -462,6 +462,21 @@ class AdminController extends Controller
         return back()->with('success', 'Identitas dan pengaturan kartu pendaftaran berhasil diperbarui.');
     }
 
+    public function updateAksesSekolah(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'tombol_terima_tolak_aktif' => ['required', 'boolean'],
+        ]);
+
+        PengaturanSpmb::setMany([
+            'tombol_terima_tolak_aktif' => $request->boolean('tombol_terima_tolak_aktif') ? '1' : '0',
+        ]);
+
+        $status = $request->boolean('tombol_terima_tolak_aktif') ? 'DIAKTIFKAN' : 'DINONAKTIFKAN';
+
+        return back()->with('success', "Tombol Terima/Tolak pendaftar di panel Admin Sekolah berhasil {$status}.");
+    }
+
     public function showSignature(): BinaryFileResponse|StreamedResponse
     {
         return $this->signatureResponse();

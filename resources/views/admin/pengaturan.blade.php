@@ -124,6 +124,9 @@
             <button class="nav-link" id="whitelist-tab" data-bs-toggle="tab" data-bs-target="#whitelist-pane" type="button" role="tab" aria-controls="whitelist-pane" aria-selected="false">Whitelist Calon Siswa</button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="akses-tab" data-bs-toggle="tab" data-bs-target="#akses-pane" type="button" role="tab" aria-controls="akses-pane" aria-selected="false">Akses Sekolah</button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="kontak-tab" data-bs-toggle="tab" data-bs-target="#kontak-pane" type="button" role="tab" aria-controls="kontak-pane" aria-selected="false">Kontak Panitia</button>
         </li>
     </ul>
@@ -300,6 +303,45 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <section class="tab-pane fade card shadow-sm" id="akses-pane" role="tabpanel" aria-labelledby="akses-tab" tabindex="0">
+            <div class="card-header border-bottom-0">
+                <h4 class="settings-section-title">Akses Sekolah</h4>
+                <p class="settings-section-subtitle">Kelola izin akses fitur dan tombol aksi untuk panel Administrator Sekolah.</p>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ route('admin.pengaturan.akses-sekolah') }}" class="row g-3">
+                    @csrf
+                    <div class="col-lg-8">
+                        <div class="border rounded p-4 bg-light">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="fs-2 text-primary" style="margin-top: -3px;">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="fw-bold mb-1">Aksi Penerimaan Murid</h5>
+                                    <p class="text-muted small mb-3">Tentukan apakah admin sekolah berhak langsung menerima atau menolak pendaftaran calon murid di panel mereka.</p>
+                                    
+                                    <div class="form-check form-switch fs-6">
+                                        <input type="hidden" name="tombol_terima_tolak_aktif" value="0">
+                                        <input type="checkbox" name="tombol_terima_tolak_aktif" value="1" class="form-check-input" id="tombolTerimaTolakAktif" @checked((bool) (int) ($settings['tombol_terima_tolak_aktif'] ?? 0))>
+                                        <label class="form-check-label fw-bold text-dark" for="tombolTerimaTolakAktif">
+                                            Aktifkan Tombol Terima/Tolak Pendaftar
+                                        </label>
+                                    </div>
+                                    <div class="small text-muted mt-3">
+                                        <span class="badge text-bg-warning">Catatan</span> Jika opsi ini dinonaktifkan, status pendaftaran di dashboard sekolah hanya dapat dilihat, dan tombol aksi "Terima" atau "Tolak" akan berada dalam kondisi terkunci (tergembok).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <button class="btn btn-primary px-4 py-2" style="border-radius: 0.5rem;">Simpan Pengaturan Akses</button>
+                    </div>
+                </form>
             </div>
         </section>
 

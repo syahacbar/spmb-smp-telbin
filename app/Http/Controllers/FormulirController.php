@@ -328,7 +328,7 @@ class FormulirController extends Controller
             ],
             'surat_keterangan_lulus' => ['prohibited'],
             'kartu_keluarga' => ['prohibited'],
-            'foto_selfie' => [$requiredFileRule, 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
+            'foto_selfie' => [$requiredFileRule, 'image', 'mimes:jpg,jpeg,png', 'max:4096'],
             'dokumen_pendukung' => [
                 Rule::requiredIf(function () use ($request, $requireFiles): bool {
                     if (! $requireFiles) {
@@ -347,6 +347,10 @@ class FormulirController extends Controller
         ]), [
             'nik.digits' => 'NIK harus terdiri dari tepat 16 digit angka.',
             'nik.unique' => 'NIK tersebut sudah digunakan oleh pendaftar lain.',
+            'foto_selfie.required' => 'Pas foto wajib diunggah.',
+            'foto_selfie.image' => 'Pas foto harus berupa gambar.',
+            'foto_selfie.mimes' => 'Pas foto harus berupa file JPG, JPEG, atau PNG.',
+            'foto_selfie.max' => 'Ukuran pas foto maksimal 4 MB.',
         ]);
 
         unset($data['surat_keterangan_lulus'], $data['kartu_keluarga'], $data['foto_selfie'], $data['dokumen_pendukung']);

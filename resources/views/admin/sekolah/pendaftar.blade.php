@@ -173,16 +173,26 @@
 
     {{-- Table --}}
     <div class="pendaftar-table-wrap">
-        <div class="filter-bar">
-            <span class="fw-bold text-muted small">Filter status:</span>
-            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter])) }}"
-               class="filter-btn {{ $statusFilter === '' ? 'active' : '' }}">Semua</a>
-            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'submitted'])) }}"
-               class="filter-btn {{ $statusFilter === 'submitted' ? 'active' : '' }}">Belum Diproses</a>
-            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'diterima'])) }}"
-               class="filter-btn {{ $statusFilter === 'diterima' ? 'active' : '' }}">Diterima</a>
-            <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'ditolak'])) }}"
-               class="filter-btn {{ $statusFilter === 'ditolak' ? 'active' : '' }}">Ditolak</a>
+        <div class="filter-bar d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="fw-bold text-muted small">Filter status:</span>
+                <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter])) }}"
+                   class="filter-btn {{ $statusFilter === '' ? 'active' : '' }}">Semua</a>
+                <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'submitted'])) }}"
+                   class="filter-btn {{ $statusFilter === 'submitted' ? 'active' : '' }}">Belum Diproses</a>
+                <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'diterima'])) }}"
+                   class="filter-btn {{ $statusFilter === 'diterima' ? 'active' : '' }}">Diterima</a>
+                <a href="{{ route('sekolah.admin.pendaftar', array_filter(['jalur' => $jalurFilter, 'status' => 'ditolak'])) }}"
+                   class="filter-btn {{ $statusFilter === 'ditolak' ? 'active' : '' }}">Ditolak</a>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('sekolah.admin.pendaftar.ekspor', array_filter(['jalur' => $jalurFilter, 'status' => $statusFilter])) }}" class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1.5" title="Unduh data pendaftar ke file Excel/CSV">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Ekspor Excel
+                </a>
+                <a href="{{ route('sekolah.admin.pendaftar.pdf', array_filter(['jalur' => $jalurFilter, 'status' => $statusFilter])) }}" target="_blank" class="btn btn-sm btn-danger fw-bold d-inline-flex align-items-center gap-1.5" title="Unduh data pendaftar ke file PDF / Cetak">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> Unduh PDF
+                </a>
+            </div>
         </div>
 
         <div class="table-responsive p-3">
@@ -277,28 +287,37 @@
                             </td>
                             <td class="text-center">
                                 @if($formulir->status === 'submitted')
-                                    <div class="d-flex align-items-center justify-content-center gap-1">
-                                        <form action="{{ route('sekolah.admin.pendaftar.terima', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin MENERIMA pendaftar ini?')">
-                                            @csrf
-                                            @method('PUT')
-                                            <button type="submit" class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1 py-1 px-2" title="Terima Pendaftar" style="font-size: 0.8rem;">
-                                                <i class="bi bi-check-circle-fill"></i> Terima
+                                    @if($tombolAktif)
+                                        <div class="d-flex align-items-center justify-content-center gap-1">
+                                            <form action="{{ route('sekolah.admin.pendaftar.terima', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin MENERIMA pendaftar ini?')">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit" class="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1 py-1 px-2" title="Terima Pendaftar" style="font-size: 0.8rem;">
+                                                    <i class="bi bi-check-circle-fill"></i> Terima
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('sekolah.admin.pendaftar.tolak', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin MENOLAK pendaftar ini?')">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit" class="btn btn-sm btn-danger fw-bold d-inline-flex align-items-center gap-1 py-1 px-2" title="Tolak Pendaftar" style="font-size: 0.8rem;">
+                                                    <i class="bi bi-x-circle-fill"></i> Tolak
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <div class="d-flex align-items-center justify-content-center gap-1" data-bs-toggle="tooltip" title="Tombol Terima/Tolak tidak aktif. Hubungi Admin Dinas Pendidikan.">
+                                            <button type="button" class="btn btn-sm btn-secondary fw-bold py-1 px-2 disabled" style="font-size: 0.8rem; opacity:.55; cursor:not-allowed;" aria-disabled="true">
+                                                <i class="bi bi-lock-fill"></i> Terkunci
                                             </button>
-                                        </form>
-                                        <form action="{{ route('sekolah.admin.pendaftar.tolak', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin MENOLAK pendaftar ini?')">
-                                            @csrf
-                                            @method('PUT')
-                                            <button type="submit" class="btn btn-sm btn-danger fw-bold d-inline-flex align-items-center gap-1 py-1 px-2" title="Tolak Pendaftar" style="font-size: 0.8rem;">
-                                                <i class="bi bi-x-circle-fill"></i> Tolak
-                                            </button>
-                                        </form>
-                                    </div>
+                                        </div>
+                                    @endif
                                 @elseif($formulir->status === 'diterima' || $formulir->status === 'ditolak')
                                     <div class="d-flex align-items-center justify-content-center gap-2">
                                         <span class="{{ $formulir->status === 'diterima' ? 'text-success' : 'text-danger' }} fw-bold small">
                                             <i class="bi {{ $formulir->status === 'diterima' ? 'bi-check-lg' : 'bi-x-lg' }}"></i> 
                                             {{ $formulir->status === 'diterima' ? 'Diterima' : 'Ditolak' }}
                                         </span>
+                                        @if($tombolAktif)
                                         <form action="{{ route('sekolah.admin.pendaftar.reset', $formulir) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan keputusan status pendaftar ini?')">
                                             @csrf
                                             @method('PUT')
@@ -306,6 +325,7 @@
                                                 Batalkan
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 @else
                                     <span class="text-muted small">—</span>
@@ -330,6 +350,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Bootstrap tooltips
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+                new bootstrap.Tooltip(el);
+            });
+
             const tableEl = document.getElementById('pendaftarTable');
             if (! tableEl || ! window.DataTable) return;
 

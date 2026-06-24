@@ -66,7 +66,7 @@ class RegistrasiAkunController extends Controller
             'kelurahan_id' => ['required', 'integer', 'exists:ref_kelurahan,id'],
             'detail_alamat' => ['required', 'string', 'max:1000'],
             'no_wa' => ['required', 'regex:/^8[0-9]{8,11}$/'],
-            'kartu_keluarga' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:2048'],
+            'kartu_keluarga' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         abort_unless(
