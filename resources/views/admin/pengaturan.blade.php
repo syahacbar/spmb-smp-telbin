@@ -72,14 +72,45 @@
         }
         .settings-table td,
         .settings-table th {
-            min-width: 130px;
+            min-width: 60px;
         }
-        .settings-table .narrow {
-            min-width: 92px;
-            width: 92px;
+        .settings-table .checkbox-col {
+            min-width: 45px !important;
+            width: 45px !important;
+            text-align: center;
         }
-        .settings-table .wide {
-            min-width: 240px;
+        .settings-table .no-col {
+            min-width: 50px !important;
+            width: 50px !important;
+            text-align: center;
+        }
+        .settings-table .nisn-col {
+            min-width: 110px !important;
+            width: 110px !important;
+            text-align: center;
+        }
+        .settings-table .wide-col {
+            min-width: 180px !important;
+        }
+        .settings-table .score-col {
+            min-width: 100px !important;
+            width: 100px !important;
+            text-align: center;
+        }
+        .settings-table .year-col {
+            min-width: 90px !important;
+            width: 90px !important;
+            text-align: center;
+        }
+        .settings-table .status-col {
+            min-width: 90px !important;
+            width: 90px !important;
+            text-align: center;
+        }
+        .settings-table .action-col {
+            min-width: 120px !important;
+            width: 120px !important;
+            text-align: center;
         }
         .primary-contact {
             border-left: 4px solid #16a34a;
@@ -228,41 +259,41 @@
                             <table class="table table-bordered table-hover align-middle settings-table mb-0 w-100" id="whitelistTable" style="width: 100%">
                                 <thead>
                                 <tr>
-                                    <th class="narrow text-center" style="width: 40px; min-width: 40px;">
+                                    <th class="checkbox-col">
                                         <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
                                     </th>
-                                    <th>No</th>
-                                    <th>NISN</th>
-                                    <th class="wide">Nama</th>
-                                    <th>Asal Sekolah</th>
-                                    <th>TKA Matematika</th>
-                                    <th>TKA Bahasa Indonesia</th>
-                                    <th>Tahun Lulus</th>
-                                    <th>Status</th>
-                                    <th>Aksi</th>
+                                    <th class="no-col">No</th>
+                                    <th class="nisn-col">NISN</th>
+                                    <th class="wide-col">Nama</th>
+                                    <th class="wide-col">Asal Sekolah</th>
+                                    <th class="score-col">TKA Matematika</th>
+                                    <th class="score-col">TKA Bahasa Indonesia</th>
+                                    <th class="year-col">Tahun Lulus</th>
+                                    <th class="status-col">Status</th>
+                                    <th class="action-col">Aksi</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($whitelist as $calonSiswa)
                                     <tr>
-                                        <td class="text-center">
+                                        <td class="checkbox-col">
                                             <input type="checkbox" name="selected_ids[]" value="{{ $calonSiswa->id }}" class="form-check-input select-row-checkbox">
                                         </td>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $calonSiswa->nisn }}</td>
-                                        <td>{{ $calonSiswa->nama }}</td>
-                                        <td>{{ $calonSiswa->asal_sekolah }}</td>
-                                        <td>{{ $calonSiswa->nilai_tka_matematika ?? '-' }}</td>
-                                        <td>{{ $calonSiswa->nilai_tka_bahasa_indonesia ?? '-' }}</td>
-                                        <td>{{ $calonSiswa->tahun_lulus }}</td>
-                                        <td>
+                                        <td class="no-col text-center">{{ $loop->iteration }}</td>
+                                        <td class="nisn-col">{{ $calonSiswa->nisn }}</td>
+                                        <td class="wide-col">{{ $calonSiswa->nama }}</td>
+                                        <td class="wide-col">{{ $calonSiswa->asal_sekolah }}</td>
+                                        <td class="score-col text-center">{{ $calonSiswa->nilai_tka_matematika ?? '-' }}</td>
+                                        <td class="score-col text-center">{{ $calonSiswa->nilai_tka_bahasa_indonesia ?? '-' }}</td>
+                                        <td class="year-col text-center">{{ $calonSiswa->tahun_lulus }}</td>
+                                        <td class="status-col text-center">
                                             @if($calonSiswa->is_active)
                                                 <span class="badge text-bg-success">Aktif</span>
                                             @else
                                                 <span class="badge text-bg-secondary">Nonaktif</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="action-col text-center">
                                             <button
                                                 type="submit"
                                                 form="toggleForm{{ $calonSiswa->id }}"
