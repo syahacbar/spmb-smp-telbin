@@ -206,103 +206,85 @@
                 <p class="settings-section-subtitle">Import data NISN berdasarkan tahun lulus. Saat cohort baru diimpor, data lama tetap tersimpan dan otomatis dinonaktifkan.</p>
             </div>
             <div class="card-body">
-                <form method="post" action="{{ route('admin.pengaturan.whitelist.import') }}" enctype="multipart/form-data" class="row g-3 align-items-end">
-                    @csrf
-                    <div class="col-md-3">
-                        <label class="form-label">Tahun Lulus</label>
-                        <input type="text" name="tahun_lulus" value="{{ old('tahun_lulus', $settings['tahun_pendaftaran']) }}" class="form-control" maxlength="4" inputmode="numeric" required>
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h5 class="fw-bold m-0" style="font-size: 1rem; color: #172033;">Daftar Whitelist Calon Siswa</h5>
+                    <div class="d-flex gap-2">
+                        <button type="submit" form="bulkDeactivateForm" id="bulkDeactivateBtn" class="btn btn-sm btn-outline-danger fw-bold" style="border-radius: 0.45rem;" disabled>
+                            <i class="bi bi-shield-slash-fill"></i> Nonaktifkan Terpilih
+                        </button>
+                        <button class="btn btn-sm btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#importWhitelistModal" style="border-radius: 0.45rem;">
+                            <i class="bi bi-file-earmark-excel-fill"></i> Import Whitelist
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#tambahCalonSiswaModal" style="border-radius: 0.45rem;">
+                            <i class="bi bi-person-plus-fill"></i> Tambah Calon Siswa Manual
+                        </button>
                     </div>
-                    <div class="col-md-5">
-                        <label class="form-label">File Whitelist</label>
-                        <input type="file" name="calon_siswa_file" class="form-control" accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain" required>
-                    </div>
-                    <div class="col-md-4 d-grid">
-                        <button class="btn btn-primary">Import Whitelist</button>
-                    </div>
-                    <div class="col-12">
-                        <div class="small text-muted mb-2">Format XLSX/CSV: <strong>NISN, Nama Siswa, Tempat Lahir, Tanggal Lahir, Asal Sekolah, Nilai Matematika, Nilai Bahasa Indonesia</strong>.</div>
-                        <div class="form-check">
-                            <input type="checkbox" name="deactivate_missing_in_year" value="1" class="form-check-input" id="nonaktifTidakAdaCsv" checked>
-                            <label class="form-check-label" for="nonaktifTidakAdaCsv">Nonaktifkan NISN pada tahun lulus yang sama jika tidak ada di file baru</label>
-                            <div class="form-text">Data tahun lulus lain otomatis dinonaktifkan tetapi tidak dihapus. Siswa lama dapat diaktifkan kembali satu per satu.</div>
-                        </div>
-                    </div>
-                </form>
-
-                <hr>
-
-                <div class="bulk-action-panel mb-4">
-                    <form method="post" action="{{ route('admin.pengaturan.whitelist.deactivate') }}" class="row g-3 align-items-end">
-                        @csrf
-                        <div class="col-lg-7">
-                            <label class="form-label fw-bold">Penonaktifan Massal Berdasarkan Tahun Lulus</label>
-                            <select name="tahun_lulus" class="form-select" required>
-                                <option value="">Pilih tahun lulus</option>
-                                @foreach($whitelistYears as $year)
-                                    @php($stat = $whitelistStats->firstWhere('tahun_lulus', $year))
-                                    <option value="{{ $year }}">
-                                        {{ $year }} — {{ number_format((int) ($stat?->active_total ?? 0)) }} aktif dari {{ number_format((int) ($stat?->total ?? 0)) }} data
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="form-text">Pengaktifan kembali siswa lama hanya dilakukan per NISN melalui tombol pada tabel.</div>
-                        </div>
-                        <div class="col-lg-5 d-grid">
-                            <button class="btn btn-outline-danger" data-confirm="Nonaktifkan seluruh calon siswa aktif pada tahun yang dipilih?">Nonaktifkan</button>
-                        </div>
-                    </form>
                 </div>
 
-                <div class="whitelist-table-wrap">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover align-middle settings-table mb-0 w-100" id="whitelistTable" style="width: 100%">
-                            <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>NISN</th>
-                                <th class="wide">Nama</th>
-                                <th>Asal Sekolah</th>
-                                <th>TKA Matematika</th>
-                                <th>TKA Bahasa Indonesia</th>
-                                <th>Tahun Lulus</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach($whitelist as $calonSiswa)
+                <form id="bulkDeactivateForm" method="post" action="{{ route('admin.pengaturan.whitelist.deactivate') }}">
+                    @csrf
+                    <div class="whitelist-table-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle settings-table mb-0 w-100" id="whitelistTable" style="width: 100%">
+                                <thead>
                                 <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $calonSiswa->nisn }}</td>
-                                    <td>{{ $calonSiswa->nama }}</td>
-                                    <td>{{ $calonSiswa->asal_sekolah }}</td>
-                                    <td>{{ $calonSiswa->nilai_tka_matematika ?? '-' }}</td>
-                                    <td>{{ $calonSiswa->nilai_tka_bahasa_indonesia ?? '-' }}</td>
-                                    <td>{{ $calonSiswa->tahun_lulus }}</td>
-                                    <td>
-                                        @if($calonSiswa->is_active)
-                                            <span class="badge text-bg-success">Aktif</span>
-                                        @else
-                                            <span class="badge text-bg-secondary">Nonaktif</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <form method="post" action="{{ route('admin.pengaturan.whitelist.toggle', $calonSiswa) }}">
-                                            @csrf
+                                    <th class="narrow text-center" style="width: 40px; min-width: 40px;">
+                                        <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
+                                    </th>
+                                    <th>No</th>
+                                    <th>NISN</th>
+                                    <th class="wide">Nama</th>
+                                    <th>Asal Sekolah</th>
+                                    <th>TKA Matematika</th>
+                                    <th>TKA Bahasa Indonesia</th>
+                                    <th>Tahun Lulus</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($whitelist as $calonSiswa)
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox" name="selected_ids[]" value="{{ $calonSiswa->id }}" class="form-check-input select-row-checkbox">
+                                        </td>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $calonSiswa->nisn }}</td>
+                                        <td>{{ $calonSiswa->nama }}</td>
+                                        <td>{{ $calonSiswa->asal_sekolah }}</td>
+                                        <td>{{ $calonSiswa->nilai_tka_matematika ?? '-' }}</td>
+                                        <td>{{ $calonSiswa->nilai_tka_bahasa_indonesia ?? '-' }}</td>
+                                        <td>{{ $calonSiswa->tahun_lulus }}</td>
+                                        <td>
+                                            @if($calonSiswa->is_active)
+                                                <span class="badge text-bg-success">Aktif</span>
+                                            @else
+                                                <span class="badge text-bg-secondary">Nonaktif</span>
+                                            @endif
+                                        </td>
+                                        <td>
                                             <button
+                                                type="submit"
+                                                form="toggleForm{{ $calonSiswa->id }}"
                                                 class="btn btn-sm {{ $calonSiswa->is_active ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                                 data-confirm="{{ $calonSiswa->is_active ? 'Nonaktifkan' : 'Aktifkan' }} NISN {{ $calonSiswa->nisn }}?"
                                             >
                                                 {{ $calonSiswa->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                             </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                </form>
+
+                @foreach($whitelist as $calonSiswa)
+                    <form id="toggleForm{{ $calonSiswa->id }}" method="post" action="{{ route('admin.pengaturan.whitelist.toggle', $calonSiswa) }}" class="d-none">
+                        @csrf
+                    </form>
+                @endforeach
             </div>
         </section>
 
@@ -461,10 +443,10 @@
             const table = new DataTable(tableElement, {
                 pageLength: 10,
                 lengthMenu: [10, 25, 50, 100],
-                order: [[4, 'desc'], [2, 'asc']],
+                order: [[5, 'desc'], [3, 'asc']],
                 columnDefs: [
-                    { orderable: false, searchable: false, targets: 0 },
-                    { type: 'num', targets: [0, 4] },
+                    { orderable: false, searchable: false, targets: [0, 1, 9] },
+                    { type: 'num', targets: [1, 5] },
                 ],
                 language: {
                     search: 'Cari calon siswa:',
@@ -485,11 +467,93 @@
 
             const updateRowNumbers = function () {
                 table.rows({ page: 'current' }).nodes().each(function (row, index) {
-                    row.cells[0].textContent = table.page.info().start + index + 1;
+                    if (row.cells[1]) {
+                        row.cells[1].textContent = table.page.info().start + index + 1;
+                    }
                 });
             };
 
-            table.on('draw', updateRowNumbers);
+            // Select all checkbox functionality
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const bulkDeactivateBtn = document.getElementById('bulkDeactivateBtn');
+
+            const updateBulkButtonState = function () {
+                const checkedCount = table.$('.select-row-checkbox:checked').length;
+                if (bulkDeactivateBtn) {
+                    bulkDeactivateBtn.disabled = checkedCount === 0;
+                    if (checkedCount > 0) {
+                        bulkDeactivateBtn.innerHTML = `<i class="bi bi-shield-slash-fill"></i> Nonaktifkan Terpilih (${checkedCount})`;
+                    } else {
+                        bulkDeactivateBtn.innerHTML = `<i class="bi bi-shield-slash-fill"></i> Nonaktifkan Terpilih`;
+                    }
+                }
+            };
+
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function () {
+                    const isChecked = this.checked;
+                    table.$('.select-row-checkbox').each(function () {
+                        this.checked = isChecked;
+                    });
+                    updateBulkButtonState();
+                });
+            }
+
+            tableElement.addEventListener('change', function (e) {
+                if (e.target.classList.contains('select-row-checkbox')) {
+                    updateBulkButtonState();
+
+                    const totalCheckboxes = table.$('.select-row-checkbox').length;
+                    const checkedCheckboxes = table.$('.select-row-checkbox:checked').length;
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = totalCheckboxes === checkedCheckboxes;
+                        selectAllCheckbox.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
+                    }
+                }
+            });
+
+            const bulkDeactivateForm = document.getElementById('bulkDeactivateForm');
+            if (bulkDeactivateForm) {
+                bulkDeactivateForm.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    const checkedCheckboxes = table.$('.select-row-checkbox:checked');
+                    if (checkedCheckboxes.length === 0) {
+                        alert('Silakan pilih data yang ingin dinonaktifkan.');
+                        return;
+                    }
+
+                    const confirmMsg = `Nonaktifkan ${checkedCheckboxes.length} calon siswa yang terpilih?`;
+                    if (!confirm(confirmMsg)) {
+                        return;
+                    }
+
+                    // Hapus input hidden yang ditambahkan sebelumnya
+                    bulkDeactivateForm.querySelectorAll('input[name="selected_ids[]"]').forEach(el => el.remove());
+
+                    // Tambahkan input hidden untuk semua baris yang dicentang lintas halaman
+                    checkedCheckboxes.each(function () {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'selected_ids[]';
+                        hiddenInput.value = this.value;
+                        bulkDeactivateForm.appendChild(hiddenInput);
+                    });
+
+                    bulkDeactivateForm.submit();
+                });
+            }
+
+            table.on('draw', function () {
+                updateRowNumbers();
+                const visibleCheckboxes = document.querySelectorAll('.select-row-checkbox');
+                const visibleChecked = document.querySelectorAll('.select-row-checkbox:checked');
+                if (selectAllCheckbox && visibleCheckboxes.length > 0) {
+                    selectAllCheckbox.checked = visibleCheckboxes.length === visibleChecked.length;
+                    selectAllCheckbox.indeterminate = visibleChecked.length > 0 && visibleChecked.length < visibleCheckboxes.length;
+                }
+            });
+
             updateRowNumbers();
 
             document.getElementById('whitelist-tab')?.addEventListener('shown.bs.tab', function () {
@@ -497,4 +561,104 @@
             });
         });
     </script>
+
+    <div class="modal fade" id="tambahCalonSiswaModal" tabindex="-1" aria-labelledby="tambahCalonSiswaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 0.75rem; border: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.12);">
+                <form method="post" action="{{ route('admin.pengaturan.whitelist.store') }}">
+                    @csrf
+                    <div class="modal-header border-bottom-0 px-4 pt-4 pb-0">
+                        <h5 class="modal-title fw-bold text-dark" id="tambahCalonSiswaModalLabel" style="font-size: 1.15rem;">Tambah Calon Siswa Manual</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body px-4 py-3">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-muted small mb-1">NISN <span class="text-danger">*</span></label>
+                                <input type="text" name="nisn" class="form-control" placeholder="10 digit NISN" pattern="[0-9]{10}" maxlength="10" required style="border-radius: 0.45rem;">
+                                <div class="form-text small">Harus berupa 10 digit angka unik.</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-muted small mb-1">Nama Lengkap <span class="text-danger">*</span></label>
+                                <input type="text" name="nama" class="form-control" placeholder="Nama lengkap calon siswa" maxlength="100" required style="border-radius: 0.45rem;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-muted small mb-1">Tempat Lahir <span class="text-danger">*</span></label>
+                                <input type="text" name="tempat_lahir" class="form-control" placeholder="Tempat lahir" maxlength="100" required style="border-radius: 0.45rem;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-muted small mb-1">Tanggal Lahir <span class="text-danger">*</span></label>
+                                <input type="text" name="tanggal_lahir" placeholder="dd-mm-yyyy" pattern="\d{2}-\d{2}-\d{4}" class="form-control" required style="border-radius: 0.45rem;" title="Format harus dd-mm-yyyy (Contoh: 15-05-2013)">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-muted small mb-1">Asal Sekolah <span class="text-danger">*</span></label>
+                                <input type="text" name="asal_sekolah" class="form-control" placeholder="Nama SD/MI/Sederajat" maxlength="100" required style="border-radius: 0.45rem;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-muted small mb-1">Nilai TKA Matematika</label>
+                                <input type="number" step="0.01" min="0" max="100" name="nilai_tka_matematika" class="form-control" placeholder="0.00 - 100.00" style="border-radius: 0.45rem;">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-muted small mb-1">Nilai TKA B. Indonesia</label>
+                                <input type="number" step="0.01" min="0" max="100" name="nilai_tka_bahasa_indonesia" class="form-control" placeholder="0.00 - 100.00" style="border-radius: 0.45rem;">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-muted small mb-1">Tahun Lulus <span class="text-danger">*</span></label>
+                                <input type="text" name="tahun_lulus" value="{{ $settings['tahun_pendaftaran'] }}" class="form-control" maxlength="4" required style="border-radius: 0.45rem;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 px-4 pb-4 pt-2 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 0.45rem;">Batal</button>
+                        <button type="submit" class="btn btn-primary px-4" style="border-radius: 0.45rem;">Tambah Calon Siswa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="importWhitelistModal" tabindex="-1" aria-labelledby="importWhitelistModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 0.75rem; border: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.12);">
+                <form method="post" action="{{ route('admin.pengaturan.whitelist.import') }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header border-bottom-0 px-4 pt-4 pb-0">
+                        <h5 class="modal-title fw-bold text-dark" id="importWhitelistModalLabel" style="font-size: 1.15rem;">Import Whitelist Calon Siswa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body px-4 py-3">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-muted small mb-1">Tahun Lulus <span class="text-danger">*</span></label>
+                                <input type="text" name="tahun_lulus" value="{{ old('tahun_lulus', $settings['tahun_pendaftaran']) }}" class="form-control" maxlength="4" inputmode="numeric" required style="border-radius: 0.45rem;">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-muted small mb-1">File Whitelist <span class="text-danger">*</span></label>
+                                <input type="file" name="calon_siswa_file" class="form-control" accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain" required style="border-radius: 0.45rem;">
+                                <div class="form-text small mt-2">
+                                    Format XLSX/CSV: <strong>NISN, Nama Siswa, Tempat Lahir, Tanggal Lahir, Asal Sekolah, Nilai Matematika, Nilai Bahasa Indonesia</strong>.
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" name="deactivate_missing_in_year" value="1" class="form-check-input" id="nonaktifTidakAdaCsv" checked>
+                                    <label class="form-check-label small" for="nonaktifTidakAdaCsv">Nonaktifkan NISN pada tahun lulus yang sama jika tidak ada di file baru</label>
+                                    <div class="form-text small">Data tahun lulus lain otomatis dinonaktifkan tetapi tidak dihapus. Siswa lama dapat diaktifkan kembali satu per satu.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 px-4 pb-4 pt-2 d-flex justify-content-between align-items-center">
+                        <a href="{{ route('admin.pengaturan.whitelist.download-format') }}" class="btn btn-sm btn-outline-success fw-bold" style="border-radius: 0.45rem;">
+                            <i class="bi bi-download"></i> Unduh Format
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius: 0.45rem;">Batal</button>
+                            <button type="submit" class="btn btn-sm btn-primary px-4" style="border-radius: 0.45rem;">Import</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </x-layouts.app>

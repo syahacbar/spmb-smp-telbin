@@ -561,26 +561,19 @@ class AdminController extends Controller
 
     public function deactivateCalonSiswaWhitelist(Request $request): RedirectResponse
     {
-        $tahun = $this->validatedWhitelistYear($request);
+        $data = $request->validate([
+            'selected_ids' => ['required', 'array'],
+            'selected_ids.*' => ['required', 'integer', 'exists:tb_calon_siswa,id'],
+        ], [
+            'selected_ids.required' => 'Pilih data calon siswa yang ingin dinonaktifkan terlebih dahulu.',
+        ]);
 
         $updated = CalonSiswa::query()
-            ->where('tahun_lulus', $tahun)
+            ->whereIn('id', $data['selected_ids'])
             ->where('is_active', true)
             ->update(['is_active' => false]);
 
-        return back()->with('success', "Whitelist tahun {$tahun} berhasil dinonaktifkan ({$updated} data).");
-    }
-
-    private function validatedWhitelistYear(Request $request): string
-    {
-        $data = $request->validate([
-            'tahun_lulus' => ['required', 'digits:4', 'exists:tb_calon_siswa,tahun_lulus'],
-        ], [
-            'tahun_lulus.required' => 'Pilih tahun lulus terlebih dahulu.',
-            'tahun_lulus.exists' => 'Tahun lulus yang dipilih tidak ditemukan.',
-        ]);
-
-        return $data['tahun_lulus'];
+        return back()->with('success', "Berhasil menonaktifkan {$updated} data calon siswa terpilih.");
     }
 
     public function toggleCalonSiswaWhitelist(CalonSiswa $calonSiswa): RedirectResponse
@@ -834,6 +827,62 @@ class AdminController extends Controller
         }
 
         return $digits;
+    }
+
+    public function downloadWhitelistFormat(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $filename = 'format-import-whitelist-calon-siswa.csv';
+
+        return response()->streamDownload(function (): void {
+            $handle = fopen('php://output', 'w');
+            // BOM for Excel UTF-8
+            fwrite($handle, "\xEF\xBB\xBF");
+            // Header
+            fputcsv($handle, [
+                'NISN', 'Nama Siswa', 'Tempat Lahir', 'Tanggal Lahir', 'Asal Sekolah', 'Nilai Matematika', 'Nilai Bahasa Indonesia'
+            ]);
+            // Sample row
+            fputcsv($handle, [
+                '1234567890', 'Budi Santoso', 'Bintuni', '15-05-2013', 'SD Negeri 1 Bintuni', '85.50', '80.00'
+            ]);
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function storeCalonSiswa(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'nisn' => ['required', 'digits:10', 'unique:tb_calon_siswa,nisn'],
+            'nama' => ['required', 'string', 'max:100'],
+            'tempat_lahir' => ['required', 'string', 'max:100'],
+            'tanggal_lahir' => ['required', 'regex:/^\d{2}-\d{2}-\d{4}$/'],
+            'asal_sekolah' => ['required', 'string', 'max:100'],
+            'nilai_tka_matematika' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'nilai_tka_bahasa_indonesia' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'tahun_lulus' => ['required', 'digits:4'],
+        ], [
+            'nisn.required' => 'NISN wajib diisi.',
+            'nisn.digits' => 'NISN harus terdiri dari 10 digit angka.',
+            'nisn.unique' => 'NISN tersebut sudah terdaftar di database whitelist.',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
+            'tanggal_lahir.regex' => 'Format tanggal lahir harus dd-mm-yyyy (Contoh: 15-05-2013).',
+            'tahun_lulus.required' => 'Tahun lulus wajib diisi.',
+            'tahun_lulus.digits' => 'Tahun lulus harus berisi 4 digit angka.',
+        ]);
+
+        try {
+            $data['tanggal_lahir'] = \Carbon\Carbon::createFromFormat('d-m-Y', $data['tanggal_lahir'])->format('Y-m-d');
+        } catch (\Exception $e) {
+            return back()->withErrors(['tanggal_lahir' => 'Format tanggal lahir tidak valid. Gunakan format dd-mm-yyyy (Contoh: 15-05-2013).'])->withInput();
+        }
+
+        $data['is_active'] = true;
+
+        CalonSiswa::create($data);
+
+        return back()->with('success', "Calon siswa {$data['nama']} (NISN: {$data['nisn']}) berhasil ditambahkan ke whitelist.");
     }
 
     private function validatedSchool(Request $request, ?Sekolah $sekolah = null): array

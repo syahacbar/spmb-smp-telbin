@@ -72,6 +72,8 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::get('/pengaturan/tanda-tangan', [AdminController::class, 'showSignature'])->name('pengaturan.signature.show');
         Route::post('/pengaturan/identitas', [AdminController::class, 'updateIdentitas'])->name('pengaturan.identitas');
         Route::post('/pengaturan/whitelist-calon-siswa/import', [AdminController::class, 'importCalonSiswa'])->name('pengaturan.whitelist.import');
+        Route::get('/pengaturan/whitelist-calon-siswa/download-format', [AdminController::class, 'downloadWhitelistFormat'])->name('pengaturan.whitelist.download-format');
+        Route::post('/pengaturan/whitelist-calon-siswa', [AdminController::class, 'storeCalonSiswa'])->name('pengaturan.whitelist.store');
         Route::post('/pengaturan/whitelist-calon-siswa/nonaktifkan', [AdminController::class, 'deactivateCalonSiswaWhitelist'])->name('pengaturan.whitelist.deactivate');
         Route::post('/pengaturan/whitelist-calon-siswa/{calonSiswa}/toggle', [AdminController::class, 'toggleCalonSiswaWhitelist'])->name('pengaturan.whitelist.toggle');
         Route::post('/pengaturan/kontak-panitia', [AdminController::class, 'storeKontakPanitia'])->name('pengaturan.kontak.store');
