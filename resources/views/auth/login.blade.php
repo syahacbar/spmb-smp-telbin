@@ -126,26 +126,25 @@
 
         .quick-info {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0;
-            max-width: 980px;
-            margin: 14px auto 0;
+            margin: 12px 0 0;
             border: 1px solid rgba(207, 228, 220, .88);
-            border-radius: 18px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, .92);
-            box-shadow: 0 18px 34px rgba(16, 35, 63, .14);
+            box-shadow: 0 10px 22px rgba(16, 35, 63, .08);
             overflow: hidden;
             backdrop-filter: blur(12px);
         }
 
         .quick-info-item {
             display: grid;
-            grid-template-columns: 48px 1fr;
-            gap: 12px;
+            grid-template-columns: 40px 1fr;
+            gap: 10px;
             align-items: center;
             width: 100%;
-            min-height: 78px;
-            padding: 14px 18px;
+            min-height: 66px;
+            padding: 10px 12px;
             border: 0;
             border-radius: 0;
             background: transparent;
@@ -167,21 +166,30 @@
             border-right: 0;
         }
 
+        .quick-info-item:nth-child(2n) {
+            border-right: 0;
+        }
+
+        .quick-info-item:nth-child(n + 3) {
+            border-top: 1px solid #d9e7e4;
+        }
+
         .quick-info-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             color: #ffffff;
-            font-size: 1.55rem;
+            font-size: 1.25rem;
             box-shadow: 0 10px 20px rgba(16, 35, 63, .15);
         }
 
         .quick-info-title {
             display: block;
             color: var(--login-ink);
+            font-size: .88rem;
             font-weight: 900;
             line-height: 1.2;
         }
@@ -190,7 +198,7 @@
             display: block;
             margin-top: 3px;
             color: #344054;
-            font-size: .82rem;
+            font-size: .74rem;
             line-height: 1.4;
         }
 
@@ -425,12 +433,13 @@
             justify-content: center;
             gap: 9px;
             min-height: 42px;
-            border: 1px solid #0f4f94;
+            border: 1px solid rgba(255, 255, 255, .55);
             border-radius: 8px;
             color: #0f3f85 !important;
             font-weight: 900;
             text-decoration: none;
             text-transform: uppercase;
+            background: var(--login-gold);
         }
 
         .back-home-link {
@@ -515,9 +524,9 @@
             align-items: flex-start;
             justify-content: space-between;
             gap: 18px;
-            padding: 18px 20px;
+            padding: 18px 20px 10px;
             background: linear-gradient(135deg, var(--login-forest-dark), var(--login-forest));
-            color: #ffffff;
+            color: 0 24px 70px rgba(3, 45, 38, .32);
         }
 
         .info-modal-title {
@@ -537,7 +546,7 @@
             border: 1px solid rgba(255, 255, 255, .4);
             border-radius: 8px;
             background: rgba(255, 255, 255, .12);
-            color: #ffffff;
+            color: 0 24px 70px rgba(3, 45, 38, .32);
             font-size: 1.35rem;
             line-height: 1;
         }
@@ -545,7 +554,7 @@
         .info-modal-body {
             display: grid;
             gap: 12px;
-            padding: 18px 20px 20px;
+            padding: 8px 20px 20px;
         }
 
         .info-list {
@@ -595,10 +604,6 @@
         }
 
         @media (max-width: 1199.98px) {
-            .quick-info {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
             .login-main-grid {
                 grid-template-columns: 1fr;
             }
@@ -639,6 +644,10 @@
                 border-bottom: 1px solid #d9e7e4;
             }
 
+            .quick-info-item:nth-child(n + 3) {
+                border-top: 0;
+            }
+
             .quick-info-item:last-child {
                 border-bottom: 0;
             }
@@ -677,11 +686,43 @@
                             </span>
                         </button>
                         <div class="zoom-hint"><i class="bi bi-search"></i> Klik gambar untuk memperbesar</div>
+
+                        <div class="quick-info" aria-label="Informasi pendaftaran">
+                            <button class="quick-info-item" type="button" data-info-modal-target="jadwalSpmbModal">
+                                <span class="quick-info-icon" style="background: linear-gradient(135deg, #1d4ed8, #f59e0b);"><i class="bi bi-calendar2-week"></i></span>
+                                <span>
+                                    <span class="quick-info-title">Jadwal Kegiatan SPMB</span>
+                                    <span class="quick-info-text">Lihat rangkaian kegiatan SPMB TA 2026/2027</span>
+                                </span>
+                            </button>
+                            <button class="quick-info-item" type="button" data-info-modal-target="jalurPenerimaanModal">
+                                <span class="quick-info-icon" style="background: linear-gradient(135deg, #f97316, #0f766e);"><i class="bi bi-buildings"></i></span>
+                                <span>
+                                    <span class="quick-info-title">Jalur Penerimaan</span>
+                                    <span class="quick-info-text">Zonasi, Afirmasi, Prestasi, dan Perpindahan Tugas</span>
+                                </span>
+                            </button>
+                            <a class="quick-info-item" href="{{ route('juknis.download') }}" download="juknis-spmb-smp-teluk-bintuni-2026.pdf">
+                                <span class="quick-info-icon" style="background: linear-gradient(135deg, #1d4ed8, #0f4f94);"><i class="bi bi-file-earmark-text"></i></span>
+                                <span>
+                                    <span class="quick-info-title">Petunjuk Teknis (Juknis)</span>
+                                    <span class="quick-info-text">Unduh dokumen resmi sebagai panduan</span>
+                                </span>
+                            </a>
+                            <a class="quick-info-item" href="{{ $panitiaWhatsappUrl }}" target="_blank" rel="noopener">
+                                <span class="quick-info-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);"><i class="bi bi-whatsapp"></i></span>
+                                <span>
+                                    <span class="quick-info-title">Bantuan & Informasi</span>
+                                    <span class="quick-info-text">Hubungi panitia melalui WhatsApp</span>
+                                </span>
+                            </a>
+                        </div>
                     </section>
 
                     <section class="login-card" aria-labelledby="login-title">
                         <div class="login-card-heading">
-                            <h1 id="login-title"><i class="bi bi-shield-lock-fill"></i> Akses SPMB Online</h1>
+                        <h2 class="section-title-bar" id="login-title"><i class="bi bi-shield-lock-fill"></i> Akses SPMB Online</h2>
+
                         </div>
 
                         <p class="login-card-note">Belum punya akun? Klik tombol <strong>Buat Akun</strong> dibawah ini</p>
@@ -754,36 +795,6 @@
                     </section>
                 </div>
 
-                <div class="quick-info" aria-label="Informasi pendaftaran">
-                    <button class="quick-info-item" type="button" data-info-modal-target="jadwalSpmbModal">
-                        <span class="quick-info-icon" style="background: linear-gradient(135deg, #1d4ed8, #f59e0b);"><i class="bi bi-calendar2-week"></i></span>
-                        <span>
-                            <span class="quick-info-title">Jadwal Kegiatan SPMB</span>
-                            <span class="quick-info-text">Lihat rangkaian kegiatan SPMB TA 2026/2027</span>
-                        </span>
-                    </button>
-                    <button class="quick-info-item" type="button" data-info-modal-target="jalurPenerimaanModal">
-                        <span class="quick-info-icon" style="background: linear-gradient(135deg, #f97316, #0f766e);"><i class="bi bi-buildings"></i></span>
-                        <span>
-                            <span class="quick-info-title">Jalur Penerimaan</span>
-                            <span class="quick-info-text">Zonasi, Afirmasi, Prestasi, dan Perpindahan Tugas</span>
-                        </span>
-                    </button>
-                    <a class="quick-info-item" href="{{ route('juknis.download') }}" download="juknis-spmb-smp-teluk-bintuni-2026.pdf">
-                        <span class="quick-info-icon" style="background: linear-gradient(135deg, #1d4ed8, #0f4f94);"><i class="bi bi-file-earmark-text"></i></span>
-                        <span>
-                            <span class="quick-info-title">Petunjuk Teknis (Juknis)</span>
-                            <span class="quick-info-text">Unduh dokumen resmi sebagai panduan</span>
-                        </span>
-                    </a>
-                    <a class="quick-info-item" href="{{ $panitiaWhatsappUrl }}" target="_blank" rel="noopener">
-                        <span class="quick-info-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);"><i class="bi bi-whatsapp"></i></span>
-                        <span>
-                            <span class="quick-info-title">Bantuan & Informasi</span>
-                            <span class="quick-info-text">Hubungi panitia melalui WhatsApp</span>
-                        </span>
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -798,16 +809,17 @@
     <div class="info-modal" id="jadwalSpmbModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="jadwalSpmbTitle">
         <div class="info-modal-dialog">
             <div class="info-modal-header">
-                <h2 class="info-modal-title" id="jadwalSpmbTitle">Jadwal Kegiatan SPMB</h2>
+                <h2 class="info-modal-title" id="jadwalSpmbTitle">Jadwal Kegiatan SPMB</h2>            
                 <button class="info-modal-close" type="button" data-info-modal-close aria-label="Tutup informasi">&times;</button>
             </div>
             <div class="info-modal-body">
                 <ul class="info-list">
-                    <li><span>1</span><div><strong>Pendaftaran Online</strong>Pengisian akun dan data calon murid melalui portal SPMB.</div></li>
-                    <li><span>2</span><div><strong>Verifikasi Berkas</strong>Pemeriksaan data dan dokumen persyaratan oleh panitia.</div></li>
-                    <li><span>3</span><div><strong>Seleksi</strong>Proses seleksi sesuai jalur penerimaan yang dipilih.</div></li>
-                    <li><span>4</span><div><strong>Pengumuman</strong>Hasil seleksi diumumkan melalui sistem SPMB.</div></li>
-                    <li><span>5</span><div><strong>Daftar Ulang</strong>Calon murid yang diterima melakukan daftar ulang sesuai ketentuan.</div></li>
+                    <li><span>1</span><div><strong>Pendaftaran Online : 01 - 06 Juli 2026</strong>Pengisian akun dan data calon murid melalui portal SPMB.</div></li>
+                    <li><span>2</span><div><strong>Verifikasi Berkas : 07 - 09 Juli 2026</strong>Proses pemeriksaan dan validasi data serta dokumen persyaratan oleh panitia.</div></li>
+                    <li><span>3</span><div><strong>Pengolahan Data Pendaftar : 10 Juli 2026</strong>Proses seleksi dan pengolahan data sesuai jalur penerimaan yang dipilih.</div></li>
+                    <li><span>4</span><div><strong>Pengumuman Hasil : 11 Juli 2026</strong>Hasil seleksi diumumkan melalui sistem SPMB.</div></li>
+                    <li><span>5</span><div><strong>Daftar Ulang : 13 Juli 2026</strong>Proses daftar ulang bagi calon murid yang dinyatakan diterima sesuai ketentuan yang berlaku.</div></li>
+                    <li><span>6</span><div><strong>Masa Pengenalan Lingkungan Sekolah : 15 - 17 Juli 2026</strong>Kegiatan pengenalan lingkungan sekolah bagi peserta didik baru yang telah diterima.</div></li>
                 </ul>
             </div>
         </div>
