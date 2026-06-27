@@ -15,6 +15,13 @@ use App\Http\Controllers\RegistrasiAkunController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'))->name('landing');
+Route::get('/juknis-spmb/download', function () {
+    return response()->download(
+        public_path('juknis_spmb_tahun_2026_teluk_bintuni.pdf'),
+        'juknis-spmb-smp-teluk-bintuni-2026.pdf',
+        ['Content-Type' => 'application/pdf']
+    );
+})->name('juknis.download');
 Route::post('/cek-status', [LandingController::class, 'checkStatus'])
     ->middleware('throttle:spmb-status')
     ->name('status.check');
