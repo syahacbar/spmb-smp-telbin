@@ -219,7 +219,7 @@
         }
 
         .flow-card {
-            padding: 12px 14px 14px;
+            padding: 24px 28px 18px;
         }
 
         .section-title-bar {
@@ -352,6 +352,25 @@
         .login-card .input-group .btn {
             border-top-left-radius: 0;
             border-bottom-left-radius: 0;
+        }
+
+        .login-card .password-toggle-group {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .login-card .password-toggle-group .input-with-icon {
+            display: block;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .login-card .password-toggle-group .password-toggle {
+            flex: 0 0 56px;
+            width: 56px;
+            min-width: 56px;
         }
 
         .input-with-icon {
@@ -699,7 +718,7 @@
                                 <span class="quick-info-icon" style="background: linear-gradient(135deg, #f97316, #0f766e);"><i class="bi bi-buildings"></i></span>
                                 <span>
                                     <span class="quick-info-title">Jalur Penerimaan</span>
-                                    <span class="quick-info-text">Zonasi, Afirmasi, Prestasi, dan Perpindahan Tugas</span>
+                                    <span class="quick-info-text">Domisili, Prestasi, Afirmasi dan Mutasi</span>
                                 </span>
                             </button>
                             <a class="quick-info-item" href="{{ route('juknis.download') }}" download="juknis-spmb-smp-teluk-bintuni-2026.pdf">
@@ -833,10 +852,10 @@
             </div>
             <div class="info-modal-body">
                 <ul class="info-list">
-                    <li><span>1</span><div><strong>Zonasi</strong>Berdasarkan domisili calon murid sesuai wilayah layanan sekolah.</div></li>
-                    <li><span>2</span><div><strong>Afirmasi</strong>Untuk calon murid dari keluarga tidak mampu atau kategori khusus sesuai ketentuan.</div></li>
-                    <li><span>3</span><div><strong>Prestasi</strong>Berdasarkan prestasi akademik atau non akademik calon murid.</div></li>
-                    <li><span>4</span><div><strong>Perpindahan Tugas</strong>Untuk calon murid yang mengikuti perpindahan tugas orang tua atau wali.</div></li>
+                    <li><span>1</span><div><strong>Domisili</strong>Ditujukan bagi calon murid yang memilih sekolah sesuai dengan domisili pada Kartu Keluarga (KK) yang telah diverifikasi.</div></li>
+                    <li><span>2</span><div><strong>Prestasi</strong>Ditujukan bagi calon murid yang memilih sekolah di luar domisili. Pemeringkatan berdasarkan nilai TKA.</div></li>
+                    <li><span>3</span><div><strong>Afirmasi</strong>Ditujukan bagi calon murid dari keluarga tidak mampu, penyandang disabilitas dan/atau kelompok khusus lainnya sesuai ketentuan. Wajib unggah surat keterangan yang valid.</div></li>
+                    <li><span>4</span><div><strong>Mutasi</strong>Ditujukan bagi calon murid yang orang tuanya mengalami perpindahan tugas/pekerjaan. Wajib unggah surat keterangan yang valid</div></li>
                 </ul>
             </div>
         </div>
