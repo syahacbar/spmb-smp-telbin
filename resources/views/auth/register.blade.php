@@ -281,6 +281,13 @@
                                 <div class="text-muted small">Periksa NISN sebelum melanjutkan pengisian akun.</div>
                             </div>
 
+                            @unless($registrationServiceOpen ?? true)
+                                <div class="alert alert-warning">
+                                    <div class="fw-bold mb-1">Layanan pendaftaran sedang tutup.</div>
+                                    <div>{{ $registrationServiceStatus['message'] ?? 'Silakan kembali pada jam pelayanan pendaftaran.' }}</div>
+                                </div>
+                            @endunless
+
                             @if($errors->any())
                                 <div class="alert alert-danger">
                                     <div class="fw-bold mb-1">Pendaftaran belum dapat diproses.</div>
@@ -301,8 +308,8 @@
                                     <label class="form-label">NISN</label>
                                     <div class="input-group input-group-lg">
                                         <input type="hidden" name="nisn" value="{{ old('nisn') }}" data-register-nisn-hidden>
-                                        <input type="text" value="{{ old('nisn') }}" class="form-control" inputmode="numeric" maxlength="10" autocomplete="username" data-register-nisn required>
-                                        <button class="btn btn-outline-primary" type="button" data-check-nisn-url="{{ route('register.check-nisn') }}" aria-label="Lanjutkan cek NISN">Selanjutnya &rarr;</button>
+                                        <input type="text" value="{{ old('nisn') }}" class="form-control" inputmode="numeric" maxlength="10" autocomplete="username" data-register-nisn required @disabled(! ($registrationServiceOpen ?? true))>
+                                        <button class="btn btn-outline-primary" type="button" data-check-nisn-url="{{ route('register.check-nisn') }}" aria-label="Lanjutkan cek NISN" @disabled(! ($registrationServiceOpen ?? true))>Selanjutnya &rarr;</button>
                                     </div>
                                 </div>
 
@@ -446,7 +453,7 @@
                                     </div>
 
                                     <div class="register-actions d-flex gap-2">
-                                        <button class="btn btn-primary btn-lg flex-fill">Daftar Akun</button>
+                                        <button class="btn btn-primary btn-lg flex-fill" @disabled(! ($registrationServiceOpen ?? true))>Daftar Akun</button>
                                         <a href="{{ route('login') }}" class="btn btn-outline-secondary btn-lg">Kembali</a>
                                     </div>
                                 </div>

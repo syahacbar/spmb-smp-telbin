@@ -1289,7 +1289,7 @@
                     <a class="sidebar-link {{ request()->routeIs('sekolah.admin.kuota') ? 'active' : '' }}" href="{{ route('sekolah.admin.kuota') }}">Kuota Penerimaan</a>
                     <a class="sidebar-link {{ request()->routeIs('sekolah.admin.profil') ? 'active' : '' }}" href="{{ route('sekolah.admin.profil') }}">Profil Sekolah</a>
                 @else
-                    <span class="sidebar-link active">Dashboard Calon Murid</span>
+                    <a class="sidebar-link {{ request()->routeIs('formulir.*') ? 'active' : '' }}" href="{{ route('formulir.create') }}">Formulir Registrasi</a>
                 @endif
             </aside>
             <main class="col-md-9 col-lg-10 p-4">

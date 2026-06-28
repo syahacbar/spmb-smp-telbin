@@ -8,6 +8,7 @@ use App\Models\JalurPendaftaran;
 use App\Models\PengaturanSpmb;
 use App\Models\Pengguna;
 use App\Models\Sekolah;
+use App\Services\RegistrationServiceHours;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ use Throwable;
 
 class FormulirController extends Controller
 {
-    public function create(Request $request): View|RedirectResponse
+    public function create(Request $request, RegistrationServiceHours $serviceHours): View|RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
         abort_unless($pengguna->isCalonMurid(), 403);
@@ -34,6 +35,10 @@ class FormulirController extends Controller
             }
 
             return redirect()->route('formulir.edit', $formulir);
+        }
+
+        if (! $serviceHours->isOpen()) {
+            return redirect()->route('dashboard')->with('warning', $serviceHours->closedMessage());
         }
 
         return view('formulir.form', [
@@ -48,10 +53,14 @@ class FormulirController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, RegistrationServiceHours $serviceHours): RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
         abort_unless($pengguna->isCalonMurid(), 403);
+
+        if (! $serviceHours->isOpen()) {
+            return back()->with('warning', $serviceHours->closedMessage());
+        }
 
         if ($formulir = Formulir::where('nisn', $pengguna->id_pengguna)->first()) {
             return redirect()->route(
@@ -102,7 +111,7 @@ class FormulirController extends Controller
         ]);
     }
 
-    public function edit(Request $request, Formulir $formulir): View|RedirectResponse
+    public function edit(Request $request, Formulir $formulir, RegistrationServiceHours $serviceHours): View|RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
 
@@ -110,6 +119,10 @@ class FormulirController extends Controller
 
         if (! $pengguna->isAdminDinas() && $formulir->isSubmitted()) {
             return redirect()->route('formulir.riwayat')->with('warning', 'Formulir yang sudah dikirim final tidak dapat diedit.');
+        }
+
+        if (! $pengguna->isAdminDinas() && ! $serviceHours->isOpen()) {
+            return redirect()->route('formulir.riwayat')->with('warning', $serviceHours->closedMessage());
         }
 
         $akunPendaftar = Pengguna::find($formulir->nisn) ?: $pengguna;
@@ -190,7 +203,7 @@ class FormulirController extends Controller
         return redirect()->route('formulir.periksa', $formulir)->with('success', 'Data formulir user berhasil disimpan. Periksa kembali sebelum mengirim final.');
     }
 
-    public function update(Request $request, Formulir $formulir): RedirectResponse
+    public function update(Request $request, Formulir $formulir, RegistrationServiceHours $serviceHours): RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
 
@@ -198,6 +211,10 @@ class FormulirController extends Controller
 
         if (! $pengguna->isAdminDinas() && $formulir->isSubmitted()) {
             return redirect()->route('formulir.riwayat')->with('warning', 'Formulir yang sudah dikirim final tidak dapat diedit.');
+        }
+
+        if (! $pengguna->isAdminDinas() && ! $serviceHours->isOpen()) {
+            return back()->with('warning', $serviceHours->closedMessage());
         }
 
         $data = $this->validatedData($request, false, $formulir->nisn);
@@ -244,7 +261,7 @@ class FormulirController extends Controller
         return view('formulir.periksa', compact('pengguna', 'formulir'));
     }
 
-    public function kirim(Request $request, Formulir $formulir): RedirectResponse
+    public function kirim(Request $request, Formulir $formulir, RegistrationServiceHours $serviceHours): RedirectResponse
     {
         $pengguna = $request->attributes->get('pengguna');
 
@@ -253,6 +270,16 @@ class FormulirController extends Controller
         if ($formulir->isSubmitted()) {
             return redirect()->route('formulir.riwayat')->with('success', 'Formulir sudah dikirim final.');
         }
+
+        if (! $pengguna->isAdminDinas() && ! $serviceHours->isOpen()) {
+            return back()->with('warning', $serviceHours->closedMessage());
+        }
+
+        $this->ensureQuotaAvailable(
+            (int) $formulir->sekolah_id,
+            (int) $formulir->jalur_id,
+            $formulir->nisn,
+        );
 
         $formulir->update([
             'status' => 'submitted',
@@ -404,6 +431,12 @@ class FormulirController extends Controller
             ]);
         }
 
+        $this->ensureQuotaAvailable(
+            (int) $data['sekolah_id'],
+            (int) $data['jalur_id'],
+            $nisn,
+        );
+
         if ($parentAddressSame) {
             $data['alamat_ortu_provinsi'] = 'Papua Barat';
             $data['alamat_ortu_kabupaten'] = $data['alamat_kabupaten'];
@@ -528,6 +561,31 @@ class FormulirController extends Controller
             ->pluck('sekolah_id')
             ->map(fn ($id) => (int) $id)
             ->all();
+        $jalurOptions = JalurPendaftaran::query()->where('is_active', true)->orderBy('id')->get();
+        $schoolOptions = Sekolah::query()
+            ->where('is_active', true)
+            ->orderBy('nama')
+            ->get();
+        $quotaRows = DB::table('tb_kuota_sekolah_jalur')
+            ->where('periode_id', $periodeId)
+            ->whereIn('sekolah_id', $schoolOptions->pluck('id'))
+            ->whereIn('jalur_id', $jalurOptions->pluck('id'))
+            ->get(['sekolah_id', 'jalur_id', 'kuota'])
+            ->groupBy(fn ($row) => $row->sekolah_id.'-'.$row->jalur_id);
+        $applicantCountsQuery = DB::table('tb_formulir')
+            ->where('status', 'submitted')
+            ->whereIn('sekolah_id', $schoolOptions->pluck('id'))
+            ->whereIn('jalur_id', $jalurOptions->pluck('id'));
+
+        if ($nisn !== '') {
+            $applicantCountsQuery->where('nisn', '!=', $nisn);
+        }
+
+        $applicantCounts = $applicantCountsQuery
+            ->groupBy('sekolah_id', 'jalur_id')
+            ->selectRaw('sekolah_id, jalur_id, count(*) as total')
+            ->get()
+            ->keyBy(fn ($row) => $row->sekolah_id.'-'.$row->jalur_id);
 
         return [
             'domisili' => $domisili,
@@ -553,16 +611,31 @@ class FormulirController extends Controller
                         ->all())
                     ->all())
                 ->all(),
-            'jalurOptions' => JalurPendaftaran::query()->where('is_active', true)->orderBy('id')->get(),
-            'schoolOptions' => Sekolah::query()
-                ->where('is_active', true)
-                ->orderBy('nama')
-                ->get()
+            'jalurOptions' => $jalurOptions,
+            'schoolOptions' => $schoolOptions
                 ->map(fn (Sekolah $sekolah) => [
                     'id' => $sekolah->id,
                     'nama' => $sekolah->nama,
                     'status' => $sekolah->status,
                     'eligible_domisili' => in_array($sekolah->id, $eligibleDomisiliIds, true),
+                    'jalur_kuota' => $jalurOptions
+                        ->mapWithKeys(function (JalurPendaftaran $jalur) use ($sekolah, $quotaRows, $applicantCounts): array {
+                            $key = $sekolah->id.'-'.$jalur->id;
+                            $quota = (int) optional($quotaRows->get($key)?->first())->kuota;
+                            $applicants = (int) optional($applicantCounts->get($key))->total;
+                            $remaining = max(0, $quota - $applicants);
+
+                            return [
+                                $jalur->kode => [
+                                    'jalur_id' => $jalur->id,
+                                    'kuota' => $quota,
+                                    'pendaftar' => $applicants,
+                                    'sisa_kuota' => $remaining,
+                                    'penuh' => $remaining <= 0,
+                                ],
+                            ];
+                        })
+                        ->all(),
                 ])
                 ->values(),
             'nilaiTka' => $pengguna?->calonSiswa
@@ -629,6 +702,35 @@ class FormulirController extends Controller
             'tanggal_lahir' => $calonSiswa->tanggal_lahir,
             'asal_sekolah' => $calonSiswa->asal_sekolah,
         ];
+    }
+
+    private function ensureQuotaAvailable(int $sekolahId, int $jalurId, ?string $nisn = null): void
+    {
+        $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
+        $quota = DB::table('tb_kuota_sekolah_jalur')
+            ->where('periode_id', $periodeId)
+            ->where('sekolah_id', $sekolahId)
+            ->where('jalur_id', $jalurId)
+            ->value('kuota');
+
+        $quota = (int) ($quota ?? 0);
+        $applicantQuery = DB::table('tb_formulir')
+            ->where('status', 'submitted')
+            ->where('sekolah_id', $sekolahId)
+            ->where('jalur_id', $jalurId);
+
+        if ($nisn) {
+            $applicantQuery->where('nisn', '!=', $nisn);
+        }
+
+        if ($quota <= 0 || $applicantQuery->count() >= $quota) {
+            $schoolName = DB::table('tb_sekolah')->where('id', $sekolahId)->value('nama') ?: 'sekolah tersebut';
+            $pathName = DB::table('tb_jalur_pendaftaran')->where('id', $jalurId)->value('nama') ?: 'jalur tersebut';
+
+            throw ValidationException::withMessages([
+                'jalur_id' => "Kuota {$pathName} di {$schoolName} sudah penuh. Silakan pilih jalur lain atau sekolah lain.",
+            ]);
+        }
     }
 
     private function authorizeFormulir($pengguna, Formulir $formulir): void

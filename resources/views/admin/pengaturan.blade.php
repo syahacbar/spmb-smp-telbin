@@ -158,6 +158,9 @@
             <button class="nav-link" id="akses-tab" data-bs-toggle="tab" data-bs-target="#akses-pane" type="button" role="tab" aria-controls="akses-pane" aria-selected="false">Akses Sekolah</button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="jam-pelayanan-tab" data-bs-toggle="tab" data-bs-target="#jam-pelayanan-pane" type="button" role="tab" aria-controls="jam-pelayanan-pane" aria-selected="false">Jam Pelayanan</button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="kontak-tab" data-bs-toggle="tab" data-bs-target="#kontak-pane" type="button" role="tab" aria-controls="kontak-pane" aria-selected="false">Kontak Panitia</button>
         </li>
     </ul>
@@ -353,6 +356,92 @@
                     </div>
                     <div class="col-12 mt-4">
                         <button class="btn btn-primary px-4 py-2" style="border-radius: 0.5rem;">Simpan Pengaturan Akses</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="tab-pane fade card shadow-sm" id="jam-pelayanan-pane" role="tabpanel" aria-labelledby="jam-pelayanan-tab" tabindex="0">
+            <div class="card-header border-bottom-0">
+                <h4 class="settings-section-title">Jam Pelayanan Pendaftaran</h4>
+                <p class="settings-section-subtitle">Atur jam layanan calon murid untuk cek NISN, registrasi akun, pengisian formulir, dan kirim final.</p>
+            </div>
+            <div class="card-body">
+                @php
+                    $selectedServiceDays = collect(explode(',', (string) ($settings['jam_pelayanan_hari'] ?? '1,2,3,4,5,6,7')))
+                        ->map(fn ($day) => (int) trim($day))
+                        ->filter()
+                        ->all();
+                    $oldServiceDays = old('jam_pelayanan_hari');
+                    $selectedServiceDays = is_array($oldServiceDays)
+                        ? collect($oldServiceDays)->map(fn ($day) => (int) $day)->all()
+                        : $selectedServiceDays;
+                    $dayLabels = [
+                        1 => 'Senin',
+                        2 => 'Selasa',
+                        3 => 'Rabu',
+                        4 => 'Kamis',
+                        5 => 'Jumat',
+                        6 => 'Sabtu',
+                        7 => 'Minggu',
+                    ];
+                @endphp
+                <form method="post" action="{{ route('admin.pengaturan.jam-pelayanan') }}" class="row g-3">
+                    @csrf
+                    <div class="col-lg-8">
+                        <div class="border rounded p-4 bg-light">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="fs-2 text-primary" style="margin-top: -3px;">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="fw-bold mb-1">Batasi Jam Pelayanan Calon Murid</h5>
+                                    <p class="text-muted small mb-3">Jika aktif, calon murid hanya dapat membuat akun dan mengisi formulir pada hari dan jam yang ditentukan. Admin tetap dapat mengelola data.</p>
+
+                                    <div class="form-check form-switch fs-6 mb-3">
+                                        <input type="hidden" name="jam_pelayanan_aktif" value="0">
+                                        <input type="checkbox" name="jam_pelayanan_aktif" value="1" class="form-check-input" id="jamPelayananAktif" @checked((bool) (int) ($settings['jam_pelayanan_aktif'] ?? 0))>
+                                        <label class="form-check-label fw-bold text-dark" for="jamPelayananAktif">
+                                            Aktifkan Pembatasan Jam Pelayanan
+                                        </label>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Jam Mulai</label>
+                                            <input type="time" name="jam_pelayanan_mulai" value="{{ old('jam_pelayanan_mulai', $settings['jam_pelayanan_mulai'] ?? '08:00') }}" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Jam Selesai</label>
+                                            <input type="time" name="jam_pelayanan_selesai" value="{{ old('jam_pelayanan_selesai', $settings['jam_pelayanan_selesai'] ?? '14:00') }}" class="form-control" required>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Hari Pelayanan</label>
+                                            <div class="d-flex flex-wrap gap-3">
+                                                @foreach($dayLabels as $dayNumber => $dayLabel)
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="jam_pelayanan_hari[]" value="{{ $dayNumber }}" id="jamPelayananHari{{ $dayNumber }}" @checked(in_array($dayNumber, $selectedServiceDays, true))>
+                                                        <label class="form-check-label" for="jamPelayananHari{{ $dayNumber }}">{{ $dayLabel }}</label>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            <div class="form-text">Kosongkan semua hari untuk memakai setiap hari.</div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Pesan Saat Layanan Tutup</label>
+                                            <textarea name="jam_pelayanan_pesan_tutup" class="form-control" rows="3" maxlength="500">{{ old('jam_pelayanan_pesan_tutup', $settings['jam_pelayanan_pesan_tutup'] ?? '') }}</textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="small text-muted mt-3">
+                                        <span class="badge text-bg-info">Zona waktu</span> Jam dihitung menggunakan WIT (Asia/Jayapura).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <button class="btn btn-primary px-4 py-2" style="border-radius: 0.5rem;">Simpan Jam Pelayanan</button>
                     </div>
                 </form>
             </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CalonSiswa;
 use App\Models\KontakPanitia;
 use App\Models\Pengguna;
+use App\Services\RegistrationServiceHours;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -103,9 +104,10 @@ class AuthController extends Controller
         return redirect()->route('dashboard')->with('success', 'Login berhasil.');
     }
 
-    public function register(Request $request): View
+    public function register(Request $request, RegistrationServiceHours $serviceHours): View
     {
         $this->generateRegisterCaptcha($request);
+        $serviceStatus = $serviceHours->status();
 
         try {
             $kecamatanOptions = DB::table('ref_kecamatan')->orderBy('urutan')->orderBy('nama')->get(['id', 'nama']);
@@ -120,14 +122,24 @@ class AuthController extends Controller
             'panitiaWhatsappUrl' => $this->panitiaWhatsappUrl(),
             'kecamatanOptions' => $kecamatanOptions,
             'kelurahanOptions' => $kelurahanOptions,
+            'registrationServiceStatus' => $serviceStatus,
+            'registrationServiceOpen' => (bool) $serviceStatus['open'],
             'calonSiswa' => old('nisn')
                 ? CalonSiswa::active()->find(old('nisn'))
                 : null,
         ]);
     }
 
-    public function checkRegisterNisn(Request $request): JsonResponse
+    public function checkRegisterNisn(Request $request, RegistrationServiceHours $serviceHours): JsonResponse
     {
+        if (! $serviceHours->isOpen()) {
+            return response()->json([
+                'ok' => false,
+                'type' => 'warning',
+                'message' => $serviceHours->closedMessage(),
+            ], 423);
+        }
+
         $validator = Validator::make($request->all(), [
             'nisn' => ['required', 'digits:10'],
         ], [
@@ -177,8 +189,16 @@ class AuthController extends Controller
         ]);
     }
 
-    public function storeRegistration(Request $request): RedirectResponse
+    public function storeRegistration(Request $request, RegistrationServiceHours $serviceHours): RedirectResponse
     {
+        if (! $serviceHours->isOpen()) {
+            $this->generateRegisterCaptcha($request);
+
+            return back()
+                ->withErrors(['jam_pelayanan' => $serviceHours->closedMessage()])
+                ->withInput($request->except(['password', 'password_confirmation', 'kartu_keluarga']));
+        }
+
         $validator = Validator::make($request->all(), [
             'nisn' => ['required', 'digits:10'],
             'kecamatan_id' => ['required', 'integer', 'exists:ref_kecamatan,id'],

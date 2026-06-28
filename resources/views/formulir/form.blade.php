@@ -196,6 +196,11 @@
             opacity: .45;
             cursor: not-allowed;
         }
+        [data-path-quota-status] {
+            min-height: 1.05rem;
+            font-size: .72rem;
+            line-height: 1.2;
+        }
         /* Nama jalur dalam tombol */
         [data-choose-path] .text-primary {
             color: var(--reg-green) !important;
@@ -661,6 +666,7 @@
                                                 class="btn btn-outline-primary w-100 h-100 p-3 d-flex flex-column align-items-center justify-content-center text-center"
                                                 data-choose-path="{{ $jalur->kode }}"
                                                 data-path-id="{{ $jalur->id }}"
+                                                data-tka-unavailable="{{ $jalur->kode === 'prestasi' && (! $nilaiTka || $nilaiTka['matematika'] === null || $nilaiTka['bahasa_indonesia'] === null) ? '1' : '0' }}"
                                                 @disabled(
                                                     $jalur->kode === 'prestasi'
                                                     && (
@@ -676,6 +682,7 @@
                                                 <span class="badge text-bg-success mt-1 small" style="font-size: 0.7rem; font-weight: 700;">Rekomendasi</span>
                                             @endif
                                             <span class="text-muted mt-2 d-block" style="font-size: 0.72rem; line-height: 1.2;">{{ $jalur->deskripsi }}</span>
+                                            <span class="text-muted mt-2 d-block fw-semibold" data-path-quota-status>Memuat kuota</span>
                                             @if(
                                                 $jalur->kode === 'prestasi'
                                                 && (
@@ -1346,10 +1353,73 @@
                 }
             });
 
+            const getSelectedSchool = function () {
+                if (! targetSchool?.value) {
+                    return null;
+                }
+
+                return schoolOptions.find(item => String(item.id) === String(targetSchool.value)) || null;
+            };
+
+            const getPathQuota = function (school, code) {
+                return school?.jalur_kuota?.[code] || {
+                    kuota: 0,
+                    pendaftar: 0,
+                    sisa_kuota: 0,
+                    penuh: true
+                };
+            };
+
+            const updatePathwayAvailability = function () {
+                let selectedPathIsUnavailable = false;
+                const school = getSelectedSchool();
+
+                pathListContainer?.querySelectorAll('[data-choose-path]').forEach(function (button) {
+                    const code = button.dataset.choosePath;
+                    const quota = getPathQuota(school, code);
+                    const totalQuota = Number(quota.kuota || 0);
+                    const remaining = Number(quota.sisa_kuota || 0);
+                    const tkaUnavailable = button.dataset.tkaUnavailable === '1';
+                    const quotaUnavailable = ! school || totalQuota <= 0 || remaining <= 0 || quota.penuh;
+                    const unavailable = tkaUnavailable || quotaUnavailable;
+                    const status = button.querySelector('[data-path-quota-status]');
+
+                    button.disabled = unavailable;
+                    button.classList.toggle('is-quota-full', quotaUnavailable);
+                    button.setAttribute('aria-disabled', unavailable ? 'true' : 'false');
+
+                    if (status) {
+                        status.classList.toggle('text-danger', quotaUnavailable);
+                        status.classList.toggle('text-success', ! quotaUnavailable && !! school);
+                        status.classList.toggle('text-muted', ! school);
+
+                        if (! school) {
+                            status.textContent = 'Pilih sekolah dulu';
+                        } else if (totalQuota <= 0) {
+                            status.textContent = 'Kuota belum dibuka';
+                        } else if (remaining <= 0 || quota.penuh) {
+                            status.textContent = 'Kuota penuh';
+                        } else {
+                            status.textContent = 'Sisa ' + remaining + ' dari ' + totalQuota + ' kursi';
+                        }
+                    }
+
+                    if (String(pathSelect?.value || '') === String(button.dataset.pathId) && unavailable) {
+                        selectedPathIsUnavailable = true;
+                    }
+                });
+
+                if (selectedPathIsUnavailable && pathSelect) {
+                    pathSelect.value = '';
+                }
+            };
+
             const refreshSchoolOptions = function () {
                 if (! pathSelect || ! targetSchool) {
                     return;
                 }
+
+                updatePathwayAvailability();
 
                 const code = pathSelect.selectedOptions[0]?.dataset.code || '';
                 tkaPanel?.classList.toggle('d-none', code !== 'prestasi');
@@ -1447,13 +1517,14 @@
 
             pathListContainer?.addEventListener('click', function (event) {
                 const button = event.target.closest('[data-choose-path]');
-                if (! button) {
+                if (! button || button.disabled) {
                     return;
                 }
 
                 pathSelect.value = button.dataset.pathId;
                 pathSelect.setCustomValidity('');
                 refreshSchoolOptions();
+                updateReview();
             });
 
             if (targetSchool.value) {
