@@ -125,7 +125,7 @@
         <section class="dinas-hero mb-4">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                    <div class="hero-kicker">Dinas Pendidikan Kabupaten Teluk Bintuni</div>
+                    <div class="hero-kicker">Dinas Pendidikan, Kebudayaan, Pemuda dan Olahraga Kabupaten Teluk Bintuni</div>
                     <h2 class="fw-bold mt-2 mb-2">Dashboard Verifikasi Akun SPMB</h2>
                     <div class="hero-copy">Periksa kesesuaian alamat domisili dengan Kartu Keluarga sebelum memberikan akses kepada calon murid.</div>
                 </div>

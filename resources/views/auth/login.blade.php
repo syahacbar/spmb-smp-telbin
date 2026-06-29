@@ -12,7 +12,7 @@
             padding: 0;
             background:
                 linear-gradient(180deg, rgba(226, 246, 251, .38) 0%, rgba(255, 255, 255, .18) 46%, rgba(4, 63, 53, .88) 100%),
-                url("{{ asset('landing/assets/background1.png') }}") center/cover fixed;
+                url("{{ asset('landing/assets/background1.webp') }}") center/cover fixed;
             color: var(--login-ink);
             overflow: hidden;
         }

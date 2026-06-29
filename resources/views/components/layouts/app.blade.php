@@ -918,18 +918,18 @@
             inset: 0;
             background:
                 linear-gradient(135deg, rgba(185, 28, 28, .94), rgba(127, 29, 29, .84)),
-                url("{{ asset('landing/assets/background1.png') }}") center/cover;
+                url("{{ asset('landing/assets/background1.webp') }}") center/cover;
             z-index: -2;
         }
         .login-auth-page::before {
             background:
                 linear-gradient(105deg, rgba(3, 45, 38, .92) 0%, rgba(5, 92, 76, .76) 48%, rgba(7, 136, 168, .48) 100%),
-                url("{{ asset('landing/assets/background1.png') }}") center/cover;
+                url("{{ asset('landing/assets/background1.webp') }}") center/cover;
         }
         .register-auth-page::before {
             background:
                 linear-gradient(105deg, rgba(3, 45, 38, .92) 0%, rgba(5, 92, 76, .76) 48%, rgba(7, 136, 168, .48) 100%),
-                url("{{ asset('landing/assets/background2.png') }}") center/cover;
+                url("{{ asset('landing/assets/background2.webp') }}") center/cover;
         }
         .login-auth-page,
         .register-auth-page {
