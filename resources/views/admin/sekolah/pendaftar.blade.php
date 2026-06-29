@@ -333,15 +333,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="9" class="text-center text-muted p-5">
-                                @if($jalurFilter)
-                                    Belum ada pendaftar untuk jalur <strong>{{ $jalurs->firstWhere('kode', $jalurFilter)?->nama ?? $jalurFilter }}</strong>.
-                                @else
-                                    Belum ada calon murid yang memilih sekolah ini.
-                                @endif
-                            </td>
-                        </tr>
+                        {{-- DataTables akan menampilkan pesan emptyTable. Jangan render row colspan karena dibaca sebagai data. --}}
                     @endforelse
                 </tbody>
             </table>
@@ -350,6 +342,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const emptyTableMessage = @json($jalurFilter
+                ? 'Belum ada pendaftar untuk jalur '.($jalurs->firstWhere('kode', $jalurFilter)?->nama ?? $jalurFilter).'.'
+                : 'Belum ada calon murid yang memilih sekolah ini.'
+            );
+
             // Bootstrap tooltips
             document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
                 new bootstrap.Tooltip(el);
@@ -372,7 +369,7 @@
                     infoEmpty: 'Tidak ada data',
                     infoFiltered: '(difilter dari _MAX_ total)',
                     zeroRecords: 'Tidak ada pendaftar yang sesuai pencarian',
-                    emptyTable: 'Belum ada data pendaftar',
+                    emptyTable: emptyTableMessage,
                     paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' },
                 },
             });
