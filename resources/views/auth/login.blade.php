@@ -699,7 +699,7 @@
                 <div class="login-main-grid">
                     <section class="flow-card" aria-labelledby="alur-title">
                         <h2 class="section-title-bar" id="alur-title"><i class="bi bi-clipboard-check-fill"></i> Alur Pendaftaran SPMB</h2>
-                        <button class="flow-image-button" type="button" data-open-image="{{ asset('images/alur_pendaftaran.webp') }}" title="Klik untuk memperbesar">
+                        <button class="flow-image-button" type="button" data-open-image="{{ asset('images/alur_pendaftaran-272.webp') }}" title="Klik untuk memperbesar">
                             <span class="flow-image-frame">
                                 <img src="{{ asset('images/alur_pendaftaran.webp') }}" alt="Alur Pendaftaran SPMB">
                             </span>
