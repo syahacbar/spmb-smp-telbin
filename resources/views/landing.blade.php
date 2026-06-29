@@ -13,6 +13,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Portal resmi SPMB SMP Kabupaten Teluk Bintuni untuk informasi jadwal, jalur penerimaan, cek status NISN, dan registrasi calon murid baru.">
     <title>SPMB SMP Kabupaten Teluk Bintuni</title>
     <style>
         html {
