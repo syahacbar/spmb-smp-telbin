@@ -688,7 +688,7 @@
     <div class="auth-page login-auth-page">
         <div class="login-shell">
             <section class="login-hero" aria-label="Portal SPMB SMP Kabupaten Teluk Bintuni">
-                <img class="login-hero-logo" src="{{ asset('landing/assets/logo_telbin_new.webp') }}" alt="Logo Kabupaten Teluk Bintuni">
+                <img class="login-hero-logo" src="{{ asset('landing/assets/logo_telbin_new-102128.webp') }}" alt="Logo Kabupaten Teluk Bintuni">
                 <div class="login-hero-welcome">Selamat Datang</div>
                 <div class="login-hero-kicker">di Portal Resmi SPMB Online</div>
                 <div class="login-hero-title">Jenjang SMP di Kabupaten Teluk Bintuni</div>
