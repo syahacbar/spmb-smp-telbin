@@ -688,7 +688,7 @@
     <div class="auth-page login-auth-page">
         <div class="login-shell">
             <section class="login-hero" aria-label="Portal SPMB SMP Kabupaten Teluk Bintuni">
-                <img class="login-hero-logo" src="{{ asset('landing/assets/logo_telbin_new.png') }}" alt="Logo Kabupaten Teluk Bintuni">
+                <img class="login-hero-logo" src="{{ asset('landing/assets/logo_telbin_new.webp') }}" alt="Logo Kabupaten Teluk Bintuni">
                 <div class="login-hero-welcome">Selamat Datang</div>
                 <div class="login-hero-kicker">di Portal Resmi SPMB Online</div>
                 <div class="login-hero-title">Jenjang SMP di Kabupaten Teluk Bintuni</div>
@@ -699,9 +699,9 @@
                 <div class="login-main-grid">
                     <section class="flow-card" aria-labelledby="alur-title">
                         <h2 class="section-title-bar" id="alur-title"><i class="bi bi-clipboard-check-fill"></i> Alur Pendaftaran SPMB</h2>
-                        <button class="flow-image-button" type="button" data-open-image="{{ asset('images/alur_pendaftaran.jpeg') }}" title="Klik untuk memperbesar">
+                        <button class="flow-image-button" type="button" data-open-image="{{ asset('images/alur_pendaftaran.webp') }}" title="Klik untuk memperbesar">
                             <span class="flow-image-frame">
-                                <img src="{{ asset('images/alur_pendaftaran.jpeg') }}" alt="Alur Pendaftaran SPMB">
+                                <img src="{{ asset('images/alur_pendaftaran.webp') }}" alt="Alur Pendaftaran SPMB">
                             </span>
                         </button>
                         <div class="zoom-hint"><i class="bi bi-search"></i> Klik gambar untuk memperbesar</div>
