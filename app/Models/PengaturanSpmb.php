@@ -35,7 +35,8 @@ class PengaturanSpmb extends Model
             'jam_pelayanan_aktif' => '0',
             'jam_pelayanan_mulai' => '08:00',
             'jam_pelayanan_selesai' => '14:00',
-            'jam_pelayanan_hari' => '1,2,3,4,5,6,7',
+            'jam_pelayanan_tanggal_mulai' => '2026-07-01',
+            'jam_pelayanan_tanggal_selesai' => '2026-07-06',
             'jam_pelayanan_pesan_tutup' => 'Layanan pendaftaran dibuka pukul 08.00 sampai 14.00 WIT.',
         ];
     }

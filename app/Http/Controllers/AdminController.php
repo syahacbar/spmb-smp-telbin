@@ -483,27 +483,26 @@ class AdminController extends Controller
             'jam_pelayanan_aktif' => ['required', 'boolean'],
             'jam_pelayanan_mulai' => ['required', 'date_format:H:i'],
             'jam_pelayanan_selesai' => ['required', 'date_format:H:i'],
-            'jam_pelayanan_hari' => ['nullable', 'array'],
-            'jam_pelayanan_hari.*' => ['integer', 'between:1,7'],
+            'jam_pelayanan_tanggal_mulai' => ['required', 'date_format:Y-m-d'],
+            'jam_pelayanan_tanggal_selesai' => ['required', 'date_format:Y-m-d', 'after_or_equal:jam_pelayanan_tanggal_mulai'],
             'jam_pelayanan_pesan_tutup' => ['nullable', 'string', 'max:500'],
         ], [
             'jam_pelayanan_mulai.date_format' => 'Jam mulai wajib memakai format HH:MM, contoh 08:00.',
             'jam_pelayanan_selesai.date_format' => 'Jam selesai wajib memakai format HH:MM, contoh 14:00.',
+            'jam_pelayanan_tanggal_mulai.required' => 'Tanggal mulai pelayanan wajib diisi.',
+            'jam_pelayanan_tanggal_selesai.required' => 'Tanggal selesai pelayanan wajib diisi.',
+            'jam_pelayanan_tanggal_mulai.date_format' => 'Tanggal mulai pelayanan wajib memakai format tanggal yang valid.',
+            'jam_pelayanan_tanggal_selesai.date_format' => 'Tanggal selesai pelayanan wajib memakai format tanggal yang valid.',
+            'jam_pelayanan_tanggal_selesai.after_or_equal' => 'Tanggal selesai pelayanan tidak boleh lebih awal dari tanggal mulai.',
         ]);
-
-        $days = collect($data['jam_pelayanan_hari'] ?? [])
-            ->map(fn ($day): int => (int) $day)
-            ->filter(fn (int $day): bool => $day >= 1 && $day <= 7)
-            ->unique()
-            ->sort()
-            ->values();
 
         PengaturanSpmb::setMany([
             'jam_pelayanan_aktif' => $request->boolean('jam_pelayanan_aktif') ? '1' : '0',
             'jam_pelayanan_mulai' => $data['jam_pelayanan_mulai'],
             'jam_pelayanan_selesai' => $data['jam_pelayanan_selesai'],
-            'jam_pelayanan_hari' => $days->isEmpty() ? '1,2,3,4,5,6,7' : $days->implode(','),
-            'jam_pelayanan_pesan_tutup' => $data['jam_pelayanan_pesan_tutup'] ?: 'Layanan pendaftaran dibuka pukul '.str_replace(':', '.', $data['jam_pelayanan_mulai']).' sampai '.str_replace(':', '.', $data['jam_pelayanan_selesai']).' WIT.',
+            'jam_pelayanan_tanggal_mulai' => $data['jam_pelayanan_tanggal_mulai'],
+            'jam_pelayanan_tanggal_selesai' => $data['jam_pelayanan_tanggal_selesai'],
+            'jam_pelayanan_pesan_tutup' => $data['jam_pelayanan_pesan_tutup'] ?: 'Layanan pendaftaran dibuka pada tanggal '.$data['jam_pelayanan_tanggal_mulai'].' sampai '.$data['jam_pelayanan_tanggal_selesai'].', pukul '.str_replace(':', '.', $data['jam_pelayanan_mulai']).' sampai '.str_replace(':', '.', $data['jam_pelayanan_selesai']).' WIT.',
         ]);
 
         return back()->with('success', 'Jam pelayanan pendaftaran calon murid berhasil diperbarui.');
