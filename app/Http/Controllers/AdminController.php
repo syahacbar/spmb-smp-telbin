@@ -38,6 +38,8 @@ class AdminController extends Controller
         $allowedStatuses = ['menunggu_verifikasi', 'terverifikasi', 'perlu_perbaikan', 'ditolak'];
 
         $users = Pengguna::with(['calonSiswa', 'registrasiAkun'])
+            ->leftJoin('tb_registrasi_akun as registrasi_sort', 'registrasi_sort.nisn', '=', 'tb_pengguna.id_pengguna')
+            ->select('tb_pengguna.*')
             ->whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))
             ->when(
                 in_array($status, $allowedStatuses, true),
@@ -48,7 +50,10 @@ class AdminController extends Controller
                 where tb_registrasi_akun.nisn = tb_pengguna.id_pengguna
                 and tb_registrasi_akun.status = 'menunggu_verifikasi'
             ) then 0 else 1 end")
-            ->orderBy('id_pengguna')
+            ->orderByRaw('registrasi_sort.submitted_at is null')
+            ->orderBy('registrasi_sort.submitted_at')
+            ->orderBy('registrasi_sort.id')
+            ->orderBy('tb_pengguna.id_pengguna')
             ->get();
 
         return view('admin.pengguna', [

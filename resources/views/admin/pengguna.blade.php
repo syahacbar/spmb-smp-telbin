@@ -106,8 +106,10 @@
                         <th>Domisili & KK</th>
                         <th>Status</th>
                         <th>Aksi</th>
+                        <th>Waktu Daftar</th>
                     </tr>
                     <tr class="filter-row">
+                        <th></th>
                         <th></th>
                         <th></th>
                         <th></th>
@@ -290,6 +292,9 @@
                                     </div>
                                 @endif
                             </td>
+                            <td data-order="{{ $user->registrasiAkun?->submitted_at?->timestamp ?? PHP_INT_MAX }}">
+                                {{ $user->registrasiAkun?->submitted_at?->format('Y-m-d H:i:s') ?? '' }}
+                            </td>
                         </tr>
                     @endforeach
                     </tbody>
@@ -310,10 +315,11 @@
                 orderCellsTop: true,
                 pageLength: 10,
                 lengthMenu: [10, 25, 50, 100],
-                order: [[1, 'asc']],
+                order: [[8, 'asc']],
                 columnDefs: [
                     { orderable: false, searchable: false, targets: [0, 7] },
-                    { type: 'num', targets: 6 },
+                    { type: 'num', targets: [6, 8] },
+                    { visible: false, searchable: false, targets: 8 },
                 ],
                 language: {
                     search: 'Cari:',
