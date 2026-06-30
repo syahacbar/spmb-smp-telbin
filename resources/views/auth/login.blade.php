@@ -872,8 +872,7 @@
                     return;
                 }
 
-                const image = button.querySelector('img');
-                modalImage.src = image?.currentSrc || button.dataset.openImage;
+                modalImage.src = button.dataset.openImage || '';
                 imageModal.classList.add('is-open');
                 imageModal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
