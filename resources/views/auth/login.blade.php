@@ -523,6 +523,8 @@
             padding: 24px;
             background: rgba(3, 45, 38, .66);
             backdrop-filter: blur(7px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
         }
 
         .info-modal.is-open {
@@ -532,6 +534,9 @@
         .info-modal-dialog {
             width: min(620px, 94vw);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100dvh - 48px);
             border: 1px solid rgba(207, 228, 220, .95);
             border-radius: 16px;
             background: #ffffff;
@@ -545,7 +550,7 @@
             gap: 18px;
             padding: 18px 20px 10px;
             background: linear-gradient(135deg, var(--login-forest-dark), var(--login-forest));
-            color: 0 24px 70px rgba(3, 45, 38, .32);
+            color: #ffffff;
         }
 
         .info-modal-title {
@@ -565,7 +570,7 @@
             border: 1px solid rgba(255, 255, 255, .4);
             border-radius: 8px;
             background: rgba(255, 255, 255, .12);
-            color: 0 24px 70px rgba(3, 45, 38, .32);
+            color: #ffffff;
             font-size: 1.35rem;
             line-height: 1;
         }
@@ -574,6 +579,8 @@
             display: grid;
             gap: 12px;
             padding: 8px 20px 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .info-list {
@@ -681,6 +688,53 @@
 
             .captcha-row-login {
                 grid-template-columns: 1fr;
+            }
+
+            .info-modal {
+                align-items: flex-start;
+                padding: 12px;
+            }
+
+            .info-modal-dialog {
+                width: 100%;
+                max-height: calc(100dvh - 24px);
+                border-radius: 12px;
+            }
+
+            .info-modal-header {
+                align-items: center;
+                gap: 12px;
+                padding: 14px 14px 10px;
+            }
+
+            .info-modal-title {
+                font-size: 1rem;
+            }
+
+            .info-modal-close {
+                width: 36px;
+                height: 36px;
+            }
+
+            .info-modal-body {
+                padding: 10px 12px 14px;
+            }
+
+            .info-list {
+                gap: 8px;
+            }
+
+            .info-list li {
+                grid-template-columns: 28px 1fr;
+                gap: 8px;
+                padding: 9px 10px;
+                font-size: .86rem;
+            }
+
+            .info-list span {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
             }
         }
     </style>
