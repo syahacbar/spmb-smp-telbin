@@ -70,6 +70,8 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::get('/verifikasi-akun/{registrasi}', [AdminController::class, 'verifikasiAkun'])->name('verifikasi-akun.show');
         Route::put('/verifikasi-akun/{registrasi}/alamat', [AdminController::class, 'updateRegistrasiAlamat'])->name('verifikasi-akun.alamat');
         Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
+        Route::get('/reset-akun', [AdminController::class, 'resetAkun'])->name('reset-akun');
+        Route::post('/reset-akun/reset', [AdminController::class, 'resetAkunPassword'])->name('reset-akun.proses');
         Route::get('/sekolah-zonasi', [AdminController::class, 'sekolahZonasi'])->name('sekolah-zonasi');
         Route::post('/sekolah-zonasi/sekolah', [AdminController::class, 'storeSekolah'])->name('sekolah.store');
         Route::put('/sekolah-zonasi/sekolah/{sekolah}', [AdminController::class, 'updateSekolah'])->name('sekolah.update');

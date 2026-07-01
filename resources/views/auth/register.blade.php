@@ -308,7 +308,7 @@
                                     <label class="form-label">NISN</label>
                                     <div class="input-group input-group-lg">
                                         <input type="hidden" name="nisn" value="{{ old('nisn') }}" data-register-nisn-hidden>
-                                        <input type="text" value="{{ old('nisn') }}" class="form-control" inputmode="numeric" maxlength="10" autocomplete="username" data-register-nisn required @disabled(! ($registrationServiceOpen ?? true))>
+                                        <input type="text" value="{{ old('nisn') }}" class="form-control" autocomplete="username" data-register-nisn required @disabled(! ($registrationServiceOpen ?? true))>
                                         <button class="btn btn-outline-primary" type="button" data-check-nisn-url="{{ route('register.check-nisn') }}" aria-label="Lanjutkan cek NISN" @disabled(! ($registrationServiceOpen ?? true))>Selanjutnya &rarr;</button>
                                     </div>
                                 </div>

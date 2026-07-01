@@ -1445,7 +1445,7 @@
                         @csrf
                         <div class="form-field">
                             <label for="status-nisn">NISN</label>
-                            <input id="status-nisn" type="text" name="nisn" value="{{ old('nisn', session('status_nisn')) }}" inputmode="numeric" maxlength="10" autocomplete="username" placeholder="Masukkan 10 digit NISN" required>
+                            <input id="status-nisn" type="text" name="nisn" value="{{ old('nisn', session('status_nisn')) }}" autocomplete="username" placeholder="Masukkan NISN Anda" required>
                         </div>
                         <div class="captcha-row">
                             <div class="captcha-chip">

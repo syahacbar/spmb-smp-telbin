@@ -779,7 +779,7 @@ class AdminController extends Controller
         });
 
         return redirect()
-            ->route('admin.verifikasi-akun.show', $pengguna->registrasiAkun)
+            ->route('admin.pengguna')
             ->with('success', 'Akun berhasil disetujui dan calon murid sudah dapat masuk ke dashboard.');
     }
 
@@ -836,7 +836,7 @@ class AdminController extends Controller
         });
 
         return redirect()
-            ->route('admin.verifikasi-akun.show', $pengguna->registrasiAkun)
+            ->route('admin.pengguna')
             ->with('success', 'Status dan catatan verifikasi berhasil disimpan pada panel status calon murid.');
     }
 
@@ -951,7 +951,7 @@ class AdminController extends Controller
     public function storeCalonSiswa(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'nisn' => ['required', 'digits:10', 'unique:tb_calon_siswa,nisn'],
+            'nisn' => ['required', 'string', 'max:20', 'unique:tb_calon_siswa,nisn'],
             'nama' => ['required', 'string', 'max:100'],
             'tempat_lahir' => ['required', 'string', 'max:100'],
             'tanggal_lahir' => ['required', 'regex:/^\d{2}-\d{2}-\d{4}$/'],
@@ -961,7 +961,7 @@ class AdminController extends Controller
             'tahun_lulus' => ['required', 'digits:4'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
-            'nisn.digits' => 'NISN harus terdiri dari 10 digit angka.',
+            'nisn.max' => 'NISN maksimal 20 karakter.',
             'nisn.unique' => 'NISN tersebut sudah terdaftar di database whitelist.',
             'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
             'tanggal_lahir.regex' => 'Format tanggal lahir harus dd-mm-yyyy (Contoh: 15-05-2013).',
@@ -980,6 +980,48 @@ class AdminController extends Controller
         CalonSiswa::create($data);
 
         return back()->with('success', "Calon siswa {$data['nama']} (NISN: {$data['nisn']}) berhasil ditambahkan ke whitelist.");
+    }
+
+    public function resetAkun(Request $request): View
+    {
+        $nisn = $request->query('nisn');
+        $student = null;
+        $searched = false;
+
+        if ($nisn) {
+            $searched = true;
+            // Find student user (only roles: calon_murid)
+            $student = Pengguna::with(['calonSiswa', 'registrasiAkun'])
+                ->whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))
+                ->where('id_pengguna', $nisn)
+                ->first();
+        }
+
+        return view('admin.reset-akun', [
+            'pengguna' => $request->attributes->get('pengguna'),
+            'nisn' => $nisn,
+            'student' => $student,
+            'searched' => $searched,
+        ]);
+    }
+
+    public function resetAkunPassword(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'id_pengguna' => ['required', 'string', 'exists:tb_pengguna,id_pengguna'],
+        ]);
+
+        $student = Pengguna::whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))
+            ->where('id_pengguna', $data['id_pengguna'])
+            ->firstOrFail();
+
+        $student->update([
+            'password' => Hash::make('CalonMurid123'),
+        ]);
+
+        return redirect()
+            ->route('admin.reset-akun')
+            ->with('success', "Password akun NISN {$student->id_pengguna} ({$student->nama_pengguna}) berhasil direset ke 'CalonMurid123'.");
     }
 
     private function validatedSchool(Request $request, ?Sekolah $sekolah = null): array

@@ -672,8 +672,8 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label fw-semibold text-muted small mb-1">NISN <span class="text-danger">*</span></label>
-                                <input type="text" name="nisn" class="form-control" placeholder="10 digit NISN" pattern="[0-9]{10}" maxlength="10" required style="border-radius: 0.45rem;">
-                                <div class="form-text small">Harus berupa 10 digit angka unik.</div>
+                                <input type="text" name="nisn" class="form-control" placeholder="Masukkan NISN" required style="border-radius: 0.45rem;">
+                                <div class="form-text small">Masukkan NISN calon siswa secara lengkap.</div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold text-muted small mb-1">Nama Lengkap <span class="text-danger">*</span></label>

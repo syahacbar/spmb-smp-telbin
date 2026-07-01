@@ -27,11 +27,11 @@ class LandingController extends Controller
     public function checkStatus(Request $request): RedirectResponse|JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'nisn' => ['required', 'digits:10'],
+            'nisn' => ['required', 'string', 'max:20'],
             'captcha_answer' => ['required', 'integer'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
-            'nisn.digits' => 'NISN harus berisi 10 digit angka.',
+            'nisn.max' => 'NISN maksimal berisi 20 karakter.',
             'captcha_answer.required' => 'Captcha wajib diisi.',
             'captcha_answer.integer' => 'Captcha harus berupa angka.',
         ]);

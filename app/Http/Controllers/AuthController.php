@@ -141,10 +141,10 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nisn' => ['required', 'digits:10'],
+            'nisn' => ['required', 'string', 'max:20'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
-            'nisn.digits' => 'NISN harus berisi 10 digit angka.',
+            'nisn.max' => 'NISN maksimal berisi 20 karakter.',
         ]);
 
         if ($validator->fails()) {
@@ -200,7 +200,7 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nisn' => ['required', 'digits:10'],
+            'nisn' => ['required', 'string', 'max:20'],
             'kecamatan_id' => ['required', 'integer', 'exists:ref_kecamatan,id'],
             'kelurahan_id' => ['required', 'integer', 'exists:ref_kelurahan,id'],
             'detail_alamat' => ['required', 'string', 'max:1000'],
@@ -210,7 +210,7 @@ class AuthController extends Controller
             'captcha_answer' => ['required', 'integer'],
         ], [
             'nisn.required' => 'NISN wajib diisi.',
-            'nisn.digits' => 'NISN harus berisi 10 digit angka.',
+            'nisn.max' => 'NISN maksimal berisi 20 karakter.',
             'kecamatan_id.required' => 'Distrik/kecamatan domisili wajib dipilih.',
             'kelurahan_id.required' => 'Kelurahan/kampung domisili wajib dipilih.',
             'detail_alamat.required' => 'Detail alamat domisili wajib diisi.',

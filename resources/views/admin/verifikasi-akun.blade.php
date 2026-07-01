@@ -95,21 +95,18 @@
         }
         .kk-image {
             display: block;
-            width: 100%;
-            max-height: 760px;
+            max-width: 100%;
+            max-height: 100%;
             border-radius: .7rem;
             background: #eef2f1;
             object-fit: contain;
         }
         .decision-panel {
-            position: sticky;
-            bottom: 1rem;
             border: 1px solid #cfe4dc;
             border-radius: .9rem;
-            background: rgba(255, 255, 255, .96);
-            padding: 1rem;
-            box-shadow: 0 18px 46px rgba(6, 63, 53, .14);
-            backdrop-filter: blur(12px);
+            background: #fff;
+            padding: 1.25rem;
+            box-shadow: 0 12px 30px rgba(16, 55, 47, .07);
         }
         .history-item {
             position: relative;
@@ -130,7 +127,6 @@
         @media (max-width: 991.98px) {
             .verification-grid { grid-template-columns: 1fr; }
             .kk-frame { min-height: 520px; }
-            .decision-panel { position: static; }
         }
         @media (max-width: 575.98px) {
             .identity-list { grid-template-columns: 1fr; }
@@ -151,8 +147,6 @@
             </div>
         </div>
     </div>
-
-    @include('partials.flash')
 
     <div class="verification-grid">
         <div class="d-grid gap-3">
@@ -285,104 +279,281 @@
                     @if(! $registrasi->kartuKeluargaTersedia())
                         <div class="alert alert-danger mb-0">Berkas Kartu Keluarga tidak tersedia. Registrasi tidak dapat disetujui.</div>
                     @elseif($registrasi->kartuKeluargaIsImage())
-                        <img src="{{ route('admin.registrasi.kk', $registrasi) }}" class="kk-image" alt="Kartu Keluarga {{ $siswa->id_pengguna }}">
+                        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center justify-content-center bg-light p-2 rounded border border-light-subtle">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-zoom-in" title="Zoom In">
+                                <i class="bi bi-zoom-in"></i> Zoom In
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-zoom-out" title="Zoom Out">
+                                <i class="bi bi-zoom-out"></i> Zoom Out
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-rotate-left" title="Rotate Left">
+                                <i class="bi bi-arrow-counterclockwise"></i> Putar Kiri
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-rotate-right" title="Rotate Right">
+                                <i class="bi bi-arrow-clockwise"></i> Putar Kanan
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-reset-view" title="Reset">
+                                <i class="bi bi-arrow-repeat"></i> Reset
+                            </button>
+                        </div>
+                        <div class="kk-image-container border rounded bg-light overflow-hidden position-relative d-flex align-items-center justify-content-center" style="min-height: 640px; max-height: 760px; cursor: grab;">
+                            <img id="kk-image-preview" src="{{ route('admin.registrasi.kk', $registrasi) }}" class="kk-image" alt="Kartu Keluarga {{ $siswa->id_pengguna }}" style="transition: transform 0.2s ease; max-width: 100%; max-height: 100%; transform-origin: center center;">
+                        </div>
                     @else
                         <iframe src="{{ route('admin.registrasi.kk', $registrasi) }}#toolbar=1&navpanes=0" class="kk-frame" title="Kartu Keluarga {{ $siswa->id_pengguna }}"></iframe>
                     @endif
                 </div>
             </section>
 
-            <section class="decision-panel">
-                <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
-                    <div>
-                        <h5 class="fw-bold mb-1">Keputusan Verifikasi</h5>
-                        <div class="small text-muted">Keputusan dan catatan akan tampil pada panel status akun calon murid.</div>
-                    </div>
+            <section class="decision-panel card verification-card mt-3">
+                <div class="card-header bg-white border-bottom pb-2">
+                    <h5 class="fw-bold mb-1">Keputusan Verifikasi</h5>
+                    <div class="small text-muted">Keputusan dan catatan akan tampil pada panel status akun calon murid.</div>
                 </div>
 
-                @if($registrasi->status !== 'terverifikasi')
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <form method="post" action="{{ route('admin.pengguna.verifikasi', $siswa) }}">
-                            @csrf
-                            <button class="btn btn-success" data-confirm="Alamat domisili dan Kartu Keluarga sudah sesuai. Setujui akun ini?" @disabled(! $registrasi->kartuKeluargaTersedia())>
-                                Setujui Akun
-                            </button>
-                        </form>
-                    </div>
-
-                    <form method="post" action="{{ route('admin.pengguna.status-verifikasi', $siswa) }}">
-                        @csrf
-                        <div class="row g-2">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Keputusan</label>
-                                <select name="status" class="form-select" required>
-                                    <option value="perlu_perbaikan">Perlu Perbaikan</option>
-                                    <option value="ditolak">Tolak Registrasi</option>
-                                </select>
-                            </div>
-                            <div class="col-md-8">
-                                <label class="form-label fw-bold">Catatan untuk Calon Murid</label>
-                                <textarea name="catatan" class="form-control" rows="3" maxlength="1000" placeholder="Contoh: Alamat kampung yang dipilih tidak sesuai dengan alamat pada KK." required></textarea>
-                            </div>
-                            <div class="col-12 d-flex justify-content-end">
-                                <button class="btn btn-outline-danger" data-confirm="Simpan keputusan dan catatan verifikasi ini?">Simpan Keputusan</button>
-                            </div>
+                <div class="card-body">
+                    @if($registrasi->status !== 'terverifikasi')
+                        <div class="d-flex flex-wrap gap-2 mb-4 pb-3 border-bottom">
+                            <form method="post" action="{{ route('admin.pengguna.verifikasi', $siswa) }}">
+                                @csrf
+                                <button class="btn btn-success" data-confirm="Alamat domisili dan Kartu Keluarga sudah sesuai. Setujui akun ini?" @disabled(! $registrasi->kartuKeluargaTersedia())>
+                                    Setujui Akun
+                                </button>
+                            </form>
                         </div>
-                    </form>
-                @else
-                    <div class="alert alert-success mb-0">
-                        Akun telah disetujui{{ $registrasi->verified_at ? ' pada '.$registrasi->verified_at->translatedFormat('d F Y, H:i').' WIT' : '' }}.
-                        Calon murid dapat login dan masuk ke dashboard.
-                    </div>
-                @endif
+
+                        <form method="post" action="{{ route('admin.pengguna.status-verifikasi', $siswa) }}">
+                            @csrf
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold" for="select-keputusan">Keputusan</label>
+                                    <select id="select-keputusan" name="status" class="form-select" required>
+                                        <option value="perlu_perbaikan">Perlu Perbaikan</option>
+                                        <option value="ditolak">Tolak Registrasi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="mb-3" id="template-perbaikan-container">
+                                        <label class="form-label fw-bold text-muted small text-uppercase">Template Catatan Perbaikan</label>
+                                        <div class="d-flex flex-column gap-2 bg-light p-3 rounded border">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="temp_catatan" id="temp-dokumen" value="Mohon mengunggah (upload) dokumen Kartu Keluarga">
+                                                <label class="form-check-label small" for="temp-dokumen">
+                                                    <strong>Dokumen tidak sesuai:</strong> Mohon mengunggah (upload) dokumen Kartu Keluarga
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="temp_catatan" id="temp-terpotong" value="Mohon mengunggah (upload) dokumen KK secara utuh dan tidak terpotong">
+                                                <label class="form-check-label small" for="temp-terpotong">
+                                                    <strong>KK terpotong:</strong> Mohon mengunggah (upload) dokumen KK secara utuh dan tidak terpotong
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="temp_catatan" id="temp-nama" value="Nama calon murid tidak tertera di dalam KK yang diunggah (upload).">
+                                                <label class="form-check-label small" for="temp-nama">
+                                                    <strong>Nama tidak sesuai:</strong> Nama calon murid tidak tertera di dalam KK yang diunggah (upload).
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="temp_catatan" id="temp-jelas" value="Mohon mengunggah (upload) dokumen KK yang lebih jelas dan dapat dibaca">
+                                                <label class="form-check-label small" for="temp-jelas">
+                                                    <strong>KK tidak jelas:</strong> Mohon mengunggah (upload) dokumen KK yang lebih jelas dan dapat dibaca
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="temp_catatan" id="temp-lainnya" value="lainnya">
+                                                <label class="form-check-label small" for="temp-lainnya">
+                                                    <strong>Lainnya</strong> (Isi manual)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <label class="form-label fw-bold" for="textarea-catatan">Catatan untuk Calon Murid</label>
+                                    <textarea id="textarea-catatan" name="catatan" class="form-control" rows="3" maxlength="1000" placeholder="Contoh: Alamat kampung yang dipilih tidak sesuai dengan alamat pada KK." required></textarea>
+                                </div>
+                                <div class="col-12 d-flex justify-content-end">
+                                    <button class="btn btn-outline-danger" data-confirm="Simpan keputusan dan catatan verifikasi ini?">Simpan Keputusan</button>
+                                </div>
+                            </div>
+                        </form>
+                    @else
+                        <div class="alert alert-success mb-0">
+                            Akun telah disetujui{{ $registrasi->verified_at ? ' pada '.$registrasi->verified_at->translatedFormat('d F Y, H:i').' WIT' : '' }}.
+                            Calon murid dapat login dan masuk ke dashboard.
+                        </div>
+                    @endif
+                </div>
             </section>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // -- District & Village Sync Logic --
             const districtSelect = document.querySelector('[data-admin-kecamatan]');
             const villageSelect = document.querySelector('[data-admin-kelurahan]');
 
-            if (! districtSelect || ! villageSelect) {
-                return;
-            }
+            if (districtSelect && villageSelect) {
+                const villageOptions = Array.from(villageSelect.options)
+                    .filter((option) => option.value)
+                    .map((option) => ({
+                        value: option.value,
+                        text: option.textContent,
+                        district: option.dataset.kecamatan,
+                    }));
 
-            const villageOptions = Array.from(villageSelect.options)
-                .filter((option) => option.value)
-                .map((option) => ({
-                    value: option.value,
-                    text: option.textContent,
-                    district: option.dataset.kecamatan,
-                }));
+                function syncVillages() {
+                    const selectedDistrict = districtSelect.value;
+                    const selectedVillage = villageSelect.dataset.selected || villageSelect.value;
 
-            function syncVillages() {
-                const selectedDistrict = districtSelect.value;
-                const selectedVillage = villageSelect.dataset.selected || villageSelect.value;
+                    villageSelect.replaceChildren(new Option('Pilih kelurahan/desa/kampung', ''));
 
-                villageSelect.replaceChildren(new Option('Pilih kelurahan/desa/kampung', ''));
+                    villageOptions
+                        .filter((option) => String(option.district) === String(selectedDistrict))
+                        .forEach((option) => {
+                            const element = new Option(option.text, option.value);
+                            element.selected = String(option.value) === String(selectedVillage);
+                            villageSelect.appendChild(element);
+                        });
 
-                villageOptions
-                    .filter((option) => String(option.district) === String(selectedDistrict))
-                    .forEach((option) => {
-                        const element = new Option(option.text, option.value);
-                        element.selected = String(option.value) === String(selectedVillage);
-                        villageSelect.appendChild(element);
-                    });
+                    if (! Array.from(villageSelect.options).some((option) => option.selected && option.value)) {
+                        villageSelect.value = '';
+                    }
 
-                if (! Array.from(villageSelect.options).some((option) => option.selected && option.value)) {
-                    villageSelect.value = '';
+                    villageSelect.dataset.selected = villageSelect.value;
                 }
 
-                villageSelect.dataset.selected = villageSelect.value;
+                districtSelect.addEventListener('change', function () {
+                    villageSelect.dataset.selected = '';
+                    syncVillages();
+                });
+
+                syncVillages();
             }
 
-            districtSelect.addEventListener('change', function () {
-                villageSelect.dataset.selected = '';
-                syncVillages();
-            });
+            // -- Document Zoom, Rotate, & Drag Logic --
+            const img = document.getElementById('kk-image-preview');
+            const container = document.querySelector('.kk-image-container');
+            
+            if (img && container) {
+                let currentScale = 1;
+                let currentRotation = 0;
+                let translateX = 0;
+                let translateY = 0;
+                let isDragging = false;
+                let startX = 0;
+                let startY = 0;
 
-            syncVillages();
+                function updateTransform() {
+                    img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale}) rotate(${currentRotation}deg)`;
+                }
+
+                document.getElementById('btn-zoom-in')?.addEventListener('click', function() {
+                    currentScale += 0.25;
+                    updateTransform();
+                });
+
+                document.getElementById('btn-zoom-out')?.addEventListener('click', function() {
+                    if (currentScale > 0.3) {
+                        currentScale -= 0.25;
+                        updateTransform();
+                    }
+                });
+
+                document.getElementById('btn-rotate-left')?.addEventListener('click', function() {
+                    currentRotation -= 90;
+                    updateTransform();
+                });
+
+                document.getElementById('btn-rotate-right')?.addEventListener('click', function() {
+                    currentRotation += 90;
+                    updateTransform();
+                });
+
+                document.getElementById('btn-reset-view')?.addEventListener('click', function() {
+                    currentScale = 1;
+                    currentRotation = 0;
+                    translateX = 0;
+                    translateY = 0;
+                    updateTransform();
+                });
+
+                // Dragging logic
+                container.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    startX = e.clientX - translateX;
+                    startY = e.clientY - translateY;
+                    container.style.cursor = 'grabbing';
+                });
+
+                window.addEventListener('mousemove', function(e) {
+                    if (!isDragging) return;
+                    translateX = e.clientX - startX;
+                    translateY = e.clientY - startY;
+                    updateTransform();
+                });
+
+                window.addEventListener('mouseup', function() {
+                    isDragging = false;
+                    container.style.cursor = 'grab';
+                });
+
+                // Touch support
+                container.addEventListener('touchstart', function(e) {
+                    if (e.touches.length === 1) {
+                        isDragging = true;
+                        startX = e.touches[0].clientX - translateX;
+                        startY = e.touches[0].clientY - translateY;
+                    }
+                });
+
+                window.addEventListener('touchmove', function(e) {
+                    if (!isDragging || e.touches.length !== 1) return;
+                    translateX = e.touches[0].clientX - startX;
+                    translateY = e.touches[0].clientY - startY;
+                    updateTransform();
+                });
+
+                window.addEventListener('touchend', function() {
+                    isDragging = false;
+                });
+            }
+
+            // -- Template Notes Logic --
+            const statusSelect = document.querySelector('select[name="status"]');
+            const templateContainer = document.getElementById('template-perbaikan-container');
+            const catatanTextarea = document.querySelector('textarea[name="catatan"]');
+            const templates = document.querySelectorAll('input[name="temp_catatan"]');
+
+            if (statusSelect && templateContainer && catatanTextarea) {
+                function toggleTemplates() {
+                    if (statusSelect.value === 'perlu_perbaikan') {
+                        templateContainer.style.display = 'block';
+                    } else {
+                        templateContainer.style.display = 'none';
+                        // Clean radio checks if hidden
+                        templates.forEach(radio => radio.checked = false);
+                    }
+                }
+
+                statusSelect.addEventListener('change', toggleTemplates);
+                toggleTemplates(); // run on load
+
+                templates.forEach(radio => {
+                    radio.addEventListener('change', function () {
+                        if (this.checked) {
+                            if (this.value === 'lainnya') {
+                                catatanTextarea.value = '';
+                                catatanTextarea.focus();
+                            } else {
+                                catatanTextarea.value = this.value;
+                            }
+                        }
+                    });
+                });
+            }
         });
     </script>
 </x-layouts.app>

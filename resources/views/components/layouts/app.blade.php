@@ -1286,6 +1286,7 @@
                     <a class="sidebar-link {{ request()->routeIs('admin.pendaftar') ? 'active' : '' }}" href="{{ route('admin.pendaftar') }}">Data Pendaftaran</a>
                     <a class="sidebar-link {{ request()->routeIs('admin.sekolah-zonasi') ? 'active' : '' }}" href="{{ route('admin.sekolah-zonasi') }}">Sekolah & Zonasi</a>
                     <a class="sidebar-link {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}" href="{{ route('admin.pengaturan') }}">Pengaturan SPMB</a>
+                    <a class="sidebar-link {{ request()->routeIs('admin.reset-akun') ? 'active' : '' }}" href="{{ route('admin.reset-akun') }}">Reset Akun</a>
                 @elseif($pengguna->isAdminSekolah())
                     <!-- <a class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dasbor</a> -->
                     <a class="sidebar-link {{ request()->routeIs('sekolah.admin.pendaftar') ? 'active' : '' }}" href="{{ route('sekolah.admin.pendaftar') }}">Data Pendaftar</a>
