@@ -222,7 +222,34 @@
                                 <td>{{ $stat['npsn'] }}</td>
                                 <td><strong>{{ $stat['nama'] }}</strong></td>
                                 @foreach($jalurs as $jalur)
-                                    <td class="text-center">{{ $stat['pendaftar_per_jalur'][$jalur->id] ?? 0 }}</td>
+                                    @php
+                                        $pendaftar = $stat['pendaftar_per_jalur'][$jalur->id] ?? 0;
+                                        $kuota = $stat['kuota_per_jalur'][$jalur->id] ?? 0;
+                                        $persentase = $kuota > 0 ? min(round(($pendaftar / $kuota) * 100), 100) : 0;
+                                        $persentaseRiil = $kuota > 0 ? round(($pendaftar / $kuota) * 100, 1) : 0;
+                                        
+                                        $barColor = '#0b5d4b'; // forest green
+                                        if ($persentaseRiil >= 100) {
+                                            $barColor = '#b91c1c'; // red
+                                        } elseif ($persentaseRiil >= 80) {
+                                            $barColor = '#f2b84b'; // gold
+                                        }
+                                    @endphp
+                                    <td>
+                                        <div class="d-flex flex-column align-items-center mx-auto" style="max-width: 120px;">
+                                            <div class="small fw-semibold text-dark mb-1" style="font-size: 0.82rem;">
+                                                {{ $pendaftar }} <span class="text-muted">/ {{ $kuota }}</span>
+                                            </div>
+                                            @if($kuota > 0)
+                                                <div class="progress w-100" style="height: 6px; border-radius: 99px; background-color: #e2e8f0; overflow: hidden;" title="Keterisian: {{ $persentaseRiil }}%">
+                                                    <div class="progress-bar" role="progressbar" style="width: {{ $persentase }}%; background-color: {{ $barColor }}; border-radius: 99px;" aria-valuenow="{{ $persentase }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <div class="fw-bold mt-1 text-muted" style="font-size: 0.7rem; letter-spacing: 0.02em;">{{ $persentaseRiil }}%</div>
+                                            @else
+                                                <span class="text-muted small" style="font-size: 0.72rem;">Tanpa Kuota</span>
+                                            @endif
+                                        </div>
+                                    </td>
                                 @endforeach
                                 <td class="text-center fw-bold text-primary">{{ $stat['total_pendaftar'] }}</td>
                             </tr>

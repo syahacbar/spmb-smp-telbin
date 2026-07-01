@@ -79,6 +79,7 @@ class DashboardController extends Controller
         if ($pengguna->isAdminDinas()) {
             $jalurs = JalurPendaftaran::where('is_active', true)->orderBy('id')->get();
             $sekolahs = Sekolah::where('is_active', true)->orderBy('nama')->get();
+            $periodeId = DB::table('tb_periode_spmb')->where('is_active', true)->value('id');
 
             $pendaftarSekolahJalur = Formulir::whereIn('status', ['submitted', 'diterima', 'ditolak'])
                 ->select('sekolah_id', 'jalur_id')
@@ -88,14 +89,24 @@ class DashboardController extends Controller
                 ->groupBy('sekolah_id')
                 ->map(fn($items) => $items->pluck('total', 'jalur_id'));
 
-            $sekolahStats = $sekolahs->map(function ($sekolah) use ($jalurs, $pendaftarSekolahJalur, &$totalPerJalur, &$grandTotal) {
+            $kuotaSekolahJalur = DB::table('tb_kuota_sekolah_jalur')
+                ->where('periode_id', $periodeId)
+                ->get()
+                ->groupBy('sekolah_id')
+                ->map(fn($items) => $items->pluck('kuota', 'jalur_id'));
+
+            $sekolahStats = $sekolahs->map(function ($sekolah) use ($jalurs, $pendaftarSekolahJalur, $kuotaSekolahJalur, &$totalPerJalur, &$grandTotal) {
                 $counts = $pendaftarSekolahJalur[$sekolah->id] ?? collect();
+                $kuotas = $kuotaSekolahJalur[$sekolah->id] ?? collect();
                 $totalPendaftar = 0;
                 $pendaftarPerJalur = [];
+                $kuotaPerJalur = [];
 
                 foreach ($jalurs as $jalur) {
                     $count = (int) ($counts[$jalur->id] ?? 0);
+                    $kuota = (int) ($kuotas[$jalur->id] ?? 0);
                     $pendaftarPerJalur[$jalur->id] = $count;
+                    $kuotaPerJalur[$jalur->id] = $kuota;
                     $totalPendaftar += $count;
 
                     $totalPerJalur[$jalur->id] = ($totalPerJalur[$jalur->id] ?? 0) + $count;
@@ -107,6 +118,7 @@ class DashboardController extends Controller
                     'npsn' => $sekolah->npsn,
                     'nama' => $sekolah->nama,
                     'pendaftar_per_jalur' => $pendaftarPerJalur,
+                    'kuota_per_jalur' => $kuotaPerJalur,
                     'total_pendaftar' => $totalPendaftar,
                 ];
             });
