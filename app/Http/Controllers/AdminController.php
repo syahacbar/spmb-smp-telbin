@@ -82,6 +82,8 @@ class AdminController extends Controller
             'calonSiswa' => $registrasi->pengguna->calonSiswa,
             'kecamatan' => DB::table('ref_kecamatan')->where('id', $registrasi->kecamatan_id)->value('nama'),
             'kelurahan' => DB::table('ref_kelurahan')->where('id', $registrasi->kelurahan_id)->value('nama'),
+            'kecamatanOptions' => DB::table('ref_kecamatan')->orderBy('urutan')->orderBy('nama')->get(['id', 'nama']),
+            'kelurahanOptions' => DB::table('ref_kelurahan')->orderBy('urutan')->orderBy('nama')->get(['id', 'kecamatan_id', 'nama']),
             'riwayat' => DB::table('tb_riwayat_verifikasi_akun')
                 ->leftJoin('tb_pengguna as petugas', 'petugas.id_pengguna', '=', 'tb_riwayat_verifikasi_akun.diproses_oleh')
                 ->where('registrasi_akun_id', $registrasi->id)
@@ -91,6 +93,65 @@ class AdminController extends Controller
                     'petugas.nama_pengguna as nama_petugas',
                 ]),
         ]);
+    }
+
+    public function updateRegistrasiAlamat(Request $request, RegistrasiAkun $registrasi): RedirectResponse
+    {
+        $registrasi->load('pengguna');
+
+        abort_unless($registrasi->pengguna?->isCalonMurid(), 404);
+
+        $data = $request->validate([
+            'kecamatan_id' => ['required', 'integer', 'exists:ref_kecamatan,id'],
+            'kelurahan_id' => ['required', 'integer', 'exists:ref_kelurahan,id'],
+            'detail_alamat' => ['required', 'string', 'max:1000'],
+        ], [
+            'kecamatan_id.required' => 'Distrik/kecamatan domisili wajib dipilih.',
+            'kelurahan_id.required' => 'Kelurahan/desa/kampung domisili wajib dipilih.',
+            'detail_alamat.required' => 'Detail alamat domisili wajib diisi.',
+        ]);
+
+        $kelurahanValid = DB::table('ref_kelurahan')
+            ->where('id', $data['kelurahan_id'])
+            ->where('kecamatan_id', $data['kecamatan_id'])
+            ->exists();
+
+        if (! $kelurahanValid) {
+            return back()
+                ->withErrors(['kelurahan_id' => 'Kelurahan/desa/kampung tidak sesuai dengan distrik/kecamatan yang dipilih.'])
+                ->withInput();
+        }
+
+        $admin = $request->attributes->get('pengguna');
+        $oldKecamatan = DB::table('ref_kecamatan')->where('id', $registrasi->kecamatan_id)->value('nama') ?: '-';
+        $oldKelurahan = DB::table('ref_kelurahan')->where('id', $registrasi->kelurahan_id)->value('nama') ?: '-';
+        $newKecamatan = DB::table('ref_kecamatan')->where('id', $data['kecamatan_id'])->value('nama') ?: '-';
+        $newKelurahan = DB::table('ref_kelurahan')->where('id', $data['kelurahan_id'])->value('nama') ?: '-';
+        $oldDetail = $registrasi->detail_alamat ?: '-';
+
+        DB::transaction(function () use ($registrasi, $data, $admin, $oldKecamatan, $oldKelurahan, $oldDetail, $newKecamatan, $newKelurahan): void {
+            $registrasi->update([
+                'kabupaten' => 'Teluk Bintuni',
+                'kecamatan_id' => $data['kecamatan_id'],
+                'kelurahan_id' => $data['kelurahan_id'],
+                'detail_alamat' => $data['detail_alamat'],
+            ]);
+
+            $registrasi->pengguna?->update([
+                'alamat' => $data['detail_alamat'],
+            ]);
+
+            DB::table('tb_riwayat_verifikasi_akun')->insert([
+                'registrasi_akun_id' => $registrasi->id,
+                'status_sebelumnya' => $registrasi->status,
+                'status_baru' => $registrasi->status,
+                'catatan' => "Alamat domisili diperbarui oleh Admin Dinas. Dari: {$oldKelurahan}, {$oldKecamatan}, {$oldDetail}. Menjadi: {$newKelurahan}, {$newKecamatan}, {$data['detail_alamat']}.",
+                'diproses_oleh' => $admin?->id_pengguna,
+                'created_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Alamat domisili registrasi akun berhasil diperbarui.');
     }
 
     public function pengaturan(Request $request): View

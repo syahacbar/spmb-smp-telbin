@@ -67,6 +67,25 @@
             background: #eef7f3;
             padding: 1rem;
         }
+        .address-edit-form {
+            display: grid;
+            gap: .9rem;
+        }
+        .address-edit-form .form-label {
+            color: #344054;
+            font-size: .78rem;
+            font-weight: 900;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+        }
+        .address-edit-note {
+            border: 1px solid #d9e7e4;
+            border-radius: .7rem;
+            background: #fff;
+            padding: .75rem .85rem;
+            color: #52647d;
+            font-size: .85rem;
+        }
         .kk-frame {
             width: 100%;
             min-height: 640px;
@@ -173,24 +192,57 @@
                 </div>
                 <div class="card-body">
                     <div class="address-check">
-                        <div class="identity-list">
-                            <div class="identity-item">
-                                <span class="identity-label">Kabupaten</span>
-                                <strong class="identity-value">{{ $registrasi->kabupaten }}</strong>
+                        <form method="post" action="{{ route('admin.verifikasi-akun.alamat', $registrasi) }}" class="address-edit-form">
+                            @csrf
+                            @method('put')
+
+                            <div class="address-edit-note">
+                                Koreksi alamat sesuai Kartu Keluarga sebelum akun disetujui. Perubahan ini akan menjadi dasar pilihan sekolah jalur domisili.
                             </div>
-                            <div class="identity-item">
-                                <span class="identity-label">Distrik/Kecamatan</span>
-                                <strong class="identity-value">{{ $kecamatan ?: '-' }}</strong>
+
+                            <div>
+                                <label class="form-label" for="alamat-kabupaten">Kabupaten</label>
+                                <input id="alamat-kabupaten" type="text" class="form-control" value="{{ $registrasi->kabupaten ?: 'Teluk Bintuni' }}" readonly>
                             </div>
-                            <div class="identity-item">
-                                <span class="identity-label">Kelurahan/Kampung</span>
-                                <strong class="identity-value">{{ $kelurahan ?: '-' }}</strong>
+
+                            <div>
+                                <label class="form-label" for="alamat-kecamatan">Distrik/Kecamatan</label>
+                                <select id="alamat-kecamatan" name="kecamatan_id" class="form-select @error('kecamatan_id') is-invalid @enderror" data-admin-kecamatan required>
+                                    <option value="">Pilih distrik/kecamatan</option>
+                                    @foreach($kecamatanOptions as $item)
+                                        <option value="{{ $item->id }}" @selected((string) old('kecamatan_id', $registrasi->kecamatan_id) === (string) $item->id)>{{ $item->nama }}</option>
+                                    @endforeach
+                                </select>
+                                @error('kecamatan_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
-                            <div class="identity-item wide">
-                                <span class="identity-label">Detail Alamat</span>
-                                <strong class="identity-value">{{ $registrasi->detail_alamat ?: '-' }}</strong>
+
+                            <div>
+                                <label class="form-label" for="alamat-kelurahan">Kelurahan/Desa/Kampung</label>
+                                <select id="alamat-kelurahan" name="kelurahan_id" class="form-select @error('kelurahan_id') is-invalid @enderror" data-admin-kelurahan data-selected="{{ old('kelurahan_id', $registrasi->kelurahan_id) }}" required>
+                                    <option value="">Pilih kelurahan/desa/kampung</option>
+                                    @foreach($kelurahanOptions as $item)
+                                        <option value="{{ $item->id }}" data-kecamatan="{{ $item->kecamatan_id }}" @selected((string) old('kelurahan_id', $registrasi->kelurahan_id) === (string) $item->id)>{{ $item->nama }}</option>
+                                    @endforeach
+                                </select>
+                                @error('kelurahan_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
-                        </div>
+
+                            <div>
+                                <label class="form-label" for="alamat-detail">Detail Alamat</label>
+                                <textarea id="alamat-detail" name="detail_alamat" class="form-control @error('detail_alamat') is-invalid @enderror" rows="3" maxlength="1000" placeholder="Jalan, RT/RW, patokan, atau detail alamat lain" required>{{ old('detail_alamat', $registrasi->detail_alamat) }}</textarea>
+                                @error('detail_alamat')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button class="btn btn-primary" data-confirm="Simpan perubahan alamat domisili akun ini?">Simpan Alamat</button>
+                            </div>
+                        </form>
                     </div>
                     <div class="alert alert-light border mt-3 mb-0 small">
                         Pastikan distrik, kampung, dan detail alamat di atas sesuai dengan alamat keluarga yang terbaca pada KK.
@@ -286,4 +338,51 @@
             </section>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const districtSelect = document.querySelector('[data-admin-kecamatan]');
+            const villageSelect = document.querySelector('[data-admin-kelurahan]');
+
+            if (! districtSelect || ! villageSelect) {
+                return;
+            }
+
+            const villageOptions = Array.from(villageSelect.options)
+                .filter((option) => option.value)
+                .map((option) => ({
+                    value: option.value,
+                    text: option.textContent,
+                    district: option.dataset.kecamatan,
+                }));
+
+            function syncVillages() {
+                const selectedDistrict = districtSelect.value;
+                const selectedVillage = villageSelect.dataset.selected || villageSelect.value;
+
+                villageSelect.replaceChildren(new Option('Pilih kelurahan/desa/kampung', ''));
+
+                villageOptions
+                    .filter((option) => String(option.district) === String(selectedDistrict))
+                    .forEach((option) => {
+                        const element = new Option(option.text, option.value);
+                        element.selected = String(option.value) === String(selectedVillage);
+                        villageSelect.appendChild(element);
+                    });
+
+                if (! Array.from(villageSelect.options).some((option) => option.selected && option.value)) {
+                    villageSelect.value = '';
+                }
+
+                villageSelect.dataset.selected = villageSelect.value;
+            }
+
+            districtSelect.addEventListener('change', function () {
+                villageSelect.dataset.selected = '';
+                syncVillages();
+            });
+
+            syncVillages();
+        });
+    </script>
 </x-layouts.app>

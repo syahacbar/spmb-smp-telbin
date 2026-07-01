@@ -68,6 +68,7 @@ Route::middleware('spmb.auth')->group(function (): void {
         Route::get('/pendaftar', [AdminController::class, 'pendaftar'])->name('pendaftar');
         Route::get('/pengguna', [AdminController::class, 'pengguna'])->name('pengguna');
         Route::get('/verifikasi-akun/{registrasi}', [AdminController::class, 'verifikasiAkun'])->name('verifikasi-akun.show');
+        Route::put('/verifikasi-akun/{registrasi}/alamat', [AdminController::class, 'updateRegistrasiAlamat'])->name('verifikasi-akun.alamat');
         Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
         Route::get('/sekolah-zonasi', [AdminController::class, 'sekolahZonasi'])->name('sekolah-zonasi');
         Route::post('/sekolah-zonasi/sekolah', [AdminController::class, 'storeSekolah'])->name('sekolah.store');
