@@ -90,6 +90,10 @@
             Ditolak
             <span class="verification-filter-count">{{ (int) ($statusCounts['ditolak'] ?? 0) }}</span>
         </a>
+        <a href="{{ route('admin.pengguna', ['status' => 'belum_mendaftar']) }}" class="verification-filter-link {{ $activeStatus === 'belum_mendaftar' ? 'active' : '' }}">
+            Belum Daftar Sekolah
+            <span class="verification-filter-count">{{ (int) ($belumMendaftarCount ?? 0) }}</span>
+        </a>
     </nav>
 
     <div class="card shadow-sm">

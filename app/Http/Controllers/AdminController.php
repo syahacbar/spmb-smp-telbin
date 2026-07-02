@@ -45,6 +45,10 @@ class AdminController extends Controller
                 in_array($status, $allowedStatuses, true),
                 fn ($query) => $query->whereHas('registrasiAkun', fn ($registrasi) => $registrasi->where('status', $status)),
             )
+            ->when(
+                $status === 'belum_mendaftar',
+                fn ($query) => $query->whereDoesntHave('formulir', fn ($q) => $q->whereIn('status', ['submitted', 'diterima', 'ditolak'])),
+            )
             ->orderByRaw("case when exists (
                 select 1 from tb_registrasi_akun
                 where tb_registrasi_akun.nisn = tb_pengguna.id_pengguna
@@ -56,6 +60,10 @@ class AdminController extends Controller
             ->orderBy('tb_pengguna.id_pengguna')
             ->get();
 
+        $belumMendaftarCount = Pengguna::whereHas('roles', fn ($query) => $query->where('kode', 'calon_murid'))
+            ->whereDoesntHave('formulir', fn ($q) => $q->whereIn('status', ['submitted', 'diterima', 'ditolak']))
+            ->count();
+
         return view('admin.pengguna', [
             'pengguna' => $request->attributes->get('pengguna'),
             'users' => $users,
@@ -65,6 +73,7 @@ class AdminController extends Controller
                 ->selectRaw('count(*) as total')
                 ->groupBy('status')
                 ->pluck('total', 'status'),
+            'belumMendaftarCount' => $belumMendaftarCount,
             'kecamatanNames' => DB::table('ref_kecamatan')->pluck('nama', 'id'),
             'kelurahanNames' => DB::table('ref_kelurahan')->pluck('nama', 'id'),
         ]);
